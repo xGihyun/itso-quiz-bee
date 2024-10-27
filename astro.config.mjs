@@ -9,11 +9,13 @@ export default defineConfig({
   integrations: [react(), tailwind({
     applyBaseStyles: false
   })],
-  output: "server",
+  output: "hybrid",
   experimental: {
     env: {
       schema: {
         DATABASE_URL: envField.string({ context: "server", access: "secret" }),
+        BACKEND_HOST: envField.string({ context: "client", access: "public" }),
+        BACKEND_PORT: envField.string({ context: "client", access: "public" }),
       },
     },
   },

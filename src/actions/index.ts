@@ -5,6 +5,7 @@ import { RegisterSchema } from "@/pages/register/schema";
 import { ActionError, defineAction } from "astro:actions";
 import { and, eq } from "drizzle-orm";
 
+// NOTE: These are no longer used
 export const server = {
   register: defineAction({
     input: RegisterSchema,

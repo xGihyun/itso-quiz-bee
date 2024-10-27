@@ -25,13 +25,20 @@ export function LoginForm(): JSX.Element {
     },
   });
 
-  async function onSubmit(values: LoginInput) {
+  async function onSubmit(value: LoginInput) {
     let toastId = toast.loading("Logging in...");
 
-    const { error } = await actions.login(values);
+    const response = await fetch(`http://localhost:3001/login`, {
+      method: "POST",
+      body: JSON.stringify(value),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
 
-    if (error) {
-      toast.error(error.message, { id: toastId });
+    if (!response.ok) {
+      toast.error("", { id: toastId });
       return;
     }
 
