@@ -1,3 +1,10 @@
 ---
-
+import { Layout } from "@/layouts";
+import { JoinLobbyForm } from "./_components/join-form";
 ---
+
+<Layout title="Lobbies">
+  <JoinLobbyForm client:only="react" />
+
+  List of lobbies here
+</Layout>

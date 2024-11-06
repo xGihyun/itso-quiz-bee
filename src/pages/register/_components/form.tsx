@@ -12,9 +12,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { actions } from "astro:actions";
 import { toast } from "sonner";
 import { navigate } from "astro:transitions/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { BACKEND_URL } from "astro:env/client";
+import type { ApiResponse } from "@/lib/types/api";
 
 export function RegisterForm(): JSX.Element {
   const form = useForm<RegisterInput>({
@@ -25,53 +33,74 @@ export function RegisterForm(): JSX.Element {
     },
   });
 
-  async function onSubmit(values: RegisterInput) {
-    let toastId = toast.loading("Submitting...");
+  async function onSubmit(value: RegisterInput) {
+    let toastId = toast.loading("Registering...");
 
-    const { error } = await actions.register(values);
+    const response = await fetch(`${BACKEND_URL}/api/register`, {
+      method: "POST",
+      body: JSON.stringify(value),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
 
-    if (error) {
-      toast.error(error.message, { id: toastId });
+    const result: ApiResponse = await response.json();
+
+    console.log("Result:", result);
+
+    if (!response.ok) {
+      toast.error(result.message || "Server error.", { id: toastId });
       return;
     }
 
-    toast.success("Successfully registered!", { id: toastId });
-    navigate("/login");
+    toast.success(result.message, { id: toastId });
+    await navigate("/login");
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <Card className="mx-auto max-w-sm">
+      <CardHeader>
+        <CardTitle className="text-2xl">Register</CardTitle>
+        <CardDescription>
+          Enter your credentials to register.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <Button type="submit">Submit</Button>
-      </form>
-    </Form>
+            <Button type="submit">Submit</Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }

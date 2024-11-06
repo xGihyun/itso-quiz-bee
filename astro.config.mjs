@@ -16,6 +16,7 @@ export default defineConfig({
         DATABASE_URL: envField.string({ context: "server", access: "secret" }),
         BACKEND_HOST: envField.string({ context: "client", access: "public" }),
         BACKEND_PORT: envField.string({ context: "client", access: "public" }),
+        BACKEND_URL: envField.string({ context: "client", access: "public" }),
       },
     },
   },

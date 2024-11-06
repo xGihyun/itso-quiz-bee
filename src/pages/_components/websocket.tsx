@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { BACKEND_HOST, BACKEND_PORT } from "astro:env/client";
 
 enum EventType {
@@ -55,6 +56,7 @@ export function WebSocketTest(): JSX.Element {
 
   return (
     <div>
+      <Button onClick={() => navigate("/login")}>Navigate</Button>
       <Button onClick={sendMessage}>Send message!</Button>
       <Button onClick={nextQuestion}>Next Question!</Button>
     </div>

@@ -11,10 +11,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { actions } from "astro:actions";
 import { toast } from "sonner";
 import { navigate } from "astro:transitions/client";
+import { BACKEND_URL } from "astro:env/client";
+import type { ApiResponse } from "@/lib/types/api";
 
 export function LoginForm(): JSX.Element {
   const form = useForm<LoginInput>({
@@ -28,7 +36,7 @@ export function LoginForm(): JSX.Element {
   async function onSubmit(value: LoginInput) {
     let toastId = toast.loading("Logging in...");
 
-    const response = await fetch(`http://localhost:3001/login`, {
+    const response = await fetch(`${BACKEND_URL}/api/login`, {
       method: "POST",
       body: JSON.stringify(value),
       headers: {
@@ -37,48 +45,64 @@ export function LoginForm(): JSX.Element {
       credentials: "include",
     });
 
+    const result: ApiResponse = await response.json();
+
+    console.log("Result:", result);
+
     if (!response.ok) {
-      toast.error("", { id: toastId });
+      toast.error(result.message || "Server error.", { id: toastId });
       return;
     }
 
-    toast.success("Successfully logged in!", { id: toastId });
-    navigate("/");
+    toast.success(result.message, { id: toastId });
+    await navigate("/");
+
+    console.log("Navigated!")
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <Card className="mx-auto max-w-sm">
+      <CardHeader>
+        <CardTitle className="text-2xl">Login</CardTitle>
+        <CardDescription>
+          Enter your email below to login to your account
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <Button type="submit">Submit</Button>
-      </form>
-    </Form>
+            <Button type="submit">Submit</Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }

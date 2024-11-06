@@ -2,6 +2,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import "@/styles/globals.css";
 import { ViewTransitions } from "astro:transitions";
+import Navbar from "@/components/navbar.astro"
 
 interface Props {
   title?: string;
@@ -22,6 +23,8 @@ const { title } = Astro.props;
   </head>
 
   <Toaster closeButton richColors client:load />
+
+  <Navbar client:load />
 
   <body>
     <main>
