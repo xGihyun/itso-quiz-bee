@@ -1,10 +1,10 @@
 ---
 import { Layout } from "@/layouts";
 import { WebSocketTest } from "./_components/websocket";
+import { WebSocketProvider } from "@/components/contexts/websocket";
+import { Test } from "./_components/test";
 ---
 
 <Layout>
-  Hello!
-
-  <WebSocketTest client:only="react" />
+  <WebSocketTest client:load />
 </Layout>

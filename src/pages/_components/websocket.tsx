@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { socket } from "@/lib/socket";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
-import { BACKEND_HOST, BACKEND_PORT } from "astro:env/client";
 
 enum EventType {
   Message = "message",
@@ -14,10 +14,14 @@ type WebSocketEvent = {
   data: any;
 };
 
-export function WebSocketTest(): JSX.Element {
-  const socket = new WebSocket(`ws://${BACKEND_HOST}:${BACKEND_PORT}/ws`);
+type Props = {
+  children?: JSX.Element;
+};
 
-  socket.onopen = (event) => {
+export function WebSocketTest(props: Props): JSX.Element {
+  console.log("I am client!");
+
+  socket.onopen = () => {
     console.log("WebSocket is open!");
   };
 
@@ -33,32 +37,34 @@ export function WebSocketTest(): JSX.Element {
     console.log("Received: ", event);
   };
 
-  const sendMessage = () => {
-    const msg: WebSocketEvent = {
-      data: "I am from the client! (´｡• ᵕ •｡`)",
-      event: EventType.Message,
-    };
-
-    socket.send(JSON.stringify(msg));
-  };
-
-  const nextQuestion = () => {
-    const msg: WebSocketEvent = {
-      data: {
-        question_id: "Insert question ID",
-        // ... other details here
-      },
-      event: EventType.Message,
-    };
-
-    socket.send(JSON.stringify(msg));
-  };
-
   return (
     <div>
       <Button onClick={() => navigate("/login")}>Navigate</Button>
       <Button onClick={sendMessage}>Send message!</Button>
       <Button onClick={nextQuestion}>Next Question!</Button>
+
+      <div>{props.children}</div>
     </div>
   );
+}
+
+function sendMessage() {
+  const msg: WebSocketEvent = {
+    data: "I am from the client! (´｡• ᵕ •｡`)",
+    event: EventType.Message,
+  };
+
+  socket.send(JSON.stringify(msg));
+}
+
+function nextQuestion() {
+  const msg: WebSocketEvent = {
+    data: {
+      question_id: "Insert question ID",
+      // ... other details here
+    },
+    event: EventType.Message,
+  };
+
+  socket.send(JSON.stringify(msg));
 }
