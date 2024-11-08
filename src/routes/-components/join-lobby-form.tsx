@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { LoginSchema, type LoginInput } from "./schema";
+import { JoinLobbySchema, type JoinLobbyInput } from "./schema";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,26 +18,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import type { ApiResponse } from "@/lib/types/api";
+import { ApiResponse } from "@/lib/types/api";
 import { useNavigate } from "@tanstack/react-router";
+import { Input } from "@/components/ui/input";
 
-export function LoginForm(): JSX.Element {
-  const navigate = useNavigate({ from: "/login" });
-  const form = useForm<LoginInput>({
-    resolver: zodResolver(LoginSchema),
+type JoinLobbyResponse = {
+  lobby_id: string;
+};
+
+export function JoinLobbyForm(): JSX.Element {
+  const navigate = useNavigate({ from: "/" });
+  const form = useForm<JoinLobbyInput>({
+    resolver: zodResolver(JoinLobbySchema),
     defaultValues: {
-      email: "",
-      password: "",
+      code: "",
     },
   });
 
-  async function onSubmit(value: LoginInput) {
+  async function onSubmit(value: JoinLobbyInput) {
     let toastId = toast.loading("Logging in...");
 
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/login`,
+      `${import.meta.env.VITE_BACKEND_URL}/api/lobbies/join`,
       {
         method: "POST",
         body: JSON.stringify(value),
@@ -48,7 +51,7 @@ export function LoginForm(): JSX.Element {
       },
     );
 
-    const result: ApiResponse = await response.json();
+    const result: ApiResponse<JoinLobbyResponse> = await response.json();
 
     if (!response.ok) {
       toast.error(result.message || "Server error.", { id: toastId });
@@ -56,43 +59,26 @@ export function LoginForm(): JSX.Element {
     }
 
     toast.success(result.message, { id: toastId });
-    await navigate({ to: "/" });
-
+    await navigate({ to: `/lobbies/${result.data.lobby_id}` });
   }
 
   return (
     <Card className="mx-auto max-w-sm">
       <CardHeader>
-        <CardTitle className="text-2xl">Login</CardTitle>
-        <CardDescription>
-          Enter your email below to login to your account
-        </CardDescription>
+        <CardTitle className="text-2xl">Join Lobby</CardTitle>
+        <CardDescription>Enter lobby code to join.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="email"
+              name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Code</FormLabel>
                   <FormControl>
                     <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

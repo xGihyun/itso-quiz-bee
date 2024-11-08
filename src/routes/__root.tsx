@@ -10,7 +10,7 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <>
-      <Toaster richColors closeButton />
+      <Toaster closeButton />
 
       <main className="h-[100svh]">
         <Outlet />
