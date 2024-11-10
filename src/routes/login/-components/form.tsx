@@ -33,7 +33,7 @@ export function LoginForm(): JSX.Element {
     },
   });
 
-  async function onSubmit(value: LoginInput) {
+  async function onSubmit(value: LoginInput): Promise<void> {
     let toastId = toast.loading("Logging in...");
 
     const response = await fetch(
@@ -57,7 +57,6 @@ export function LoginForm(): JSX.Element {
 
     toast.success(result.message, { id: toastId });
     await navigate({ to: "/" });
-
   }
 
   return (
