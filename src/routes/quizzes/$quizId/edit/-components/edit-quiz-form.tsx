@@ -28,7 +28,6 @@ import {
   NewQuizInput,
   NewQuizSchema,
   QuestionVariant,
-  QuizStatus,
 } from "./schema";
 import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,6 +38,7 @@ import { toast } from "sonner";
 import { ApiResponse } from "@/lib/types/api";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { useEffect } from "react";
+import { QuizStatus } from "@/routes/quizzes/-types";
 
 type Props = {
   quiz?: NewQuizInput;

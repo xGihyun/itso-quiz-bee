@@ -1,3 +1,4 @@
+import { QuizStatus } from "@/routes/quizzes/-types";
 import { z } from "zod";
 
 export const NewAnswerSchema = z.object({
@@ -22,13 +23,6 @@ export const NewQuestionSchema = z.object({
 });
 
 export type NewQuestionInput = z.infer<typeof NewQuestionSchema>;
-
-export enum QuizStatus {
-  Open = "open",
-  Started = "started",
-  Paused = "paused",
-  Closed = "closed",
-}
 
 export const NewQuizSchema = z.object({
   quiz_id: z.string(),

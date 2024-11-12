@@ -4,6 +4,9 @@ import { NewQuizInput } from "./-components/schema";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ApiResponse } from "@/lib/types/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/quizzes/$quizId/edit/")({
   component: RouteComponent,
@@ -26,7 +29,20 @@ function RouteComponent(): JSX.Element {
     toastId = toast.success(query.data?.message);
   }
 
-  // TODO: Use form to dynamically add questions and stuff
+  if (query.isPending) {
+    return <Skeleton className="w-20 h-20" />;
+  }
+
+  if (query.isError) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{query.data?.message}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="max-w-lg mx-auto">
       <EditQuizForm quiz={query.data?.data} />
