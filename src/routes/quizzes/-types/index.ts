@@ -17,3 +17,28 @@ export type UpdateQuizStatusRequest = {
   quiz_id: string;
   status: QuizStatus;
 };
+
+export type Quiz = {
+  questions: QuizQuestion[];
+} & QuizBasicInfo;
+
+export type QuizAnswer = {
+  quiz_answer_id: string;
+  content: string;
+  is_correct: boolean;
+};
+
+export enum QuizQuestionVariant {
+  MultipleChoice = "multiple-choice",
+  Boolean = "boolean",
+  Written = "written",
+}
+
+export type QuizQuestion = {
+  quiz_question_id: string;
+  content: string;
+  variant: QuizQuestionVariant;
+  points: number;
+  order_number: number;
+  answers: QuizAnswer[];
+};

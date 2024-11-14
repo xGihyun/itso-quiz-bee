@@ -4,12 +4,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { QuizStatus, UpdateQuizStatusRequest } from "../-types";
 import { toast } from "sonner";
+import { SOCKET_URL } from "@/lib/server";
 
 export const Route = createFileRoute("/quizzes/$quizId/")({
   component: RouteComponent,
 });
 
-const SOCKET_URL = `ws://localhost:3002/ws`;
+// NOTE: This is like the waiting room before the quiz starts
 
 function RouteComponent(): JSX.Element {
   const params = Route.useParams();
@@ -34,27 +35,13 @@ function RouteComponent(): JSX.Element {
     onClose: () => {
       console.log("WebSocket connection is closing...");
     },
+    //heartbeat: {
+    //  message: "Ping!",
+    //  returnMessage: "Pong!",
+    //  timeout: 60000,
+    //  interval: 25000,
+    //},
   });
 
-  function startQuiz(): void {
-    const data: WebSocketRequest<UpdateQuizStatusRequest> = {
-      event: WebSocketEvent.QuizStart,
-      data: {
-        quiz_id: params.quizId,
-        status: QuizStatus.Started,
-      },
-    };
-    socket.sendJsonMessage(data);
-  }
-
-  return (
-    <div>
-      <Button
-        onClick={startQuiz}
-        disabled={socket.readyState !== ReadyState.OPEN}
-      >
-        Start
-      </Button>
-    </div>
-  );
+  return <div></div>;
 }

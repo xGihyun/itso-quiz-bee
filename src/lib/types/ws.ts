@@ -1,3 +1,5 @@
+import { UpdateQuizStatusRequest } from "@/routes/quizzes/-types";
+
 export enum WebSocketEvent {
   QuizStart = "quiz-start",
   QuizPause = "quiz-pause",
@@ -12,4 +14,13 @@ export enum WebSocketEvent {
 export type WebSocketRequest<T = any> = {
   event: WebSocketEvent;
   data: T;
+};
+
+export type QuizStartRequest = {
+  quiz_question_id: string;
+} & UpdateQuizStatusRequest;
+
+export type QuizNextQuestionRequest = {
+  quiz_question_id: string;
+  quiz_id: string;
 };
