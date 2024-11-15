@@ -1,12 +1,12 @@
+import { QuizQuestionVariant } from "@/lib/quiz/types";
 import {
   type NewAnswerInput,
   type NewQuestionInput,
-  QuestionVariant,
 } from "../-components/schema";
 
-export const DEFAULT_ANSWER = new Map<QuestionVariant, NewAnswerInput[]>([
+export const DEFAULT_ANSWER = new Map<QuizQuestionVariant, NewAnswerInput[]>([
   [
-    QuestionVariant.MultipleChoice,
+    QuizQuestionVariant.MultipleChoice,
     [
       {
         content: "Option 1",
@@ -15,7 +15,7 @@ export const DEFAULT_ANSWER = new Map<QuestionVariant, NewAnswerInput[]>([
     ],
   ],
   [
-    QuestionVariant.Written,
+    QuizQuestionVariant.Written,
     [
       {
         content: "Option 1",
@@ -24,7 +24,7 @@ export const DEFAULT_ANSWER = new Map<QuestionVariant, NewAnswerInput[]>([
     ],
   ],
   [
-    QuestionVariant.Boolean,
+    QuizQuestionVariant.Boolean,
     [
       {
         content: "True",
@@ -40,8 +40,8 @@ export const DEFAULT_ANSWER = new Map<QuestionVariant, NewAnswerInput[]>([
 
 export const DEFAULT_QUESTION: NewQuestionInput = {
   points: 1,
-  answers: DEFAULT_ANSWER.get(QuestionVariant.MultipleChoice) || [],
+  answers: DEFAULT_ANSWER.get(QuizQuestionVariant.MultipleChoice) || [],
   content: "Untitled Question",
-  variant: QuestionVariant.MultipleChoice,
+  variant: QuizQuestionVariant.MultipleChoice,
   //order_number: 1,
 };

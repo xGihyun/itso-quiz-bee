@@ -1,4 +1,4 @@
-import { ApiResponse } from "../api/api";
+import { ApiResponse } from "../api/types";
 import { User } from "./types";
 
 export async function getCurrentUser(): Promise<ApiResponse<User>> {

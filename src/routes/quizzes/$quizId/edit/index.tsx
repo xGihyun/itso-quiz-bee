@@ -2,8 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { EditQuizForm } from "./-components/edit-quiz-form";
 import { NewQuizInput } from "./-components/schema";
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { ApiResponse } from "@/lib/types/api";
+import { ApiResponse } from "@/lib/api/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -18,16 +17,6 @@ function RouteComponent(): JSX.Element {
     queryKey: ["quiz"],
     queryFn: () => getQuiz(params.quizId),
   });
-
-  let toastId: string | number;
-
-  if (query.isPending) {
-    toastId = toast.loading("Getting quiz...");
-  } else if (query.error) {
-    toastId = toast.error(query.data?.message);
-  } else {
-    toastId = toast.success(query.data?.message);
-  }
 
   if (query.isPending) {
     return <Skeleton className="w-20 h-20" />;
@@ -45,7 +34,7 @@ function RouteComponent(): JSX.Element {
 
   return (
     <div className="max-w-lg mx-auto">
-      <EditQuizForm quiz={query.data?.data} />
+      <EditQuizForm quiz={query.data.data} />
     </div>
   );
 }

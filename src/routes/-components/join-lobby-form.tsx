@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ApiResponse } from "@/lib/types/api";
+import { ApiResponse } from "@/lib/api/types";
 import { useNavigate } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
 

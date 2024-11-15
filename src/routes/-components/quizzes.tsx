@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ApiResponse, ApiResponseStatus } from "@/lib/types/api";
+import { ApiResponse, ApiResponseStatus } from "@/lib/api/types";
 import {
   Card,
   CardContent,
@@ -14,8 +14,8 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { QuizBasicInfo } from "../quizzes/-types";
 import { toast } from "sonner";
-import { getCurrentUser } from "@/lib/server";
-import { UserRole } from "@/lib/types/user";
+import { getCurrentUser } from "@/lib/user/requests";
+import { UserRole } from "@/lib/user/types";
 
 async function getQuizzes(): Promise<ApiResponse<QuizBasicInfo[]>> {
   const response = await fetch(
@@ -73,7 +73,7 @@ export function Quizzes(): JSX.Element {
 
               if (result.status !== ApiResponseStatus.Success) {
                 console.error("Failed to join quiz:", result);
-                return;
+                //return;
               }
 
               toast.success(result.message);

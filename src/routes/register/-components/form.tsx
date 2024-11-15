@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import type { ApiResponse } from "@/lib/types/api";
+import type { ApiResponse } from "@/lib/api/types";
 import { useNavigate } from "@tanstack/react-router";
 
 export function RegisterForm(): JSX.Element {

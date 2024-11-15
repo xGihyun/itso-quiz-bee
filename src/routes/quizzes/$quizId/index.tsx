@@ -1,10 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { WebSocketEvent, WebSocketRequest } from "@/lib/types/ws";
+import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 import { createFileRoute } from "@tanstack/react-router";
-import useWebSocket, { ReadyState } from "react-use-websocket";
-import { QuizStatus, UpdateQuizStatusRequest } from "../-types";
+import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
-import { SOCKET_URL } from "@/lib/server";
+import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 
 export const Route = createFileRoute("/quizzes/$quizId/")({
   component: RouteComponent,
@@ -13,12 +11,8 @@ export const Route = createFileRoute("/quizzes/$quizId/")({
 // NOTE: This is like the waiting room before the quiz starts
 
 function RouteComponent(): JSX.Element {
-  const params = Route.useParams();
   const navigate = Route.useNavigate();
-  const socket = useWebSocket(SOCKET_URL, {
-    onOpen: () => {
-      console.log("WebSocket opened.");
-    },
+  const socket = useWebSocket(WEBSOCKET_URL, {
     onMessage: async (event) => {
       const result: WebSocketRequest = await JSON.parse(event.data);
       console.log(result);
@@ -32,16 +26,8 @@ function RouteComponent(): JSX.Element {
           console.warn("Unknown event type:", result.event);
       }
     },
-    onClose: () => {
-      console.log("WebSocket connection is closing...");
-    },
-    //heartbeat: {
-    //  message: "Ping!",
-    //  returnMessage: "Pong!",
-    //  timeout: 60000,
-    //  interval: 25000,
-    //},
+    ...WEBSOCKET_OPTIONS,
   });
 
-  return <div></div>;
+  return <div>Waiting room!</div>;
 }

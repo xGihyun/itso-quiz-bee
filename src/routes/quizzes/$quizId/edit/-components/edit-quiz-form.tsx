@@ -27,7 +27,6 @@ import {
 import {
   NewQuizInput,
   NewQuizSchema,
-  QuestionVariant,
 } from "./schema";
 import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,10 +34,9 @@ import { Input } from "@/components/ui/input";
 import { DEFAULT_ANSWER, DEFAULT_QUESTION } from "../-constants";
 import { useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ApiResponse } from "@/lib/types/api";
+import { ApiResponse } from "@/lib/api/types";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
-import { useEffect } from "react";
-import { QuizStatus } from "@/routes/quizzes/-types";
+import { QuizQuestionVariant, QuizStatus } from "@/lib/quiz/types";
 
 type Props = {
   quiz?: NewQuizInput;
@@ -49,7 +47,7 @@ export function EditQuizForm(props: Props): JSX.Element {
 
   const form = useForm<NewQuizInput>({
     resolver: zodResolver(NewQuizSchema),
-    defaultValues: {
+    defaultValues: props.quiz || {
       questions: [DEFAULT_QUESTION],
       description: "",
       name: "Untitled Quiz",
@@ -58,14 +56,6 @@ export function EditQuizForm(props: Props): JSX.Element {
       lobby_id: "",
     },
   });
-
-  useEffect(() => {
-    console.log(props.quiz);
-
-    if (props.quiz) {
-      form.reset(props.quiz);
-    }
-  }, [props.quiz]);
 
   const formQuestions = useFieldArray({
     control: form.control,
@@ -100,7 +90,7 @@ export function EditQuizForm(props: Props): JSX.Element {
   }
 
   function resetAnswer(value: string, index: number): void {
-    const newAnswer = DEFAULT_ANSWER.get(value as QuestionVariant);
+    const newAnswer = DEFAULT_ANSWER.get(value as QuizQuestionVariant);
 
     if (!newAnswer) {
       console.error("Invalid question variant:", value);
@@ -189,13 +179,13 @@ export function EditQuizForm(props: Props): JSX.Element {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value={QuestionVariant.MultipleChoice}>
+                          <SelectItem value={QuizQuestionVariant.MultipleChoice}>
                             Multiple Choice
                           </SelectItem>
-                          <SelectItem value={QuestionVariant.Boolean}>
+                          <SelectItem value={QuizQuestionVariant.Boolean}>
                             Boolean
                           </SelectItem>
-                          <SelectItem value={QuestionVariant.Written}>
+                          <SelectItem value={QuizQuestionVariant.Written}>
                             Written
                           </SelectItem>
                         </SelectContent>

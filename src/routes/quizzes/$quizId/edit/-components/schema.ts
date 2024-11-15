@@ -1,4 +1,4 @@
-import { QuizStatus } from "@/routes/quizzes/-types";
+import { QuizQuestionVariant, QuizStatus } from "@/lib/quiz/types";
 import { z } from "zod";
 
 export const NewAnswerSchema = z.object({
@@ -8,15 +8,9 @@ export const NewAnswerSchema = z.object({
 
 export type NewAnswerInput = z.infer<typeof NewAnswerSchema>;
 
-export enum QuestionVariant {
-  MultipleChoice = "multiple-choice",
-  Boolean = "boolean",
-  Written = "written",
-}
-
 export const NewQuestionSchema = z.object({
   content: z.string(),
-  variant: z.nativeEnum(QuestionVariant),
+  variant: z.nativeEnum(QuizQuestionVariant),
   points: z.coerce.number(),
   //order_number: z.coerce.number(),
   answers: NewAnswerSchema.array(),
