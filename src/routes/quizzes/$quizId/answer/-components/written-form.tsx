@@ -51,8 +51,6 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
       data: data,
     };
 
-    console.log(message);
-
     props.socket.sendJsonMessage(message);
   }
 

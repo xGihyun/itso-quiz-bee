@@ -9,6 +9,8 @@ export enum WebSocketEvent {
   QuizSubmitAnswer = "quiz-submit-answer",
   UserJoin = "user-join",
   UserLeave = "user-leave",
+
+  Heartbeat = "heartbeat"
 }
 
 export type WebSocketRequest<T = unknown> = {

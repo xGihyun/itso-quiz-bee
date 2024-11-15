@@ -1,4 +1,5 @@
 import { Options } from "react-use-websocket";
+import { WebSocketEvent, WebSocketRequest } from "./types";
 
 export const WEBSOCKET_OPTIONS: Options = {
   onOpen: () => {
@@ -8,12 +9,19 @@ export const WEBSOCKET_OPTIONS: Options = {
     console.log("WebSocket connection is closing...");
   },
   shouldReconnect: (_) => true,
-  //heartbeat: {
-  //  message: "Ping!",
-  //  returnMessage: "Pong!",
-  //  timeout: 60000,
-  //  interval: 25000,
-  //},
+  heartbeat: {
+    message: () => {
+      const data: WebSocketRequest = {
+        event: WebSocketEvent.Heartbeat,
+        data: "Heartbeat!",
+      };
+
+      return JSON.stringify(data);
+    },
+    timeout: 60000,
+    interval: 25000,
+  },
+  reconnectAttempts: 10,
 };
 
 export const WEBSOCKET_URL = `ws://localhost:3002/ws`;

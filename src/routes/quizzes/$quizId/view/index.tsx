@@ -35,10 +35,12 @@ function RouteComponent(): JSX.Element {
     queryFn: async () => {
       const quiz = await getQuiz(params.quizId);
       const currentQuestion = await getCurrentQuestion(params.quizId);
+      const users = await getUsers(params.quizId);
 
       return {
         quiz,
         currentQuestion,
+        users,
       };
     },
   });
@@ -75,6 +77,7 @@ function RouteComponent(): JSX.Element {
 
   const quiz = query.data.quiz.data;
   const currentQuestion = query.data.currentQuestion.data;
+  const users = query.data.users.data;
 
   return (
     <div>
@@ -90,6 +93,8 @@ function RouteComponent(): JSX.Element {
       >
         Start
       </Button>
+
+      <h2 className="text-2xl my-2 font-bold">Questions</h2>
 
       <RadioGroup
         className="grid-cols-4"
@@ -121,9 +126,26 @@ function RouteComponent(): JSX.Element {
         })}
       </RadioGroup>
 
-      <div>Display current question and answers here.</div>
+      <h2 className="text-2xl my-2 font-bold">Players</h2>
+      <Users users={users} />
+    </div>
+  );
+}
 
-      <div>Display the players with their answers here.</div>
+type UsersProps = {
+  users: QuizUser[];
+};
+
+function Users(props: UsersProps): JSX.Element {
+  return (
+    <div>
+      {props.users.map((user) => {
+        return (
+          <div key={user.user_id}>
+            {user.first_name} {user.last_name}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -138,6 +160,27 @@ async function getQuiz(quizId: string): Promise<ApiResponse<Quiz>> {
   );
 
   const result: ApiResponse<Quiz> = await response.json();
+
+  return result;
+}
+
+type QuizUser = {
+  user_id: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+};
+
+async function getUsers(quizId: string): Promise<ApiResponse<QuizUser[]>> {
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/users`,
+    {
+      method: "GET",
+      credentials: "include",
+    },
+  );
+
+  const result: ApiResponse<QuizUser[]> = await response.json();
 
   return result;
 }
