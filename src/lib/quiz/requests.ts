@@ -3,7 +3,7 @@ import { QuizQuestion } from "./types";
 
 export async function getCurrentQuestion(
   quizId: string,
-): Promise<ApiResponse<QuizQuestion>> {
+): Promise<ApiResponse<QuizQuestion | null>> {
   const response = await fetch(
     `${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/questions/current`,
     {
@@ -12,7 +12,7 @@ export async function getCurrentQuestion(
     },
   );
 
-  const result: ApiResponse<QuizQuestion> = await response.json();
+  const result: ApiResponse<QuizQuestion | null> = await response.json();
 
   console.log(result);
 

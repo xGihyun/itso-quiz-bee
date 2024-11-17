@@ -32,7 +32,6 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
     defaultValues: {
       content: "",
       quiz_question_id: props.question.quiz_question_id,
-      user_id: "",
     },
   });
 
@@ -63,7 +62,17 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input placeholder="Enter answer here" {...field} />
+                <Input
+                  {...field}
+                  placeholder="Enter answer here"
+                  onChange={(event) => {
+                    typeAnswer(props.socket, {
+                      quiz_question_id: props.question.quiz_question_id,
+                      content: event.target.value,
+                    });
+                    return field.onChange(event);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -74,4 +83,18 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
       </form>
     </Form>
   );
+}
+
+type QuizTypeAnswerRequest = WrittenAnswerInput;
+
+function typeAnswer(socket: WebSocketHook, data: QuizTypeAnswerRequest): void {
+  const message: WebSocketRequest<QuizTypeAnswerRequest> = {
+    event: WebSocketEvent.QuizTypeAnswer,
+    data: {
+      content: data.content,
+      quiz_question_id: data.quiz_question_id,
+    },
+  };
+
+  socket.sendJsonMessage(message);
 }

@@ -1,4 +1,4 @@
-import { QuizQuestionVariant, UpdateQuizStatusRequest } from "../quiz/types";
+import { QuizQuestion, QuizQuestionVariant, UpdateQuizStatusRequest } from "../quiz/types";
 
 export enum WebSocketEvent {
   QuizStart = "quiz-start",
@@ -7,10 +7,13 @@ export enum WebSocketEvent {
   QuizEnd = "quiz-end",
   QuizChangeQuestion = "quiz-change-question",
   QuizSubmitAnswer = "quiz-submit-answer",
+  QuizSelectAnswer = "quiz-select-answer",
+  QuizTypeAnswer = "quiz-type-answer",
+
   UserJoin = "user-join",
   UserLeave = "user-leave",
 
-  Heartbeat = "heartbeat"
+  Heartbeat = "heartbeat",
 }
 
 export type WebSocketRequest<T = unknown> = {
@@ -18,14 +21,19 @@ export type WebSocketRequest<T = unknown> = {
   data: T;
 };
 
+export type WebSocketResponse<T = unknown> = {
+  event: WebSocketEvent;
+  data: T;
+  user_id: string;
+};
+
 export type QuizStartRequest = {
   quiz_question_id: string;
 } & UpdateQuizStatusRequest;
 
 export type QuizChangeQuestionRequest = {
-  quiz_question_id: string;
   quiz_id: string;
-};
+} & QuizQuestion;
 
 export type QuizSubmitAnswerRequest<T = unknown> = {
   //user_id: string;

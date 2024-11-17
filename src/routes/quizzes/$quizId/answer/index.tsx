@@ -20,9 +20,8 @@ export const Route = createFileRoute("/quizzes/$quizId/answer/")({
 // This is where the players would answer the quiz
 // Redirect here once admin starts the quiz
 
-// TODO: 
-// WebSocket connection closes when passing it as props to Form components
-// Solution (?): Wrap components with socket context???
+// TODO: (IMPORTANT!!!)
+// Prevent answer resubmission 
 
 function RouteComponent(): JSX.Element {
   const params = Route.useParams();
@@ -39,7 +38,7 @@ function RouteComponent(): JSX.Element {
 
       switch (result.event) {
         case WebSocketEvent.QuizChangeQuestion:
-          query.refetch();
+          await query.refetch();
 
           toast.info("Next question!");
           break;

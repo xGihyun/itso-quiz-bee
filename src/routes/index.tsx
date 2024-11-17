@@ -11,8 +11,10 @@ function HomeComponent() {
     <div>
       <h1>Quiz Bee</h1>
 
-      <JoinLobbyForm />
+      {/* NOTE: This is useless now (｡•́︿•̀｡). Not enough time to implement */}
+      {/* <JoinLobbyForm /> */}
 
+      {/* NOTE: Join quiz directly instead */}
       <Quizzes />
     </div>
   );

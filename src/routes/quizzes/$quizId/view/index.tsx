@@ -5,8 +5,15 @@ import {
   QuizStartRequest,
   WebSocketEvent,
   WebSocketRequest,
+  WebSocketResponse,
 } from "@/lib/websocket/types";
-import { Quiz, QuizStatus } from "@/lib/quiz/types";
+import {
+  Quiz,
+  QuizQuestion,
+  QuizQuestionVariant,
+  QuizResult,
+  QuizStatus,
+} from "@/lib/quiz/types";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +25,11 @@ import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getCurrentQuestion } from "@/lib/quiz/requests";
+import {
+  MultipleChoiceInput,
+  WrittenAnswerInput,
+} from "../answer/-components/schema";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/quizzes/$quizId/view/")({
   component: RouteComponent,
@@ -28,32 +40,105 @@ export const Route = createFileRoute("/quizzes/$quizId/view/")({
 // Admin can see the players' current answers in real-time
 // Admin can move to the next/previous question
 
+type PlayerCurrentAnswer =
+  | {
+      event: WebSocketEvent.QuizSelectAnswer;
+      data: MultipleChoiceInput;
+    }
+  | {
+      event: WebSocketEvent.QuizTypeAnswer;
+      data: WrittenAnswerInput;
+    };
+
+type PlayerAnswerState = {
+  current: PlayerCurrentAnswer;
+  result: QuizResult;
+};
+
 function RouteComponent(): JSX.Element {
   const params = Route.useParams();
-  const query = useQuery({
-    queryKey: ["quiz"],
-    queryFn: async () => {
-      const quiz = await getQuiz(params.quizId);
-      const currentQuestion = await getCurrentQuestion(params.quizId);
-      const users = await getUsers(params.quizId);
 
-      return {
-        quiz,
-        currentQuestion,
-        users,
-      };
-    },
+  //const [playerResults, setPlayerResults] = useState<
+  //  Map<string, PlayerAnswerState>
+  //>(new Map());
+  const [playerAnswers, setPlayerAnswers] = useState<
+    Map<string, PlayerCurrentAnswer>
+  >(new Map());
+
+  const quizQuery = useQuery({
+    queryKey: ["quiz"],
+    queryFn: () => getQuiz(params.quizId),
+  });
+  const currentQuestionQuery = useQuery({
+    queryKey: ["current-question"],
+    queryFn: () => getCurrentQuestion(params.quizId),
+  });
+  const playersQuery = useQuery({
+    queryKey: ["players"],
+    queryFn: () => getPlayers(params.quizId),
+  });
+  const quizResultsQuery = useQuery({
+    queryKey: ["quiz-results"],
+    queryFn: () => getResults(params.quizId),
   });
 
   const socket = useWebSocket(WEBSOCKET_URL, {
     onMessage: async (event) => {
-      const result: WebSocketRequest = await JSON.parse(event.data);
-      console.log(result);
+      const result: WebSocketResponse = await JSON.parse(event.data);
 
       switch (result.event) {
+        case WebSocketEvent.UserJoin:
+          // NOTE:
+          // Probably not a good idea to constantly refetch on player join
+          await playersQuery.refetch();
+          break;
         case WebSocketEvent.QuizStart:
           toast.info("Quiz has started!");
           break;
+
+        case WebSocketEvent.QuizChangeQuestion:
+          toast.info("Next question!");
+
+          // NOTE: Probably not the best idea but it works
+          await currentQuestionQuery.refetch();
+          break;
+
+        case WebSocketEvent.QuizSelectAnswer:
+          {
+            const data = result.data as MultipleChoiceInput;
+
+            setPlayerAnswers((prevAnswers) => {
+              const newAnswers = new Map(prevAnswers);
+              newAnswers.set(result.user_id, {
+                event: WebSocketEvent.QuizSelectAnswer,
+                data,
+              });
+              return newAnswers;
+            });
+          }
+          break;
+
+        case WebSocketEvent.QuizTypeAnswer:
+          {
+            const data = result.data as WrittenAnswerInput;
+
+            setPlayerAnswers((prevAnswers) => {
+              const newAnswers = new Map(prevAnswers);
+              newAnswers.set(result.user_id, {
+                event: WebSocketEvent.QuizTypeAnswer,
+                data,
+              });
+              return newAnswers;
+            });
+          }
+          break;
+
+        case WebSocketEvent.QuizSubmitAnswer:
+          // NOTE:
+          // Probably not a good idea to constantly refetch on each submission
+          await quizResultsQuery.refetch();
+          break;
+
         default:
           console.warn("Unknown event type:", result.event);
       }
@@ -61,23 +146,35 @@ function RouteComponent(): JSX.Element {
     ...WEBSOCKET_OPTIONS,
   });
 
-  if (query.isPending) {
+  if (
+    quizQuery.isPending ||
+    currentQuestionQuery.isPending ||
+    playersQuery.isPending ||
+    quizResultsQuery.isPending
+  ) {
     return <Skeleton className="w-20 h-20" />;
   }
 
-  if (query.isError) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{query.data?.quiz.message}</AlertDescription>
-      </Alert>
-    );
+  if (quizQuery.isError) {
+    return <QueryError message={quizQuery.error.message} />;
   }
 
-  const quiz = query.data.quiz.data;
-  const currentQuestion = query.data.currentQuestion.data;
-  const users = query.data.users.data;
+  if (currentQuestionQuery.isError) {
+    return <QueryError message={currentQuestionQuery.error.message} />;
+  }
+
+  if (playersQuery.isError) {
+    return <QueryError message={playersQuery.error.message} />;
+  }
+
+  if (quizResultsQuery.isError) {
+    return <QueryError message={quizResultsQuery.error.message} />;
+  }
+
+  const quiz = quizQuery.data.data;
+  const currentQuestion = currentQuestionQuery.data.data;
+  const players = playersQuery.data.data;
+  const quizResults = quizResultsQuery.data.data;
 
   return (
     <div>
@@ -99,7 +196,9 @@ function RouteComponent(): JSX.Element {
       <RadioGroup
         className="grid-cols-4"
         defaultValue={
-          currentQuestion.quiz_question_id || quiz.questions[0].quiz_question_id
+          currentQuestion
+            ? currentQuestion.quiz_question_id
+            : quiz.questions[0].quiz_question_id
         }
       >
         {quiz.questions.map((question) => {
@@ -115,7 +214,7 @@ function RouteComponent(): JSX.Element {
                 onClick={() =>
                   changeQuestion(socket, {
                     quiz_id: params.quizId,
-                    quiz_question_id: question.quiz_question_id,
+                    ...question,
                   })
                 }
                 disabled={socket.readyState !== ReadyState.OPEN}
@@ -127,25 +226,86 @@ function RouteComponent(): JSX.Element {
       </RadioGroup>
 
       <h2 className="text-2xl my-2 font-bold">Players</h2>
-      <Users users={users} />
+      <div>
+        {players.map((player) => {
+          const answer = playerAnswers.get(player.user_id);
+          const result = quizResults.find(
+            (result) => result.user_id === player.user_id,
+          );
+
+          return (
+            <Player
+              key={player.user_id}
+              question={currentQuestion}
+              player={player}
+              answer={answer}
+              result={result}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-type UsersProps = {
-  users: QuizUser[];
+type PlayerProps = {
+  player: QuizUser;
+  answer?: PlayerCurrentAnswer;
+  question: QuizQuestion | null;
+  result?: QuizResult;
 };
 
-function Users(props: UsersProps): JSX.Element {
+function Player(props: PlayerProps): JSX.Element {
+  let answerContent = "";
+
+  if (props.question) {
+    if (props.answer?.event === WebSocketEvent.QuizSelectAnswer) {
+      const answerId = props.answer.data.quiz_answer_id;
+      answerContent =
+        props.question.answers.find((value) => value.quiz_answer_id == answerId)
+          ?.content || "No answer.";
+    } else {
+      answerContent = props.answer?.data.content || "No answer.";
+    }
+  }
+
   return (
-    <div>
-      {props.users.map((user) => {
-        return (
-          <div key={user.user_id}>
-            {user.first_name} {user.last_name}
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-bold">Player:</h2>
+        <p>
+          {props.player.first_name} {props.player.last_name}
+        </p>
+      </div>
+
+      <div>
+        <h2 className="font-bold">Current Answer:</h2>
+        <p>{answerContent}</p>
+      </div>
+
+      <div>
+        <h2 className="font-bold">Score:</h2>
+        {props.result ? <div>{props.result.score}</div> : 0}
+      </div>
+
+      <div>
+        <h2 className="font-bold">Submitted Answers:</h2>
+        {props.result ? (
+          <div>
+            {props.result.answers.map((answer, i) => {
+              return (
+                <div key={answer.player_answer_id}>
+                  <span className="font-semibold">#{i + 1} - </span>
+                  {answer.content} -{" "}
+                  {answer.is_correct ? "Correct!" : "Incorrect!"}
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
+        ) : (
+          "No submitted answers."
+        )}
+      </div>
     </div>
   );
 }
@@ -171,7 +331,7 @@ type QuizUser = {
   last_name: string;
 };
 
-async function getUsers(quizId: string): Promise<ApiResponse<QuizUser[]>> {
+async function getPlayers(quizId: string): Promise<ApiResponse<QuizUser[]>> {
   const response = await fetch(
     `${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/users`,
     {
@@ -181,6 +341,20 @@ async function getUsers(quizId: string): Promise<ApiResponse<QuizUser[]>> {
   );
 
   const result: ApiResponse<QuizUser[]> = await response.json();
+
+  return result;
+}
+
+async function getResults(quizId: string): Promise<ApiResponse<QuizResult[]>> {
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/results`,
+    {
+      method: "GET",
+      credentials: "include",
+    },
+  );
+
+  const result: ApiResponse<QuizResult[]> = await response.json();
 
   return result;
 }
@@ -204,11 +378,24 @@ function changeQuestion(
 ): void {
   const message: WebSocketRequest<QuizChangeQuestionRequest> = {
     event: WebSocketEvent.QuizChangeQuestion,
-    data: {
-      quiz_question_id: data.quiz_question_id,
-      quiz_id: data.quiz_id,
-    },
+    data,
   };
 
   socket.sendJsonMessage(message);
+}
+
+// NOTE: This could be a global component
+
+type QueryErrorProps = {
+  message: string;
+};
+
+function QueryError(props: QueryErrorProps): JSX.Element {
+  return (
+    <Alert variant="destructive">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>Error</AlertTitle>
+      <AlertDescription>{props.message}</AlertDescription>
+    </Alert>
+  );
 }

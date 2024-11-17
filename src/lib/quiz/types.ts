@@ -42,3 +42,17 @@ export type QuizQuestion = {
   order_number: number;
   answers: QuizAnswer[];
 };
+
+export type PlayerAnswer = {
+  player_answer_id: string;
+  quiz_question_id: string;
+} & QuizAnswer;
+
+export type PlayerScore = {
+  score: number;
+  user_id: string;
+};
+
+export type QuizResult = {
+  answers: PlayerAnswer[];
+} & PlayerScore;

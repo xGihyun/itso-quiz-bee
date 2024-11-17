@@ -32,7 +32,6 @@ export function MultipleChoiceForm(props: Props): JSX.Element {
     resolver: zodResolver(MultipleChoiceSchema),
     defaultValues: {
       quiz_answer_id: "",
-      user_id: "",
     },
   });
 
@@ -65,7 +64,12 @@ export function MultipleChoiceForm(props: Props): JSX.Element {
               <FormControl>
                 <RadioGroup
                   className="grid-cols-2"
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => {
+                    selectAnswer(props.socket, {
+                      quiz_answer_id: value,
+                    });
+                    return field.onChange(value);
+                  }}
                 >
                   {props.question.answers.map((answer) => (
                     <div
@@ -96,4 +100,20 @@ export function MultipleChoiceForm(props: Props): JSX.Element {
       </form>
     </Form>
   );
+}
+
+type QuizSelectAnswerRequest = MultipleChoiceInput;
+
+function selectAnswer(
+  socket: WebSocketHook,
+  data: QuizSelectAnswerRequest,
+): void {
+  const message: WebSocketRequest<QuizSelectAnswerRequest> = {
+    event: WebSocketEvent.QuizSelectAnswer,
+    data: {
+      quiz_answer_id: data.quiz_answer_id,
+    },
+  };
+
+  socket.sendJsonMessage(message);
 }

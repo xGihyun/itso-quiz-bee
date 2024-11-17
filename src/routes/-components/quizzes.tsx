@@ -12,10 +12,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useNavigate } from "@tanstack/react-router";
-import { QuizBasicInfo } from "../quizzes/-types";
 import { toast } from "sonner";
 import { getCurrentUser } from "@/lib/user/requests";
 import { UserRole } from "@/lib/user/types";
+import { QuizBasicInfo } from "@/lib/quiz/types";
 
 async function getQuizzes(): Promise<ApiResponse<QuizBasicInfo[]>> {
   const response = await fetch(
