@@ -1,14 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { EditQuizForm } from "./-components/edit-quiz-form";
 import { NewQuizInput } from "./-components/schema";
 import { useQuery } from "@tanstack/react-query";
-import { ApiResponse } from "@/lib/api/types";
+import { ApiResponse, ApiResponseStatus } from "@/lib/api/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { getCurrentUser } from "@/lib/server";
+import { UserRole } from "@/lib/user/types";
 
 export const Route = createFileRoute("/quizzes/$quizId/edit/")({
   component: RouteComponent,
+  beforeLoad: async () => {
+    const result = await getCurrentUser();
+
+    if (result.status !== ApiResponseStatus.Success) {
+      console.error(result.message);
+      throw redirect({ to: "/" });
+    }
+
+    if (result.data.role !== UserRole.Admin) {
+      console.error("Permission denied.");
+      throw redirect({ to: "/" });
+    }
+  },
 });
 
 function RouteComponent(): JSX.Element {

@@ -1,3 +1,9 @@
+import {
+  MultipleChoiceInput,
+  WrittenAnswerInput,
+} from "@/routes/quizzes/$quizId/answer/-components/schema";
+import { WebSocketEvent } from "../websocket/types";
+
 export enum QuizStatus {
   Open = "open",
   Started = "started",
@@ -56,3 +62,36 @@ export type PlayerScore = {
 export type QuizResult = {
   answers: PlayerAnswer[];
 } & PlayerScore;
+
+export type GetAnswerRequest = {
+  quiz_question_id: string;
+};
+
+export type GetWrittenAnswerResponse = {
+  player_written_answer_id: string;
+  content: string;
+};
+
+export type PlayerCurrentAnswer =
+  | {
+      event: WebSocketEvent.QuizSelectAnswer;
+      data: MultipleChoiceInput;
+    }
+  | {
+      event: WebSocketEvent.QuizTypeAnswer;
+      data: WrittenAnswerInput;
+    };
+
+
+
+export type QuizUser = {
+  user_id: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+};
+
+type PlayerAnswerState = {
+  current: PlayerCurrentAnswer;
+  result: QuizResult;
+};

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   QuizChangeQuestionRequest,
@@ -8,16 +8,18 @@ import {
   WebSocketResponse,
 } from "@/lib/websocket/types";
 import {
+  PlayerCurrentAnswer,
   Quiz,
   QuizQuestion,
   QuizQuestionVariant,
   QuizResult,
   QuizStatus,
+  QuizUser,
 } from "@/lib/quiz/types";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { ApiResponse } from "@/lib/api/types";
+import { ApiResponse, ApiResponseStatus } from "@/lib/api/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -30,30 +32,31 @@ import {
   WrittenAnswerInput,
 } from "../answer/-components/schema";
 import { useEffect, useState } from "react";
+import { getCurrentUser } from "@/lib/server";
+import { UserRole } from "@/lib/user/types";
+import { Player } from "./-components/player";
 
 export const Route = createFileRoute("/quizzes/$quizId/view/")({
   component: RouteComponent,
+  beforeLoad: async () => {
+    const result = await getCurrentUser();
+
+    if (result.status !== ApiResponseStatus.Success) {
+      console.error(result.message);
+      throw redirect({ to: "/" });
+    }
+
+    if (result.data.role !== UserRole.Admin) {
+      console.error("Permission denied.");
+      throw redirect({ to: "/" });
+    }
+  },
 });
 
 // NOTE:
 // This is where admin will view all the current participants
 // Admin can see the players' current answers in real-time
 // Admin can move to the next/previous question
-
-type PlayerCurrentAnswer =
-  | {
-      event: WebSocketEvent.QuizSelectAnswer;
-      data: MultipleChoiceInput;
-    }
-  | {
-      event: WebSocketEvent.QuizTypeAnswer;
-      data: WrittenAnswerInput;
-    };
-
-type PlayerAnswerState = {
-  current: PlayerCurrentAnswer;
-  result: QuizResult;
-};
 
 function RouteComponent(): JSX.Element {
   const params = Route.useParams();
@@ -177,134 +180,76 @@ function RouteComponent(): JSX.Element {
   const quizResults = quizResultsQuery.data.data;
 
   return (
-    <div>
-      <Button
-        onClick={() =>
-          startQuiz(socket, {
-            quiz_id: params.quizId,
-            quiz_question_id: quiz.questions[0].quiz_question_id,
-            status: QuizStatus.Started,
-          })
-        }
-        disabled={socket.readyState !== ReadyState.OPEN}
-      >
-        Start
-      </Button>
+    <div className="flex flex-col h-full">
+      <div className="px-20 py-10 h-full flex flex-col items-center bg-secondary/50 ">
+        <Button
+          onClick={() =>
+            startQuiz(socket, {
+              quiz_id: params.quizId,
+              quiz_question_id: quiz.questions[0].quiz_question_id,
+              status: QuizStatus.Started,
+            })
+          }
+          disabled={socket.readyState !== ReadyState.OPEN}
+        >
+          Start
+        </Button>
 
-      <h2 className="text-2xl my-2 font-bold">Questions</h2>
+        <h2 className="text-2xl my-2 font-bold">Questions</h2>
 
-      <RadioGroup
-        className="grid-cols-4"
-        defaultValue={
-          currentQuestion
-            ? currentQuestion.quiz_question_id
-            : quiz.questions[0].quiz_question_id
-        }
-      >
-        {quiz.questions.map((question) => {
-          return (
-            <label
-              className="relative flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-input px-2 py-3 text-center shadow-sm shadow-black/5 ring-offset-background transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/70 has-[:focus-visible]:ring-offset-2"
-              key={question.quiz_question_id}
-            >
-              <RadioGroupItem
-                id={question.quiz_question_id}
-                value={question.quiz_question_id}
-                className="sr-only after:absolute after:inset-0"
-                onClick={() =>
-                  changeQuestion(socket, {
-                    quiz_id: params.quizId,
-                    ...question,
-                  })
-                }
-                disabled={socket.readyState !== ReadyState.OPEN}
+        <RadioGroup
+          className="grid-cols-4"
+          defaultValue={
+            currentQuestion
+              ? currentQuestion.quiz_question_id
+              : quiz.questions[0].quiz_question_id
+          }
+        >
+          {quiz.questions.map((question) => {
+            return (
+              <label
+                className="relative flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-input px-2 py-3 text-center shadow-sm shadow-black/5 ring-offset-background transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/70 has-[:focus-visible]:ring-offset-2"
+                key={question.quiz_question_id}
+              >
+                <RadioGroupItem
+                  id={question.quiz_question_id}
+                  value={question.quiz_question_id}
+                  className="sr-only after:absolute after:inset-0"
+                  onClick={() =>
+                    changeQuestion(socket, {
+                      quiz_id: params.quizId,
+                      ...question,
+                    })
+                  }
+                  disabled={socket.readyState !== ReadyState.OPEN}
+                />
+                <p>{question.content}</p>
+              </label>
+            );
+          })}
+        </RadioGroup>
+      </div>
+
+      <div className=" px-20 py-10 h-full flex flex-col w-full max-w-5xl mx-auto">
+        <h2 className="text-2xl my-2 font-bold">Players</h2>
+        <div>
+          {players.map((player) => {
+            const answer = playerAnswers.get(player.user_id);
+            const result = quizResults.find(
+              (result) => result.user_id === player.user_id,
+            );
+
+            return (
+              <Player
+                key={player.user_id}
+                question={currentQuestion}
+                player={player}
+                answer={answer}
+                result={result}
               />
-              <p>{question.content}</p>
-            </label>
-          );
-        })}
-      </RadioGroup>
-
-      <h2 className="text-2xl my-2 font-bold">Players</h2>
-      <div>
-        {players.map((player) => {
-          const answer = playerAnswers.get(player.user_id);
-          const result = quizResults.find(
-            (result) => result.user_id === player.user_id,
-          );
-
-          return (
-            <Player
-              key={player.user_id}
-              question={currentQuestion}
-              player={player}
-              answer={answer}
-              result={result}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-type PlayerProps = {
-  player: QuizUser;
-  answer?: PlayerCurrentAnswer;
-  question: QuizQuestion | null;
-  result?: QuizResult;
-};
-
-function Player(props: PlayerProps): JSX.Element {
-  let answerContent = "";
-
-  if (props.question) {
-    if (props.answer?.event === WebSocketEvent.QuizSelectAnswer) {
-      const answerId = props.answer.data.quiz_answer_id;
-      answerContent =
-        props.question.answers.find((value) => value.quiz_answer_id == answerId)
-          ?.content || "No answer.";
-    } else {
-      answerContent = props.answer?.data.content || "No answer.";
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="font-bold">Player:</h2>
-        <p>
-          {props.player.first_name} {props.player.last_name}
-        </p>
-      </div>
-
-      <div>
-        <h2 className="font-bold">Current Answer:</h2>
-        <p>{answerContent}</p>
-      </div>
-
-      <div>
-        <h2 className="font-bold">Score:</h2>
-        {props.result ? <div>{props.result.score}</div> : 0}
-      </div>
-
-      <div>
-        <h2 className="font-bold">Submitted Answers:</h2>
-        {props.result ? (
-          <div>
-            {props.result.answers.map((answer, i) => {
-              return (
-                <div key={answer.player_answer_id}>
-                  <span className="font-semibold">#{i + 1} - </span>
-                  {answer.content} -{" "}
-                  {answer.is_correct ? "Correct!" : "Incorrect!"}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          "No submitted answers."
-        )}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -323,13 +268,6 @@ async function getQuiz(quizId: string): Promise<ApiResponse<Quiz>> {
 
   return result;
 }
-
-type QuizUser = {
-  user_id: string;
-  first_name: string;
-  middle_name?: string;
-  last_name: string;
-};
 
 async function getPlayers(quizId: string): Promise<ApiResponse<QuizUser[]>> {
   const response = await fetch(

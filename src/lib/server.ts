@@ -1,5 +1,5 @@
-import { ApiResponse } from "../api/api";
-import { User } from "./types";
+import { ApiResponse } from "./api/types";
+import { User } from "./user/types";
 
 export async function getCurrentUser(): Promise<ApiResponse<User>> {
   const response = await fetch(

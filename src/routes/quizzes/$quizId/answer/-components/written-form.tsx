@@ -18,24 +18,34 @@ import {
   WebSocketEvent,
   WebSocketRequest,
 } from "@/lib/websocket/types";
-import { QuizQuestion } from "@/lib/quiz/types";
+import { GetWrittenAnswerResponse, QuizQuestion } from "@/lib/quiz/types";
+import { CheckIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 type Props = {
   socket: WebSocketHook;
   question: QuizQuestion;
   quizId: string;
+  answer: GetWrittenAnswerResponse | null;
 };
 
 export function WrittenAnswerForm(props: Props): JSX.Element {
   const form = useForm<WrittenAnswerInput>({
     resolver: zodResolver(WrittenAnswerSchema),
     defaultValues: {
-      content: "",
+      content: props.answer?.content || "",
       quiz_question_id: props.question.quiz_question_id,
     },
   });
+  const [hasSubmitted, setHasSubmitted] = useState(props.answer !== null);
 
   async function onSubmit(value: WrittenAnswerInput): Promise<void> {
+    if (hasSubmitted) {
+      toast.info("You have already submitted an answer.");
+      return;
+    }
+
     const data: QuizSubmitAnswerRequest<WrittenAnswerInput> = {
       quiz_question_id: props.question.quiz_question_id,
       quiz_id: props.quizId,
@@ -51,11 +61,13 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
     };
 
     props.socket.sendJsonMessage(message);
+
+    setHasSubmitted(true);
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 w-full">
         <FormField
           control={form.control}
           name="content"
@@ -64,7 +76,8 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
               <FormControl>
                 <Input
                   {...field}
-                  placeholder="Enter answer here"
+                  className="md:text-xl md:px-4 md:py-2 h-auto read-only:bg-muted/50"
+                  placeholder="Type your answer"
                   onChange={(event) => {
                     typeAnswer(props.socket, {
                       quiz_question_id: props.question.quiz_question_id,
@@ -72,6 +85,7 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
                     });
                     return field.onChange(event);
                   }}
+                  readOnly={hasSubmitted}
                 />
               </FormControl>
               <FormMessage />
@@ -79,7 +93,12 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
           )}
         />
 
-        <Button type="submit">Submit</Button>
+        <div className="flex justify-end">
+          <Button type="submit" disabled={hasSubmitted}>
+            <CheckIcon size={16} />
+            Submit
+          </Button>
+        </div>
       </form>
     </Form>
   );

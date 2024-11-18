@@ -20,6 +20,7 @@ import {
   WebSocketEvent,
   WebSocketRequest,
 } from "@/lib/websocket/types";
+import { CheckIcon } from "lucide-react";
 
 type Props = {
   socket: WebSocketHook;
@@ -55,7 +56,7 @@ export function MultipleChoiceForm(props: Props): JSX.Element {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
         <FormField
           control={form.control}
           name="quiz_answer_id"
@@ -96,7 +97,12 @@ export function MultipleChoiceForm(props: Props): JSX.Element {
           )}
         />
 
-        <Button type="submit">Submit</Button>
+        <div className="flex justify-end">
+          <Button type="submit" >
+            <CheckIcon size={16} />
+            Submit
+          </Button>
+        </div>
       </form>
     </Form>
   );
