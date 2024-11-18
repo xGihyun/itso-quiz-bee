@@ -8,3 +8,11 @@ export type User = {
   email: string;
   role: UserRole;
 };
+
+export type UserDetails = {
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+};
+
+export type RegisterRequest = User & UserDetails;

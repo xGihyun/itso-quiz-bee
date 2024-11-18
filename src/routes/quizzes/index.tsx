@@ -12,7 +12,7 @@ function RouteComponent(): JSX.Element {
   const createQuiz = async (): Promise<void> => {
     const quizId = uuidv4();
 
-    await navigate({ to: "/quizzes/$quizId/edit", params: { quizId: quizId } });
+    await navigate({ to: "/quizzes/$quizId/create", params: { quizId: quizId } });
   };
 
   return (

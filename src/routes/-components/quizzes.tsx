@@ -91,9 +91,6 @@ export function Quizzes(): JSX.Element {
               <CardTitle>{quiz.name}</CardTitle>
               <CardDescription>{quiz.description}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p>Quiz Data</p>
-            </CardContent>
           </Card>
         </button>
       ))}
