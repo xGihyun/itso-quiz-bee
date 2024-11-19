@@ -1,8 +1,13 @@
-import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
+import {
+  QuizUpdateStatusRequest,
+  WebSocketEvent,
+  WebSocketRequest,
+} from "@/lib/websocket/types";
 import { createFileRoute } from "@tanstack/react-router";
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
+import { QuizStatus } from "@/lib/quiz/types";
 
 export const Route = createFileRoute("/quizzes/$quizId/")({
   component: RouteComponent,
@@ -18,9 +23,12 @@ function RouteComponent(): JSX.Element {
       console.log(result);
 
       switch (result.event) {
-        case WebSocketEvent.QuizStart:
-          await navigate({ to: "answer" });
-          toast.info("Quiz has started!");
+        case WebSocketEvent.QuizUpdateStatus:
+          const data = result.data as QuizUpdateStatusRequest;
+          if (data.status === QuizStatus.Started) {
+            await navigate({ to: "answer" });
+            toast.info("Quiz has started!");
+          }
           break;
         default:
           console.warn("Unknown event type:", result.event);

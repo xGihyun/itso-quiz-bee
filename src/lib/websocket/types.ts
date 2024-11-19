@@ -1,6 +1,12 @@
-import { QuizQuestion, QuizQuestionVariant, UpdateQuizStatusRequest } from "../quiz/types";
+import {
+  QuizQuestion,
+  QuizQuestionVariant,
+  QuizStatus,
+  UpdateQuizStatusRequest,
+} from "../quiz/types";
 
 export enum WebSocketEvent {
+  QuizUpdateStatus = "quiz-update-status",
   QuizStart = "quiz-start",
   QuizPause = "quiz-pause",
   QuizResume = "quiz-resume",
@@ -41,4 +47,10 @@ export type QuizSubmitAnswerRequest<T = unknown> = {
   quiz_id: string;
   variant: QuizQuestionVariant;
   answer: T;
+};
+
+export type QuizUpdateStatusRequest = {
+  quiz_id: string;
+  status: QuizStatus;
+  quiz_question_id?: string;
 };

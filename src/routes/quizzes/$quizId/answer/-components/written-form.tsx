@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { WrittenAnswerInput, WrittenAnswerSchema } from "./schema";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 import {
   Form,
   FormControl,
@@ -14,23 +15,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import {
+  QuizChangeQuestionRequest,
   QuizSubmitAnswerRequest,
   WebSocketEvent,
   WebSocketRequest,
+  WebSocketResponse,
 } from "@/lib/websocket/types";
-import { GetWrittenAnswerResponse, QuizQuestion } from "@/lib/quiz/types";
 import { CheckIcon } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
+import { AnswerProps } from "..";
+import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 
-type Props = {
-  socket: WebSocketHook;
-  question: QuizQuestion;
-  quizId: string;
-  answer: GetWrittenAnswerResponse | null;
-};
-
-export function WrittenAnswerForm(props: Props): JSX.Element {
+export function WrittenAnswerForm(props: AnswerProps): JSX.Element {
   const form = useForm<WrittenAnswerInput>({
     resolver: zodResolver(WrittenAnswerSchema),
     defaultValues: {
@@ -38,10 +34,31 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
       quiz_question_id: props.question.quiz_question_id,
     },
   });
-  const [hasSubmitted, setHasSubmitted] = useState(props.answer !== null);
+
+  const socket = useWebSocket(WEBSOCKET_URL, {
+    onMessage: async (event) => {
+      const result: WebSocketResponse = await JSON.parse(event.data);
+
+      switch (result.event) {
+        case WebSocketEvent.QuizChangeQuestion:
+          const data = result.data as QuizChangeQuestionRequest
+          form.reset({
+            content: "",
+            quiz_question_id: data.quiz_question_id,
+          });
+          break;
+
+        default:
+          console.warn("Unknown event type:", result.event);
+      }
+    },
+    share: true,
+    ...WEBSOCKET_OPTIONS,
+  });
 
   async function onSubmit(value: WrittenAnswerInput): Promise<void> {
-    if (hasSubmitted) {
+    console.log(value);
+    if (props.hasSubmitted) {
       toast.info("You have already submitted an answer.");
       return;
     }
@@ -60,10 +77,9 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
       data: data,
     };
 
-    props.socket.sendJsonMessage(message);
-
-    setHasSubmitted(true);
+    socket.sendJsonMessage(message);
   }
+
 
   return (
     <Form {...form}>
@@ -76,16 +92,21 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
               <FormControl>
                 <Input
                   {...field}
-                  className="md:text-xl md:px-4 md:py-2 h-auto read-only:bg-muted/50"
+                  className="
+                  md:text-xl md:px-4 md:py-2 h-auto read-only:bg-muted/50
+                  bg-muted focus-visible:ring-transparent
+                  border-b-2 border-b-secondary/50
+                  rounded-t rounded-b-none focus:border-b-primary
+                  "
                   placeholder="Type your answer"
                   onChange={(event) => {
-                    typeAnswer(props.socket, {
+                    typeAnswer(socket, {
                       quiz_question_id: props.question.quiz_question_id,
                       content: event.target.value,
                     });
                     return field.onChange(event);
                   }}
-                  readOnly={hasSubmitted}
+                  readOnly={props.hasSubmitted}
                 />
               </FormControl>
               <FormMessage />
@@ -94,7 +115,7 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
         />
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={hasSubmitted}>
+          <Button type="submit" disabled={props.hasSubmitted}>
             <CheckIcon size={16} />
             Submit
           </Button>

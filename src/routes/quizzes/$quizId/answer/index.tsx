@@ -16,6 +16,8 @@ import { getCurrentAnswer, getCurrentQuestion } from "@/lib/quiz/requests";
 import { MultipleChoiceForm } from "./-components/multiple-choice-form";
 import { WrittenAnswerForm } from "./-components/written-form";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
+import { useState } from "react";
+import { hasSubscribers } from "diagnostics_channel";
 
 export const Route = createFileRoute("/quizzes/$quizId/answer/")({
   component: RouteComponent,
@@ -30,30 +32,37 @@ export const Route = createFileRoute("/quizzes/$quizId/answer/")({
 
 function RouteComponent(): JSX.Element {
   const params = Route.useParams();
-  const query = useQuery({
+  const currentQuestionQuery = useQuery({
     queryKey: ["current-question"],
     queryFn: () => getCurrentQuestion(params.quizId),
   });
-  const answerQuery = useQuery({
+  const currentAnswerQuery = useQuery({
     queryKey: ["current-answer"],
     queryFn: () => getCurrentAnswer(params.quizId),
   });
+
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const socket = useWebSocket(WEBSOCKET_URL, {
     onMessage: async (event) => {
       const result: WebSocketRequest<QuizQuestion> = await JSON.parse(
         event.data,
       );
-      console.log(result);
+      //console.log(result);
 
       switch (result.event) {
         case WebSocketEvent.QuizChangeQuestion:
-          await query.refetch();
+          await currentQuestionQuery.refetch();
+
+          setHasSubmitted(false);
 
           toast.info("Next question!");
           break;
         case WebSocketEvent.QuizSubmitAnswer:
+          setHasSubmitted(true);
           toast.info("Submitted answer!");
+          break;
+        case WebSocketEvent.QuizTypeAnswer:
           break;
         default:
           console.warn("Unknown event type:", result.event);
@@ -62,32 +71,34 @@ function RouteComponent(): JSX.Element {
     ...WEBSOCKET_OPTIONS,
   });
 
-  if (query.isPending || answerQuery.isPending) {
+  if (currentQuestionQuery.isPending || currentAnswerQuery.isPending) {
     return <Skeleton className="w-20 h-20" />;
   }
 
-  if (query.isError) {
+  if (currentQuestionQuery.isError) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{query.data?.message}</AlertDescription>
+        <AlertDescription>
+          {currentQuestionQuery.data?.message}
+        </AlertDescription>
       </Alert>
     );
   }
 
-  if (answerQuery.isError) {
+  if (currentAnswerQuery.isError) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{answerQuery.data?.message}</AlertDescription>
+        <AlertDescription>{currentAnswerQuery.data?.message}</AlertDescription>
       </Alert>
     );
   }
 
-  const question = query.data.data;
-  const answer = answerQuery.data.data;
+  const question = currentQuestionQuery.data.data;
+  const answer = currentAnswerQuery.data.data;
 
   if (question === null) {
     return <div>No questions available.</div>;
@@ -99,41 +110,40 @@ function RouteComponent(): JSX.Element {
       question={question}
       quizId={params.quizId}
       answer={answer}
+      hasSubmitted={hasSubmitted}
     />
   );
 }
 
-type AnswerProps = {
+export type AnswerProps = {
   socket: WebSocketHook;
   question: QuizQuestion;
   quizId: string;
   answer: GetWrittenAnswerResponse | null;
+  hasSubmitted: boolean;
 };
 
 function Answer(props: AnswerProps): JSX.Element {
   return (
     <div className="flex flex-col h-full">
-      <div className="px-20 py-10 h-full flex items-center bg-secondary/50 ">
-        <p className="mb-5 font-semibold text-3xl max-w-5xl mx-auto text-center">
+      <div className="px-20 py-10 h-full flex items-center">
+        <p className="mb-5 font-['metropolis-bold'] text-3xl max-w-5xl mx-auto text-center">
           {props.question.content}
         </p>
       </div>
 
-      <div className=" px-20 py-10 h-full flex w-full max-w-5xl mx-auto">
-        {props.question.variant === QuizQuestionVariant.Written ? (
-          <WrittenAnswerForm
-            socket={props.socket}
-            question={props.question}
-            quizId={props.quizId}
-            answer={props.answer}
-          />
-        ) : (
-          <MultipleChoiceForm
-            socket={props.socket}
-            question={props.question}
-            quizId={props.quizId}
-          />
-        )}
+      <div className="bg-card px-20 py-10 h-full flex w-full mx-auto">
+        <div className="max-w-5xl mx-auto w-full">
+          {props.question.variant === QuizQuestionVariant.Written ? (
+            <WrittenAnswerForm {...props} />
+          ) : (
+            <MultipleChoiceForm
+              socket={props.socket}
+              question={props.question}
+              quizId={props.quizId}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

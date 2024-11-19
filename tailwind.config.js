@@ -3,6 +3,14 @@ export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
+    fontFamily: {
+      marcellus: ["marcellus", "sans-serif"],
+      metropolis: ["metropolis", "sans-serif"],
+      "metropolis-medium": ["metropolis-medium", "sans-serif"],
+      "metropolis-semibold": ["metropolis-semibold", "sans-serif"],
+      "metropolis-bold": ["metropolis-bold", "sans-serif"],
+      "metropolis-black": ["metropolis-black", "sans-serif"],
+    },
     extend: {
       borderRadius: {
         lg: "var(--radius)",
