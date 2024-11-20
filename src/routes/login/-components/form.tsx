@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { LoginSchema, type LoginInput } from "./schema";
 import { Button } from "@/components/ui/button";
+import { setCookie } from "typescript-cookie"
 import {
   Form,
   FormControl,
@@ -22,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { ApiResponse } from "@/lib/api/types";
 import { useNavigate } from "@tanstack/react-router";
+import { User } from "@/lib/user/types";
 
 export function LoginForm(): JSX.Element {
   const navigate = useNavigate({ from: "/login" });
@@ -48,7 +50,7 @@ export function LoginForm(): JSX.Element {
       },
     );
 
-    const result: ApiResponse = await response.json();
+    const result: ApiResponse<User> = await response.json();
 
     if (!response.ok) {
       toast.error(result.message || "Server error.", { id: toastId });
@@ -56,6 +58,8 @@ export function LoginForm(): JSX.Element {
     }
 
     toast.success(result.message, { id: toastId });
+    setCookie("session", result.data.user_id)
+    
     await navigate({ to: "/" });
   }
 

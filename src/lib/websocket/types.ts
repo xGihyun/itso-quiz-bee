@@ -15,6 +15,10 @@ export enum WebSocketEvent {
   QuizSubmitAnswer = "quiz-submit-answer",
   QuizSelectAnswer = "quiz-select-answer",
   QuizTypeAnswer = "quiz-type-answer",
+  QuizDisableAnswering = "quiz-disable-answering",
+  
+  QuizStartTimer = "quiz-start-timer",
+  QuizTimerPass = "quiz-timer-pass",
 
   UserJoin = "user-join",
   UserLeave = "user-leave",

@@ -8,14 +8,11 @@ export const Route = createFileRoute("/")({
 
 function HomeComponent() {
   return (
-    <div>
-      <h1>Quiz Bee</h1>
-
-      {/* NOTE: This is useless now (｡•́︿•̀｡). Not enough time to implement */}
-      {/* <JoinLobbyForm /> */}
-
-      {/* NOTE: Join quiz directly instead */}
-      <Quizzes />
+    <div className="w-full grid place-items-center">
+      <div className="container py-10">
+        <h1 className="text-4xl py-2 mb-4">Quiz List</h1>
+        <Quizzes />
+      </div>
     </div>
   );
 }

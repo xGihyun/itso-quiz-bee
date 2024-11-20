@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const queryClient = new QueryClient();
 import "../index.css";
 import { Navbar } from "./-components/navbar";
+import SplashScreen from "./-components/splash";
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -22,6 +23,8 @@ function RootComponent() {
     <>
       <QueryClientProvider client={queryClient}>
         <Toaster closeButton />
+        {/* <SplashScreen /> */}
+
         {location.pathname.startsWith("/quizzes") &&
         location.pathname.endsWith("answer") ? null : (
           <Navbar />

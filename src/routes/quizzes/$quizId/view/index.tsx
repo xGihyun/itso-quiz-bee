@@ -32,10 +32,11 @@ import {
   MultipleChoiceInput,
   WrittenAnswerInput,
 } from "../answer/-components/schema";
-import { useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { getCurrentUser } from "@/lib/server";
 import { UserRole } from "@/lib/user/types";
 import { Player } from "./-components/player";
+import PlayerFullscreen from "./-components/player-fullscreen";
 
 export const Route = createFileRoute("/quizzes/$quizId/view/")({
   component: RouteComponent,
@@ -58,6 +59,18 @@ export const Route = createFileRoute("/quizzes/$quizId/view/")({
 // This is where admin will view all the current participants
 // Admin can see the players' current answers in real-time
 // Admin can move to the next/previous question
+
+export type AdminViewQuizContextType = {
+  players: QuizUser[],
+  viewPlayer: boolean;
+
+  setPlayerViewing: (user_id: string) => void;
+  quizQuestion: QuizQuestion | null;
+  playerCurrentAnswer: PlayerCurrentAnswer,
+  playerCurrentResult: QuizResult
+}
+
+// export const AdminViewQuizContext = createContext<AdminViewQuizContextType>({})
 
 function RouteComponent(): JSX.Element {
   const params = Route.useParams();
@@ -198,6 +211,7 @@ function RouteComponent(): JSX.Element {
 
   return (
     <div className="flex flex-col h-full">
+
       <div className="h-full flex flex-col items-center bg-card">
         <div className="px-10 py-10 max-w-7xl">
           <div className="flex justify-center flex-col items-center gap-2 bg-card">
@@ -286,6 +300,7 @@ function RouteComponent(): JSX.Element {
           </div>
         </div>
       </div>
+
 
       <div className=" px-20 py-10 h-full flex flex-col w-full max-w-7xl mx-auto">
         <h2 className="text-2xl my-2 font-['metropolis-bold']">Players</h2>
