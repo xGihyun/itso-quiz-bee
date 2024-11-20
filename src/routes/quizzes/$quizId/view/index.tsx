@@ -90,6 +90,7 @@ function RouteComponent(): JSX.Element {
   const [playerAnswers, setPlayerAnswers] = useState<
     Map<string, PlayerCurrentAnswer>
   >(new Map());
+  const [players, setPlayers] = useState<QuizUser[]>([])
 
   const quizQuery = useQuery({
     queryKey: ["quiz"],
@@ -114,9 +115,18 @@ function RouteComponent(): JSX.Element {
 
       switch (result.event) {
         case WebSocketEvent.UserJoin:
-          // NOTE:
-          // Probably not a good idea to constantly refetch on player join
-          await playersQuery.refetch();
+          {
+            console.log(result);
+
+            // TODO: Use this data to create mutate the state of a QuizUser array
+            const data = result.data as QuizUser;
+
+            //setPlayers() ???
+
+            // NOTE:
+            // Probably not a good idea to constantly refetch on player join
+            await playersQuery.refetch();
+          }
           break;
         case WebSocketEvent.QuizUpdateStatus:
           {
@@ -227,7 +237,7 @@ function RouteComponent(): JSX.Element {
 
   const quiz = quizQuery.data.data;
   const currentQuestion = currentQuestionQuery.data.data;
-  const players = playersQuery.data.data;
+  //const players = playersQuery.data.data;
   const quizResults = quizResultsQuery.data.data;
 
   const maxScore = quiz.questions.reduce((prev, acc) => prev + acc.points, 0);
@@ -331,8 +341,6 @@ function RouteComponent(): JSX.Element {
             </div>
           </div>
         </div>
-
-
         <div className=" px-20 py-10 h-full flex flex-col w-full max-w-7xl mx-auto">
           <h2 className="text-2xl my-2 font-['metropolis-bold']">Players</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3">
