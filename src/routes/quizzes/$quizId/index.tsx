@@ -10,7 +10,7 @@ import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { QuizStatus } from "@/lib/quiz/types";
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
-import { PuffLoader } from "react-spinners"
+import { PuffLoader } from "react-spinners";
 
 export const Route = createFileRoute("/quizzes/$quizId/")({
   component: RouteComponent,
@@ -32,18 +32,19 @@ function RouteComponent(): JSX.Element {
   const socket = useWebSocket(WEBSOCKET_URL, {
     onMessage: async (event) => {
       const result: WebSocketRequest = await JSON.parse(event.data);
-      console.log(result);
 
       switch (result.event) {
         case WebSocketEvent.QuizUpdateStatus:
           const data = result.data as QuizUpdateStatusRequest;
-          if (data.status === QuizStatus.Started) {
 
+          console.log("Quiz status updated:", data.status);
+
+          if (data.status === QuizStatus.Started) {
             await gsap.to(contentContainerRef.current, {
               scale: 0,
               ease: "expo.in",
-              duration: 0.5
-            })
+              duration: 0.5,
+            });
 
             await navigate({ to: "answer" });
           }
@@ -70,7 +71,7 @@ function RouteComponent(): JSX.Element {
       {
         top: "0px",
         opacity: 1,
-      }
+      },
     );
     gsap.fromTo(
       funFactRef.current,
@@ -81,7 +82,7 @@ function RouteComponent(): JSX.Element {
       {
         top: "0px",
         opacity: 1,
-      }
+      },
     );
 
     let time: number = Math.ceil(Math.random() * 5) + 5;
@@ -106,7 +107,7 @@ function RouteComponent(): JSX.Element {
           {
             right: "0",
             opacity: 1,
-          }
+          },
         )
         .play();
     }, time * 1000);
@@ -116,7 +117,10 @@ function RouteComponent(): JSX.Element {
 
   return (
     <div className="w-full h-full grid place-items-center">
-      <div ref={contentContainerRef} className="flex flex-col items-center *:text-center gap-4">
+      <div
+        ref={contentContainerRef}
+        className="flex flex-col items-center *:text-center gap-4"
+      >
         <PuffLoader color="#95C2FE" />
         <span ref={titleRef} className="font-bold text-4xl relative">
           Wait until the competition starts...

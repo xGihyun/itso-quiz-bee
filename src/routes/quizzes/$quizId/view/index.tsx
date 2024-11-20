@@ -61,14 +61,14 @@ export const Route = createFileRoute("/quizzes/$quizId/view/")({
 // Admin can move to the next/previous question
 
 export type AdminViewQuizContextType = {
-  players: QuizUser[],
+  players: QuizUser[];
   viewPlayer: boolean;
 
   setPlayerViewing: (user_id: string) => void;
   quizQuestion: QuizQuestion | null;
-  playerCurrentAnswer: PlayerCurrentAnswer,
-  playerCurrentResult: QuizResult
-}
+  playerCurrentAnswer: PlayerCurrentAnswer;
+  playerCurrentResult: QuizResult;
+};
 
 // export const AdminViewQuizContext = createContext<AdminViewQuizContextType>({})
 
@@ -81,6 +81,7 @@ function RouteComponent(): JSX.Element {
   const [playerAnswers, setPlayerAnswers] = useState<
     Map<string, PlayerCurrentAnswer>
   >(new Map());
+  const [players, setPlayers] = useState<QuizUser[]>([])
 
   const quizQuery = useQuery({
     queryKey: ["quiz"],
@@ -105,9 +106,18 @@ function RouteComponent(): JSX.Element {
 
       switch (result.event) {
         case WebSocketEvent.UserJoin:
-          // NOTE:
-          // Probably not a good idea to constantly refetch on player join
-          await playersQuery.refetch();
+          {
+            console.log(result);
+
+            // TODO: Use this data to create mutate the state of a QuizUser array
+            const data = result.data as QuizUser;
+
+            //setPlayers() ???
+
+            // NOTE:
+            // Probably not a good idea to constantly refetch on player join
+            await playersQuery.refetch();
+          }
           break;
         case WebSocketEvent.QuizUpdateStatus:
           {
@@ -204,14 +214,13 @@ function RouteComponent(): JSX.Element {
 
   const quiz = quizQuery.data.data;
   const currentQuestion = currentQuestionQuery.data.data;
-  const players = playersQuery.data.data;
+  //const players = playersQuery.data.data;
   const quizResults = quizResultsQuery.data.data;
 
   const maxScore = quiz.questions.reduce((prev, acc) => prev + acc.points, 0);
 
   return (
     <div className="flex flex-col h-full">
-
       <div className="h-full flex flex-col items-center bg-card">
         <div className="px-10 py-10 max-w-7xl">
           <div className="flex justify-center flex-col items-center gap-2 bg-card">
@@ -300,7 +309,6 @@ function RouteComponent(): JSX.Element {
           </div>
         </div>
       </div>
-
 
       <div className=" px-20 py-10 h-full flex flex-col w-full max-w-7xl mx-auto">
         <h2 className="text-2xl my-2 font-['metropolis-bold']">Players</h2>
