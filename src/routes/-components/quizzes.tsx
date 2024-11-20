@@ -14,15 +14,18 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { getCurrentUser } from "@/lib/user/requests";
-import { UserRole } from "@/lib/user/types";
-import { QuizBasicInfo } from "@/lib/quiz/types";
+import { User, UserRole } from "@/lib/user/types";
+import { QuizBasicInfo, QuizStatus } from "@/lib/quiz/types";
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { userInfo } from "os";
 
 async function getQuizzes(): Promise<ApiResponse<QuizBasicInfo[]>> {
   const response = await fetch(
     `${import.meta.env.VITE_BACKEND_URL}/api/quizzes`,
     {
       method: "GET",
-    },
+    }
   );
   const result: ApiResponse<QuizBasicInfo[]> = await response.json();
 
@@ -36,9 +39,41 @@ export function Quizzes(): JSX.Element {
     queryFn: getQuizzes,
   });
 
+  const quizzesRef = useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<ApiResponse<User>>();
+  const [hasLoaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const userGot = await getCurrentUser();
+      setUser(userGot);
+      setLoaded(true)
+    })
+  }, [])
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (query.isSuccess && quizzesRef.current) {
+        gsap.fromTo(
+          quizzesRef.current.children,
+          { opacity: 0, y: 20 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            stagger: 0.1,
+            ease: "power2.out",
+          }
+        );
+      }
+    }, 1000)
+
+    console.log(query.isSuccess);
+  }, [query.isSuccess]);
+
   if (query.isPending) {
     return (
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-4 ">
         <Skeleton className="w-full h-full" />
         <Skeleton className="w-full h-full" />
         <Skeleton className="w-full h-full" />
@@ -58,25 +93,36 @@ export function Quizzes(): JSX.Element {
   }
 
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div
+      className="grid grid-cols-4 gap-4 py-4"
+      ref={quizzesRef} // Attach ref to the container
+    >
       {query.data.data.map((quiz) => (
         <button
           key={quiz.quiz_id}
           onClick={async () => {
+            console.log("called")
             const user = await getCurrentUser();
             console.log(user);
+
 
             if (user.data.role === UserRole.Player) {
               const result = await joinQuiz({ quiz_id: quiz.quiz_id });
 
-              console.log(result)
 
               if (result.status !== ApiResponseStatus.Success) {
                 console.error("Failed to join quiz:", result);
-                //return;
               }
 
               toast.success(result.message);
+            }
+
+            if (user.data.role === UserRole.Admin) {
+              console.log("helo")
+              return await navigate({
+                to: "/quizzes/$quizId/view",
+                params: { quizId: quiz.quiz_id },
+              });
             }
 
             await navigate({
@@ -86,7 +132,15 @@ export function Quizzes(): JSX.Element {
           }}
           className="contents"
         >
-          <Card>
+
+          <Card
+            className={`relative hover:scale-95 transition-transform cursor-pointer`}
+          >
+            <div className="absolute px-2 bg-green-400 rounded-xl right-4 -bottom-3">
+              <span className="text-sm text-black text-center font-bold">
+                {quiz.status}
+              </span>
+            </div>
             <CardHeader>
               <CardTitle>{quiz.name}</CardTitle>
               <CardDescription>{quiz.description}</CardDescription>
@@ -109,7 +163,7 @@ async function joinQuiz(data: JoinQuizRequest): Promise<ApiResponse> {
       method: "POST",
       body: JSON.stringify(data),
       credentials: "include",
-    },
+    }
   );
 
   const result: ApiResponse = await response.json();

@@ -16,8 +16,9 @@ import { getCurrentAnswer, getCurrentQuestion } from "@/lib/quiz/requests";
 import { MultipleChoiceForm } from "./-components/multiple-choice-form";
 import { WrittenAnswerForm } from "./-components/written-form";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { hasSubscribers } from "diagnostics_channel";
+import gsap from "gsap"
 
 export const Route = createFileRoute("/quizzes/$quizId/answer/")({
   component: RouteComponent,
@@ -48,7 +49,6 @@ function RouteComponent(): JSX.Element {
       const result: WebSocketRequest<QuizQuestion> = await JSON.parse(
         event.data,
       );
-      //console.log(result);
 
       switch (result.event) {
         case WebSocketEvent.QuizChangeQuestion:
@@ -124,8 +124,20 @@ export type AnswerProps = {
 };
 
 function Answer(props: AnswerProps): JSX.Element {
+  const mainElement = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    gsap.fromTo(mainElement.current, {
+      scale: 0,
+      opacity: 0
+    }, {
+      scale: 1,
+      opacity: 1
+    })
+  }, [])
+
   return (
-    <div className="flex flex-col h-full">
+    <div ref={mainElement} className="flex flex-col h-full">
       <div className="px-20 py-10 h-full flex items-center">
         <p className="mb-5 font-['metropolis-bold'] text-3xl max-w-5xl mx-auto text-center">
           {props.question.content}
