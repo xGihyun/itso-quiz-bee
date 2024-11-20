@@ -30,6 +30,7 @@ type PlayerProps = {
   question: QuizQuestion | null;
   maxScore: number;
   result?: QuizResult;
+  onPlayerCardClicked?: () => void;
 };
 
 export function Player(props: PlayerProps): JSX.Element {
@@ -47,7 +48,7 @@ export function Player(props: PlayerProps): JSX.Element {
   }
 
   return (
-    <Card>
+    <Card className="hover:opacity-90 hover:scale-95 cursor-pointer transition-all" onClick={() => props.onPlayerCardClicked?.()}>
       <CardHeader>
         <CardTitle className="flex-row flex items-center gap-2">
           <UserIcon size={24} />
