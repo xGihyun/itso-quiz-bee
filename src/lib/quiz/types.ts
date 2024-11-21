@@ -46,6 +46,7 @@ export type QuizQuestion = {
   variant: QuizQuestionVariant;
   points: number;
   order_number: number;
+  duration: number; // nanoseconds
   answers: QuizAnswer[];
 };
 
@@ -82,8 +83,6 @@ export type PlayerCurrentAnswer =
       data: WrittenAnswerInput;
     };
 
-
-
 export type QuizUser = {
   user_id: string;
   first_name: string;
@@ -95,3 +94,7 @@ type PlayerAnswerState = {
   current: PlayerCurrentAnswer;
   result: QuizResult;
 };
+
+export type QuizWrittenAnswerRequest = {
+  user_id: string;
+} & WrittenAnswerInput;

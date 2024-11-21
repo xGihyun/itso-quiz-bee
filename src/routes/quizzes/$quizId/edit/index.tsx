@@ -1,13 +1,13 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { EditQuizForm } from "./-components/edit-quiz-form";
-import { NewQuizInput } from "./-components/schema";
 import { useQuery } from "@tanstack/react-query";
-import { ApiResponse, ApiResponseStatus } from "@/lib/api/types";
+import { ApiResponseStatus } from "@/lib/api/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getCurrentUser } from "@/lib/server";
 import { UserRole } from "@/lib/user/types";
+import { getQuiz } from "@/lib/quiz/requests";
 
 export const Route = createFileRoute("/quizzes/$quizId/edit/")({
   component: RouteComponent,
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/quizzes/$quizId/edit/")({
 function RouteComponent(): JSX.Element {
   const params = Route.useParams();
   const query = useQuery({
-    queryKey: ["quiz"],
+    queryKey: ["quiz", params.quizId],
     queryFn: () => getQuiz(params.quizId),
   });
 
@@ -52,19 +52,4 @@ function RouteComponent(): JSX.Element {
       <EditQuizForm quiz={query.data.data} />
     </div>
   );
-}
-
-async function getQuiz(quizId: string): Promise<ApiResponse<NewQuizInput>> {
-  const response = await fetch(
-    `${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}`,
-    {
-      method: "GET",
-    },
-  );
-
-  const result: ApiResponse<NewQuizInput> = await response.json();
-
-  console.log(result)
-
-  return result;
 }

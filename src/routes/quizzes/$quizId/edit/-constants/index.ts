@@ -59,6 +59,7 @@ export function createDefaultQuestion(): NewQuestionInput {
     answers: [createDefaultAnswer()],
     content: "Untitled Question",
     variant: QuizQuestionVariant.Written,
+    duration: null
     //order_number: 1,
   };
 }

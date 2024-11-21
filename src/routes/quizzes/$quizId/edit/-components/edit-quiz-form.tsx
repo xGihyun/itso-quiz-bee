@@ -33,11 +33,12 @@ import { useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ApiResponse } from "@/lib/api/types";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
-import { QuizQuestionVariant, QuizStatus } from "@/lib/quiz/types";
+import { Quiz, QuizQuestionVariant, QuizStatus } from "@/lib/quiz/types";
 import { createDefaultAnswer, createDefaultQuestion } from "../-constants";
+import { withMask } from "use-mask-input";
 
 type Props = {
-  quiz?: NewQuizInput;
+  quiz?: Quiz;
 };
 
 export function EditQuizForm(props: Props): JSX.Element {
@@ -51,7 +52,7 @@ export function EditQuizForm(props: Props): JSX.Element {
       name: "Untitled Quiz",
       status: QuizStatus.Closed,
       quiz_id: params.quizId,
-      lobby_id: null
+      lobby_id: null,
     },
   });
 
@@ -202,6 +203,27 @@ export function EditQuizForm(props: Props): JSX.Element {
                     <FormItem className="w-full col-span-1">
                       <FormControl>
                         <Input placeholder="Points" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name={`questions.${i}.duration`}
+                  render={({ field }) => (
+                    <FormItem className="w-full col-span-1">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          //placeholder="00:00:00"
+                          type="text"
+                          //ref={withMask("99:99:99", {
+                          //  placeholder: "-",
+                          //  showMaskOnHover: false,
+                          //})}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

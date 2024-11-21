@@ -19,7 +19,6 @@ import { User, UserRole } from "@/lib/user/types";
 import { QuizBasicInfo, QuizStatus } from "@/lib/quiz/types";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { userInfo } from "os";
 import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";

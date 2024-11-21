@@ -16,6 +16,7 @@ export const NewQuestionSchema = z.object({
   points: z.coerce.number(),
   //order_number: z.coerce.number(),
   answers: NewAnswerSchema.array(),
+  duration: z.coerce.number().nullable(),
 });
 
 export type NewQuestionInput = z.infer<typeof NewQuestionSchema>;

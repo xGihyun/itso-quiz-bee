@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { JoinLobbyForm } from "./-components/join-lobby-form";
 import { Quizzes } from "./-components/quizzes";
 
 export const Route = createFileRoute("/")({

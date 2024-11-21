@@ -19,7 +19,7 @@ import {
 } from "@/lib/quiz/types";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiResponse, ApiResponseStatus } from "@/lib/api/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -27,16 +27,16 @@ import { AlertCircle, PlayIcon } from "lucide-react";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { getCurrentQuestion } from "@/lib/quiz/requests";
+import { getCurrentQuestion, getQuiz } from "@/lib/quiz/requests";
 import {
   MultipleChoiceInput,
   WrittenAnswerInput,
 } from "../answer/-components/schema";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { getCurrentUser } from "@/lib/server";
 import { UserRole } from "@/lib/user/types";
 import { Player } from "./-components/player";
-import PlayerFullscreen from "./-components/player-fullscreen";
+import { PlayerFullscreen } from "./-components/player-fullscreen";
 
 export const Route = createFileRoute("/quizzes/$quizId/view/")({
   component: RouteComponent,
@@ -61,51 +61,59 @@ export const Route = createFileRoute("/quizzes/$quizId/view/")({
 // Admin can move to the next/previous question
 
 export type AdminViewQuizContextType = {
-  players: QuizUser | undefined;
-  adminViewing: boolean;
+  player: QuizUser | undefined;
+  isAdminViewing: boolean;
 
   quizQuestion: QuizQuestion | null;
-  playerCurrentAnswer: PlayerCurrentAnswer,
-  playerCurrentResult: QuizResult;
+  currentPlayerAnswer: PlayerCurrentAnswer;
+  setCurrentPlayerAnswer: React.Dispatch<
+    React.SetStateAction<PlayerCurrentAnswer | undefined>
+  >;
+  currentPlayerResult: QuizResult;
+  setCurrentPlayerResult: React.Dispatch<
+    React.SetStateAction<QuizResult | undefined>
+  >;
 
   setPlayerViewing: () => void;
-}
+};
 
-export const AdminViewQuizContext = createContext<Partial<AdminViewQuizContextType>>({})
+export const AdminViewQuizContext = createContext<
+  Partial<AdminViewQuizContextType>
+>({});
 
 function RouteComponent(): JSX.Element {
+  const queryClient = useQueryClient();
   const params = Route.useParams();
 
   //const [playerResults, setPlayerResults] = useState<
   //  Map<string, PlayerAnswerState>
   //>(new Map());
 
-  const [selectedPlayers, setSelectedPlayers] = useState<QuizUser | undefined>();
+  const [selectedPlayer, setSelectedPlayer] = useState<QuizUser | undefined>();
   const [isAdminViewing, setAdminViewing] = useState(false);
   const [quizQuestion, setQuizQuestion] = useState<QuizQuestion | null>();
-  const [currentPlayerAnswer, setCurrentPlayerAnswer] = useState<PlayerCurrentAnswer>();
+  const [currentPlayerAnswer, setCurrentPlayerAnswer] =
+    useState<PlayerCurrentAnswer>();
   const [currentPlayerResult, setCurrentPlayerResult] = useState<QuizResult>();
-
 
   const [playerAnswers, setPlayerAnswers] = useState<
     Map<string, PlayerCurrentAnswer>
   >(new Map());
-  const [players, setPlayers] = useState<QuizUser[]>([])
 
   const quizQuery = useQuery({
-    queryKey: ["quiz"],
+    queryKey: ["quiz", params.quizId],
     queryFn: () => getQuiz(params.quizId),
   });
   const currentQuestionQuery = useQuery({
-    queryKey: ["current-question"],
+    queryKey: ["quiz", "question", "current", params.quizId],
     queryFn: () => getCurrentQuestion(params.quizId),
   });
   const playersQuery = useQuery({
-    queryKey: ["players"],
+    queryKey: ["quiz", "players", params.quizId],
     queryFn: () => getPlayers(params.quizId),
   });
   const quizResultsQuery = useQuery({
-    queryKey: ["quiz-results"],
+    queryKey: ["quiz", "results", params.quizId],
     queryFn: () => getResults(params.quizId),
   });
 
@@ -116,22 +124,28 @@ function RouteComponent(): JSX.Element {
       switch (result.event) {
         case WebSocketEvent.UserJoin:
           {
-            console.log(result);
+            const data = result.data as QuizUser | null;
 
-            // TODO: Use this data to create mutate the state of a QuizUser array
-            const data = result.data as QuizUser;
+            if (!data) {
+              return;
+            }
 
-            //setPlayers() ???
-
-            // NOTE:
-            // Probably not a good idea to constantly refetch on player join
-            await playersQuery.refetch();
+            queryClient.setQueryData(
+              ["quiz", "players", params.quizId],
+              (prev: QuizUser[]) => {
+                return [...prev, data];
+              },
+            );
           }
           break;
         case WebSocketEvent.QuizUpdateStatus:
           {
             const data = result.data as QuizUpdateStatusRequest;
 
+            //queryClient.setQueryData(["quiz", params.quizId], (prev: Quiz) => ({
+            //  ...prev,
+            //  status: data.status,
+            //}));
             await quizQuery.refetch();
 
             switch (data.status) {
@@ -146,10 +160,20 @@ function RouteComponent(): JSX.Element {
           break;
 
         case WebSocketEvent.QuizChangeQuestion:
-          // NOTE: Probably not the best idea but it works
-          await currentQuestionQuery.refetch();
+          {
+            // NOTE: Probably not the best idea but it works
+            await currentQuestionQuery.refetch();
 
-          toast.info("Next question!");
+            // NOTE: Doesn't work???
+            //const data = result.data as QuizChangeQuestionRequest;
+            //
+            //queryClient.setQueryData(
+            //  ["quiz", "question", "current", params.quizId],
+            //  data,
+            //);
+
+            toast.info("Next question!");
+          }
 
           break;
 
@@ -181,7 +205,15 @@ function RouteComponent(): JSX.Element {
 
               if (currentPlayerAnswer) {
                 // @ts-ignore
-                setCurrentPlayerAnswer(oldAnswer => newAnswers.values().find(val => val.data.quiz_answer_id == oldAnswer?.data.quiz_answer_id))
+                setCurrentPlayerAnswer((oldAnswer) =>
+                  newAnswers
+                    .values()
+                    .find(
+                      (val) =>
+                        val.data.quiz_answer_id ==
+                        oldAnswer?.data.quiz_answer_id,
+                    ),
+                );
               }
 
               return newAnswers;
@@ -191,16 +223,18 @@ function RouteComponent(): JSX.Element {
 
         case WebSocketEvent.QuizSubmitAnswer:
           // NOTE:
-          // Probably not a good idea to constantly refetch on each submission
-          await quizResultsQuery.refetch();
-          if (selectedPlayers) {
-            const result = quizResults.find(
-              (result) => result.user_id === selectedPlayers.user_id,
-            );
+          // Apparently this doesn't work? It refetches the previous state or
+          // something
+          //await quizResultsQuery.refetch();
 
-            console.log("has player")
-            setCurrentPlayerResult(oldResult => result)
-          }
+          //if (selectedPlayer) {
+          //  const result = quizResults.find(
+          //    (result) => result.user_id === selectedPlayer.user_id,
+          //  );
+          //
+          //  console.log("has player", result);
+          //  //setCurrentPlayerResult((oldResult) => ({...result}));
+          //}
           break;
 
         default:
@@ -237,18 +271,21 @@ function RouteComponent(): JSX.Element {
 
   const quiz = quizQuery.data.data;
   const currentQuestion = currentQuestionQuery.data.data;
-  //const players = playersQuery.data.data;
+  const players = playersQuery.data.data;
   const quizResults = quizResultsQuery.data.data;
 
   const maxScore = quiz.questions.reduce((prev, acc) => prev + acc.points, 0);
   const contextValue = {
-    adminViewing: isAdminViewing,
-    playerCurrentAnswer: currentPlayerAnswer,
-    playerCurrentResult: currentPlayerResult,
-    players: selectedPlayers,
+    isAdminViewing: isAdminViewing,
+    currentPlayerAnswer: currentPlayerAnswer,
+    setCurrentPlayerAnswer: setCurrentPlayerAnswer,
+    currentPlayerResult: currentPlayerResult,
+    setCurrentPlayerResult: setCurrentPlayerResult,
+    player: selectedPlayer,
     quizQuestion: quizQuestion,
-    setPlayerViewing: () => setAdminViewing(false)
+    setPlayerViewing: () => setAdminViewing(false),
   } as AdminViewQuizContextType;
+
   return (
     <AdminViewQuizContext.Provider value={contextValue}>
       <div className="flex flex-col h-full">
@@ -351,7 +388,6 @@ function RouteComponent(): JSX.Element {
                 (result) => result.user_id === player.user_id,
               );
 
-
               return (
                 <Player
                   key={player.user_id}
@@ -362,9 +398,9 @@ function RouteComponent(): JSX.Element {
                   result={result}
                   onPlayerCardClicked={() => {
                     setCurrentPlayerAnswer(answer!);
-                    setCurrentPlayerResult(result)
-                    setSelectedPlayers(player);
-                    console.log(player)
+                    setCurrentPlayerResult(result);
+                    setSelectedPlayer(player);
+                    console.log(player);
                     setQuizQuestion(currentQuestion);
                     setAdminViewing(true);
                   }}
@@ -376,20 +412,6 @@ function RouteComponent(): JSX.Element {
       </div>
     </AdminViewQuizContext.Provider>
   );
-}
-
-async function getQuiz(quizId: string): Promise<ApiResponse<Quiz>> {
-  const response = await fetch(
-    `${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}`,
-    {
-      method: "GET",
-      credentials: "include",
-    },
-  );
-
-  const result: ApiResponse<Quiz> = await response.json();
-
-  return result;
 }
 
 async function getPlayers(quizId: string): Promise<ApiResponse<QuizUser[]>> {
@@ -406,7 +428,7 @@ async function getPlayers(quizId: string): Promise<ApiResponse<QuizUser[]>> {
   return result;
 }
 
-async function getResults(quizId: string): Promise<ApiResponse<QuizResult[]>> {
+export async function getResults(quizId: string): Promise<ApiResponse<QuizResult[]>> {
   const response = await fetch(
     `${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/results`,
     {
@@ -463,9 +485,8 @@ function QueryError(props: QueryErrorProps): JSX.Element {
 export function useAdminView() {
   const context = useContext(AdminViewQuizContext);
   if (!context) {
-    throw new Error(
-      "useAdminView must be used within a LessonModalProvider"
-    );
+    throw new Error("useAdminView must be used within a LessonModalProvider");
   }
   return context;
 }
+
