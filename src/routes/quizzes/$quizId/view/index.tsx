@@ -27,7 +27,7 @@ import { AlertCircle, PlayIcon } from "lucide-react";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { getCurrentQuestion } from "@/lib/quiz/requests";
+import { getCurrentQuestion, getQuizFreezeState } from "@/lib/quiz/requests";
 import {
   MultipleChoiceInput,
   WrittenAnswerInput,
@@ -112,7 +112,7 @@ function RouteComponent(): JSX.Element {
       (result) => result.user_id === curplay!.user_id
     );
 
-    console.log(answer!)
+    console.log(answer!);
 
     setSelectedPlayers(curplay);
     setCurrentPlayerResult(result);
@@ -126,6 +126,7 @@ function RouteComponent(): JSX.Element {
     Map<string, PlayerCurrentAnswer>
   >(new Map());
   const [players, setPlayers] = useState<QuizUser[]>([]);
+  const [quizFrozen, setQuizFrozen] = useState(false);
 
   const quizQuery = useQuery({
     queryKey: ["quiz"],
@@ -143,6 +144,17 @@ function RouteComponent(): JSX.Element {
     queryKey: ["quiz-results"],
     queryFn: () => getResults(params.quizId),
   });
+  const quizFreezeState = useQuery({
+    queryKey: ["frozen"],
+    queryFn: () => getQuizFreezeState(params.quizId),
+  });
+
+  useEffect(() => {
+    console.log("poop")
+    if (quizFreezeState.isFetched) {
+      setQuizFrozen(quizFreezeState.data?.data?.freezed!);
+    }
+  }, [quizFreezeState.isRefetching, quizFreezeState.isFetching]);
 
   const socket = useWebSocket(WEBSOCKET_URL, {
     onMessage: async (event) => {
@@ -184,6 +196,7 @@ function RouteComponent(): JSX.Element {
         case WebSocketEvent.QuizChangeQuestion:
           // NOTE: Probably not the best idea but it works
           await currentQuestionQuery.refetch();
+          await quizFreezeState.refetch();
 
           toast.info("Next question!");
 
@@ -215,8 +228,6 @@ function RouteComponent(): JSX.Element {
                 data,
               });
 
-
-
               setCurrentPlayerAnswer((oldAnswer) =>
                 newAnswers.values().find(
                   (val) =>
@@ -244,6 +255,10 @@ function RouteComponent(): JSX.Element {
             console.log("has player");
             setCurrentPlayerResult((oldResult) => result);
           }
+          break;
+
+        case WebSocketEvent.QuizFreezeSubmit:
+          await quizFreezeState.refetch();
           break;
 
         default:
@@ -305,38 +320,76 @@ function RouteComponent(): JSX.Element {
               <h1 className="text-center font-['metropolis-bold'] text-3xl">
                 13th ITSO Quiz Bee
               </h1>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    updateQuizStatus(socket, {
-                      quiz_id: params.quizId,
-                      quiz_question_id: quiz.questions[0].quiz_question_id,
-                      status: QuizStatus.Started,
-                    });
-                  }}
-                  disabled={
-                    socket.readyState !== ReadyState.OPEN ||
-                    quiz.status === QuizStatus.Started
-                  }
-                >
-                  <PlayIcon size={16} strokeWidth={2} />
-                  Start
-                </Button>
+              <div className="flex md:flex-col sm:flex-col flex-row gap-2 sm:w-full">
+                <div className="flex-1 flex flex-row *:flex-1 gap-2 items-center justify-center">
+                  <Button
+                    onClick={() => {
+                      updateQuizStatus(socket, {
+                        quiz_id: params.quizId,
+                        quiz_question_id: quiz.questions[0].quiz_question_id,
+                        status: QuizStatus.Started,
+                      });
+                    }}
+                    disabled={
+                      socket.readyState !== ReadyState.OPEN ||
+                      quiz.status === QuizStatus.Started
+                    }
+                  >
+                    <PlayIcon size={16} strokeWidth={2} />
+                    Start
+                  </Button>
 
-                <Button
-                  onClick={() => {
-                    updateQuizStatus(socket, {
-                      quiz_id: params.quizId,
-                      status: QuizStatus.Open,
-                    });
-                  }}
-                  disabled={
-                    socket.readyState !== ReadyState.OPEN ||
-                    quiz.status === QuizStatus.Open
-                  }
-                >
-                  Open
-                </Button>
+                  <Button
+                    onClick={() => {
+                      updateQuizStatus(socket, {
+                        quiz_id: params.quizId,
+                        status: QuizStatus.Open,
+                      });
+                    }}
+                    disabled={
+                      socket.readyState !== ReadyState.OPEN ||
+                      quiz.status === QuizStatus.Open
+                    }
+                  >
+                    Open
+                  </Button>
+                </div>
+
+                <div className="flex-1 flex flex-row *:flex-1 gap-2 items-center justify-center">
+                  <Button
+                    onClick={() => {
+                      socket.sendJsonMessage({
+                        event: WebSocketEvent.QuizFreezeSubmit,
+                        data: {
+                          quiz_id: params.quizId,
+                          freezed: true,
+                        },
+                      });
+                    }}
+                    disabled={
+                      socket.readyState !== ReadyState.OPEN || quizFrozen
+                    }
+                  >
+                    Freeze
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      socket.sendJsonMessage({
+                        event: WebSocketEvent.QuizFreezeSubmit,
+                        data: {
+                          quiz_id: params.quizId,
+                          freezed: false,
+                        },
+                      });
+                    }}
+                    disabled={
+                      socket.readyState !== ReadyState.OPEN || !quizFrozen
+                    }
+                  >
+                    Unfreeze
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -371,12 +424,19 @@ function RouteComponent(): JSX.Element {
                         id={question.quiz_question_id}
                         value={question.quiz_question_id}
                         className="sr-only after:absolute after:inset-0"
-                        onClick={() =>
+                        onClick={() => {
                           changeQuestion(socket, {
                             quiz_id: params.quizId,
                             ...question,
-                          })
-                        }
+                          });
+                          socket.sendJsonMessage({
+                            event: WebSocketEvent.QuizFreezeSubmit,
+                            data: {
+                              quiz_id: params.quizId,
+                              freezed: false,
+                            },
+                          });
+                        }}
                         disabled={socket.readyState !== ReadyState.OPEN}
                       />
                       <p>{question.content}</p>

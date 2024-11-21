@@ -14,6 +14,7 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as AboutImport } from './routes/about'
 import { Route as IndexImport } from './routes/index'
 import { Route as UsersIndexImport } from './routes/users/index'
+import { Route as TimerIndexImport } from './routes/timer/index'
 import { Route as RegisterIndexImport } from './routes/register/index'
 import { Route as QuizzesIndexImport } from './routes/quizzes/index'
 import { Route as LoginIndexImport } from './routes/login/index'
@@ -41,6 +42,12 @@ const IndexRoute = IndexImport.update({
 const UsersIndexRoute = UsersIndexImport.update({
   id: '/users/',
   path: '/users/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const TimerIndexRoute = TimerIndexImport.update({
+  id: '/timer/',
+  path: '/timer/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -144,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterIndexImport
       parentRoute: typeof rootRoute
     }
+    '/timer/': {
+      id: '/timer/'
+      path: '/timer'
+      fullPath: '/timer'
+      preLoaderRoute: typeof TimerIndexImport
+      parentRoute: typeof rootRoute
+    }
     '/users/': {
       id: '/users/'
       path: '/users'
@@ -198,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginIndexRoute
   '/quizzes': typeof QuizzesIndexRoute
   '/register': typeof RegisterIndexRoute
+  '/timer': typeof TimerIndexRoute
   '/users': typeof UsersIndexRoute
   '/lobbies/$lobbyId': typeof LobbiesLobbyIdIndexRoute
   '/quizzes/$quizId': typeof QuizzesQuizIdIndexRoute
@@ -213,6 +228,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginIndexRoute
   '/quizzes': typeof QuizzesIndexRoute
   '/register': typeof RegisterIndexRoute
+  '/timer': typeof TimerIndexRoute
   '/users': typeof UsersIndexRoute
   '/lobbies/$lobbyId': typeof LobbiesLobbyIdIndexRoute
   '/quizzes/$quizId': typeof QuizzesQuizIdIndexRoute
@@ -229,6 +245,7 @@ export interface FileRoutesById {
   '/login/': typeof LoginIndexRoute
   '/quizzes/': typeof QuizzesIndexRoute
   '/register/': typeof RegisterIndexRoute
+  '/timer/': typeof TimerIndexRoute
   '/users/': typeof UsersIndexRoute
   '/lobbies/$lobbyId/': typeof LobbiesLobbyIdIndexRoute
   '/quizzes/$quizId/': typeof QuizzesQuizIdIndexRoute
@@ -246,6 +263,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/quizzes'
     | '/register'
+    | '/timer'
     | '/users'
     | '/lobbies/$lobbyId'
     | '/quizzes/$quizId'
@@ -260,6 +278,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/quizzes'
     | '/register'
+    | '/timer'
     | '/users'
     | '/lobbies/$lobbyId'
     | '/quizzes/$quizId'
@@ -274,6 +293,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/quizzes/'
     | '/register/'
+    | '/timer/'
     | '/users/'
     | '/lobbies/$lobbyId/'
     | '/quizzes/$quizId/'
@@ -290,6 +310,7 @@ export interface RootRouteChildren {
   LoginIndexRoute: typeof LoginIndexRoute
   QuizzesIndexRoute: typeof QuizzesIndexRoute
   RegisterIndexRoute: typeof RegisterIndexRoute
+  TimerIndexRoute: typeof TimerIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
   LobbiesLobbyIdIndexRoute: typeof LobbiesLobbyIdIndexRoute
   QuizzesQuizIdIndexRoute: typeof QuizzesQuizIdIndexRoute
@@ -305,6 +326,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginIndexRoute: LoginIndexRoute,
   QuizzesIndexRoute: QuizzesIndexRoute,
   RegisterIndexRoute: RegisterIndexRoute,
+  TimerIndexRoute: TimerIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
   LobbiesLobbyIdIndexRoute: LobbiesLobbyIdIndexRoute,
   QuizzesQuizIdIndexRoute: QuizzesQuizIdIndexRoute,
@@ -329,6 +351,7 @@ export const routeTree = rootRoute
         "/login/",
         "/quizzes/",
         "/register/",
+        "/timer/",
         "/users/",
         "/lobbies/$lobbyId/",
         "/quizzes/$quizId/",
@@ -354,6 +377,9 @@ export const routeTree = rootRoute
     },
     "/register/": {
       "filePath": "register/index.tsx"
+    },
+    "/timer/": {
+      "filePath": "timer/index.tsx"
     },
     "/users/": {
       "filePath": "users/index.tsx"

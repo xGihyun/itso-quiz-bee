@@ -41,7 +41,7 @@ export function WrittenAnswerForm(props: AnswerProps): JSX.Element {
 
       switch (result.event) {
         case WebSocketEvent.QuizChangeQuestion:
-          const data = result.data as QuizChangeQuestionRequest
+          const data = result.data as QuizChangeQuestionRequest;
           form.reset({
             content: "",
             quiz_question_id: data.quiz_question_id,
@@ -80,7 +80,6 @@ export function WrittenAnswerForm(props: AnswerProps): JSX.Element {
     socket.sendJsonMessage(message);
   }
 
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 w-full">
@@ -106,7 +105,7 @@ export function WrittenAnswerForm(props: AnswerProps): JSX.Element {
                     });
                     return field.onChange(event);
                   }}
-                  readOnly={props.hasSubmitted}
+                  readOnly={props.hasSubmitted || props.isFrozen}
                 />
               </FormControl>
               <FormMessage />
@@ -115,7 +114,10 @@ export function WrittenAnswerForm(props: AnswerProps): JSX.Element {
         />
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={props.hasSubmitted}>
+          <Button
+            type="submit"
+            disabled={props.hasSubmitted || props.isFrozen}
+          >
             <CheckIcon size={16} />
             Submit
           </Button>

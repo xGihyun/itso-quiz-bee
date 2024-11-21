@@ -12,13 +12,18 @@ import {
   QuizQuestion,
   QuizQuestionVariant,
 } from "@/lib/quiz/types";
-import { getCurrentAnswer, getCurrentQuestion } from "@/lib/quiz/requests";
+import {
+  freezeQuiz,
+  getCurrentAnswer,
+  getCurrentQuestion,
+  getQuizFreezeState,
+} from "@/lib/quiz/requests";
 import { MultipleChoiceForm } from "./-components/multiple-choice-form";
 import { WrittenAnswerForm } from "./-components/written-form";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { useEffect, useRef, useState } from "react";
 import { hasSubscribers } from "diagnostics_channel";
-import gsap from "gsap"
+import gsap from "gsap";
 
 export const Route = createFileRoute("/quizzes/$quizId/answer/")({
   component: RouteComponent,
@@ -33,6 +38,7 @@ export const Route = createFileRoute("/quizzes/$quizId/answer/")({
 
 function RouteComponent(): JSX.Element {
   const params = Route.useParams();
+  const [freezed, setFreezed] = useState(false);
   const currentQuestionQuery = useQuery({
     queryKey: ["current-question"],
     queryFn: () => getCurrentQuestion(params.quizId),
@@ -42,19 +48,30 @@ function RouteComponent(): JSX.Element {
     queryFn: () => getCurrentAnswer(params.quizId),
   });
 
+  const quizFreezeState = useQuery({
+    queryKey: ["frozen"],
+    queryFn: () => getQuizFreezeState(params.quizId),
+  });
+
+  useEffect(() => {
+    if (quizFreezeState.isFetched) {
+      setFreezed(quizFreezeState.data?.data?.freezed!);
+    }
+  }, [quizFreezeState.isFetched, quizFreezeState.isRefetching]);
+
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const socket = useWebSocket(WEBSOCKET_URL, {
     onMessage: async (event) => {
       const result: WebSocketRequest<QuizQuestion> = await JSON.parse(
-        event.data,
+        event.data
       );
 
       switch (result.event) {
         case WebSocketEvent.QuizChangeQuestion:
           await currentQuestionQuery.refetch();
-
           setHasSubmitted(false);
+          await quizFreezeState.refetch();
 
           toast.info("Next question!");
           break;
@@ -63,6 +80,9 @@ function RouteComponent(): JSX.Element {
           toast.info("Submitted answer!");
           break;
         case WebSocketEvent.QuizTypeAnswer:
+          break;
+        case WebSocketEvent.QuizFreezeSubmit:
+          await quizFreezeState.refetch();
           break;
         default:
           console.warn("Unknown event type:", result.event);
@@ -111,6 +131,7 @@ function RouteComponent(): JSX.Element {
       quizId={params.quizId}
       answer={answer}
       hasSubmitted={hasSubmitted}
+      isFrozen={freezed}
     />
   );
 }
@@ -121,20 +142,25 @@ export type AnswerProps = {
   quizId: string;
   answer: GetWrittenAnswerResponse | null;
   hasSubmitted: boolean;
+  isFrozen: boolean;
 };
 
 function Answer(props: AnswerProps): JSX.Element {
   const mainElement = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    gsap.fromTo(mainElement.current, {
-      scale: 0,
-      opacity: 0
-    }, {
-      scale: 1,
-      opacity: 1
-    })
-  }, [])
+    gsap.fromTo(
+      mainElement.current,
+      {
+        scale: 0,
+        opacity: 0,
+      },
+      {
+        scale: 1,
+        opacity: 1,
+      }
+    );
+  }, []);
 
   return (
     <div ref={mainElement} className="flex flex-col h-full">
