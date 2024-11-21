@@ -68,7 +68,10 @@ export type AdminViewQuizContextType = {
   playerCurrentAnswer: PlayerCurrentAnswer,
   playerCurrentResult: QuizResult;
 
+  currentPlayerViewing: number;
+
   setPlayerViewing: () => void;
+  setCurrentPlayerViewing: (index: number) => void;
 }
 
 export const AdminViewQuizContext = createContext<Partial<AdminViewQuizContextType>>({})
@@ -85,6 +88,26 @@ function RouteComponent(): JSX.Element {
   const [quizQuestion, setQuizQuestion] = useState<QuizQuestion | null>();
   const [currentPlayerAnswer, setCurrentPlayerAnswer] = useState<PlayerCurrentAnswer>();
   const [currentPlayerResult, setCurrentPlayerResult] = useState<QuizResult>();
+  const [currentPlayerViewing, setCurrentPlayerViewing] = useState<number>();
+
+  useEffect(() => {
+    if (currentPlayerViewing == undefined) return;
+    const curplay = players.find((val, idx) => idx == currentPlayerViewing)
+    console.log(curplay)
+    if (!curplay || currentPlayerViewing < 0 || currentPlayerViewing > players.length - 1) return;
+    const answer = playerAnswers.get(curplay!.user_id);
+
+    const result = quizResults.find(
+      (result) => result.user_id === curplay!.user_id,
+    );
+
+    setCurrentPlayerAnswer(answer!);
+    setCurrentPlayerResult(result)
+    setSelectedPlayers(curplay);
+    setQuizQuestion(currentQuestion);
+
+    console.log(currentPlayerViewing)
+  }, [currentPlayerViewing])
 
 
   const [playerAnswers, setPlayerAnswers] = useState<
@@ -237,7 +260,12 @@ function RouteComponent(): JSX.Element {
     playerCurrentResult: currentPlayerResult,
     players: selectedPlayers,
     quizQuestion: quizQuestion,
-    setPlayerViewing: () => setAdminViewing(false)
+    currentPlayerViewing: currentPlayerViewing,
+    setPlayerViewing: () => setAdminViewing(false),
+    setCurrentPlayerViewing: (index: number) => {
+      setCurrentPlayerViewing(index)
+    }
+
   } as AdminViewQuizContextType;
   return (
     <AdminViewQuizContext.Provider value={contextValue}>
@@ -335,8 +363,8 @@ function RouteComponent(): JSX.Element {
 
         <div className=" px-20 py-10 h-full flex flex-col w-full max-w-7xl mx-auto">
           <h2 className="text-2xl my-2 font-['metropolis-bold']">Players</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3">
-            {players.map((player) => {
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {players.map((player, idx) => {
               const answer = playerAnswers.get(player.user_id);
 
               const result = quizResults.find(
@@ -353,12 +381,8 @@ function RouteComponent(): JSX.Element {
                   answer={answer}
                   result={result}
                   onPlayerCardClicked={() => {
-                    setCurrentPlayerAnswer(answer!);
-                    setCurrentPlayerResult(result)
-                    setSelectedPlayers(player);
-                    console.log(player)
-                    setQuizQuestion(currentQuestion);
-                    setAdminViewing(true);
+                    setCurrentPlayerViewing(idx)
+                    setAdminViewing(true)
                   }}
                 />
               );

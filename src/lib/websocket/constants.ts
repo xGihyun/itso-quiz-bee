@@ -24,4 +24,4 @@ export const WEBSOCKET_OPTIONS: Options = {
   reconnectAttempts: 10,
 };
 
-export const WEBSOCKET_URL = `ws://192.168.1.2:3002/ws`;
+export const WEBSOCKET_URL = `ws://localhost:3002/ws`;
