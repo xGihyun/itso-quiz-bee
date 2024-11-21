@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { v4 as uuidv4 } from "uuid";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Form,
@@ -24,19 +25,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  NewQuizInput,
-  NewQuizSchema,
-} from "./schema";
+import { NewQuizInput, NewQuizSchema } from "./schema";
 import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
-import { DEFAULT_ANSWER, DEFAULT_QUESTION } from "../-constants";
 import { useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ApiResponse } from "@/lib/api/types";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { QuizQuestionVariant, QuizStatus } from "@/lib/quiz/types";
+import { createDefaultAnswer, createDefaultQuestion } from "../-constants";
 
 type Props = {
   quiz?: NewQuizInput;
@@ -48,12 +46,12 @@ export function EditQuizForm(props: Props): JSX.Element {
   const form = useForm<NewQuizInput>({
     resolver: zodResolver(NewQuizSchema),
     defaultValues: props.quiz || {
-      questions: [DEFAULT_QUESTION],
+      questions: [createDefaultQuestion()],
       description: "",
       name: "Untitled Quiz",
       status: QuizStatus.Closed,
       quiz_id: params.quizId,
-      lobby_id: "",
+      lobby_id: null
     },
   });
 
@@ -90,14 +88,14 @@ export function EditQuizForm(props: Props): JSX.Element {
   }
 
   function resetAnswer(value: string, index: number): void {
-    const newAnswer = DEFAULT_ANSWER.get(value as QuizQuestionVariant);
+    const newAnswer = createDefaultAnswer();
 
     if (!newAnswer) {
       console.error("Invalid question variant:", value);
       return;
     }
 
-    form.setValue(`questions.${index}.answers`, newAnswer);
+    form.setValue(`questions.${index}.answers`, [newAnswer]);
   }
 
   return (
@@ -179,7 +177,9 @@ export function EditQuizForm(props: Props): JSX.Element {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value={QuizQuestionVariant.MultipleChoice}>
+                          <SelectItem
+                            value={QuizQuestionVariant.MultipleChoice}
+                          >
                             Multiple Choice
                           </SelectItem>
                           <SelectItem value={QuizQuestionVariant.Boolean}>
@@ -190,6 +190,19 @@ export function EditQuizForm(props: Props): JSX.Element {
                           </SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name={`questions.${i}.points`}
+                  render={({ field }) => (
+                    <FormItem className="w-full col-span-1">
+                      <FormControl>
+                        <Input placeholder="Points" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -206,12 +219,11 @@ export function EditQuizForm(props: Props): JSX.Element {
         <div className="flex flex-col gap-2">
           <Button
             type="button"
-            onClick={() => formQuestions.append(DEFAULT_QUESTION)}
+            onClick={() => formQuestions.append(createDefaultQuestion())}
             variant="secondary"
           >
             Add Question
           </Button>
-
           <Button type="submit">Create Quiz</Button>
         </div>
       </form>
@@ -244,7 +256,8 @@ function AnswersField(props: AnswersFieldProps): JSX.Element {
 
     formAnswers.append({
       content: `Option ${formAnswers.fields.length + 1}`,
-      is_correct: false,
+      is_correct: true,
+      quiz_answer_id: uuidv4(),
     });
   }
 
@@ -252,7 +265,7 @@ function AnswersField(props: AnswersFieldProps): JSX.Element {
     formAnswers.fields.forEach((_, i) => {
       props.form.setValue(
         `questions.${props.index}.answers.${i}.is_correct`,
-        false,
+        true,
       );
     });
 
@@ -269,11 +282,13 @@ function AnswersField(props: AnswersFieldProps): JSX.Element {
         {formAnswers.fields.map((field, i) => {
           return (
             <div key={field.id} className="flex items-center space-x-2">
+              {/*
               <RadioGroupItem
                 value={i.toString()}
                 onClick={() => handleRadioSelect(i)}
                 checked={field.is_correct}
               />
+                 */}
               <FormField
                 control={props.form.control}
                 name={`questions.${props.index}.answers.${i}.content`}

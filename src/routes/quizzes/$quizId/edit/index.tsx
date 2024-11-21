@@ -64,5 +64,7 @@ async function getQuiz(quizId: string): Promise<ApiResponse<NewQuizInput>> {
 
   const result: ApiResponse<NewQuizInput> = await response.json();
 
+  console.log(result)
+
   return result;
 }

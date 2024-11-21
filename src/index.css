@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -29,25 +30,26 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem
   }
+
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --background: 224 83% 7%;
+    --foreground: 193 87% 94%;
+    --card: 224 83% 9%;
+    --card-foreground: 193 87% 94%;
     --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --popover-foreground: 193 87% 94%;
+    --primary: 200 88% 73%;
+    --primary-foreground: 224 83% 7%;
+    --secondary: 224 35% 60%;
+    --secondary-foreground: 224 83% 7%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --accent: 155 95% 58%;
+    --accent-foreground: 224 83% 7%;
+    --destructive: 0 62.8% 40%;
+    --destructive-foreground: 193 87% 94%;
+    --border: 224 35% 20%;
+    --input: 224 35% 20%;
     --ring: 212.7 26.8% 83.9%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -55,11 +57,54 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%
   }
+
+  @font-face {
+    font-family: marcellus;
+    src: url('/static/fonts/marcellus/Marcellus-Regular.ttf');
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: metropolis;
+    src: url('/static/fonts/metropolis/Metropolis-Regular.otf');
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: metropolis-medium;
+    src: url('/static/fonts/metropolis/Metropolis-Medium.otf');
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: metropolis-semibold;
+    src: url('/static/fonts/metropolis/Metropolis-SemiBold.otf');
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: metropolis-bold;
+    src: url('/static/fonts/metropolis/Metropolis-Bold.otf');
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: metropolis-black;
+    src: url('/static/fonts/metropolis/Metropolis-Black.otf');
+    font-display: swap;
+  }
 }
+
 @layer base {
   * {
     @apply border-border;
   }
+
+  * {
+    font-family: metropolis, sans-serif;
+    /* border: 1px solid red;  */
+  }
+
   body {
     @apply bg-background text-foreground;
   }

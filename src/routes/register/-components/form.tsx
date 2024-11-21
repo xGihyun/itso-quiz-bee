@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { ApiResponse } from "@/lib/api/types";
 import { useNavigate } from "@tanstack/react-router";
+import { UserRole } from "@/lib/user/types";
 
 export function RegisterForm(): JSX.Element {
   const navigate = useNavigate({ from: "/register" });
@@ -30,6 +31,10 @@ export function RegisterForm(): JSX.Element {
     defaultValues: {
       email: "",
       password: "",
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      role: UserRole.Player,
     },
   });
 
@@ -92,6 +97,48 @@ export function RegisterForm(): JSX.Element {
                   <FormLabel>Password</FormLabel>
                   <FormControl>
                     <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="first_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>First Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="middle_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Middle Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="last_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

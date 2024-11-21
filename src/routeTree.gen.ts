@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as AboutImport } from './routes/about'
 import { Route as IndexImport } from './routes/index'
+import { Route as UsersIndexImport } from './routes/users/index'
 import { Route as RegisterIndexImport } from './routes/register/index'
 import { Route as QuizzesIndexImport } from './routes/quizzes/index'
 import { Route as LoginIndexImport } from './routes/login/index'
@@ -34,6 +35,12 @@ const AboutRoute = AboutImport.update({
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const UsersIndexRoute = UsersIndexImport.update({
+  id: '/users/',
+  path: '/users/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -137,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterIndexImport
       parentRoute: typeof rootRoute
     }
+    '/users/': {
+      id: '/users/'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof UsersIndexImport
+      parentRoute: typeof rootRoute
+    }
     '/lobbies/$lobbyId/': {
       id: '/lobbies/$lobbyId/'
       path: '/lobbies/$lobbyId'
@@ -184,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginIndexRoute
   '/quizzes': typeof QuizzesIndexRoute
   '/register': typeof RegisterIndexRoute
+  '/users': typeof UsersIndexRoute
   '/lobbies/$lobbyId': typeof LobbiesLobbyIdIndexRoute
   '/quizzes/$quizId': typeof QuizzesQuizIdIndexRoute
   '/quizzes/$quizId/answer': typeof QuizzesQuizIdAnswerIndexRoute
@@ -198,6 +213,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginIndexRoute
   '/quizzes': typeof QuizzesIndexRoute
   '/register': typeof RegisterIndexRoute
+  '/users': typeof UsersIndexRoute
   '/lobbies/$lobbyId': typeof LobbiesLobbyIdIndexRoute
   '/quizzes/$quizId': typeof QuizzesQuizIdIndexRoute
   '/quizzes/$quizId/answer': typeof QuizzesQuizIdAnswerIndexRoute
@@ -213,6 +229,7 @@ export interface FileRoutesById {
   '/login/': typeof LoginIndexRoute
   '/quizzes/': typeof QuizzesIndexRoute
   '/register/': typeof RegisterIndexRoute
+  '/users/': typeof UsersIndexRoute
   '/lobbies/$lobbyId/': typeof LobbiesLobbyIdIndexRoute
   '/quizzes/$quizId/': typeof QuizzesQuizIdIndexRoute
   '/quizzes/$quizId/answer/': typeof QuizzesQuizIdAnswerIndexRoute
@@ -229,6 +246,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/quizzes'
     | '/register'
+    | '/users'
     | '/lobbies/$lobbyId'
     | '/quizzes/$quizId'
     | '/quizzes/$quizId/answer'
@@ -242,6 +260,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/quizzes'
     | '/register'
+    | '/users'
     | '/lobbies/$lobbyId'
     | '/quizzes/$quizId'
     | '/quizzes/$quizId/answer'
@@ -255,6 +274,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/quizzes/'
     | '/register/'
+    | '/users/'
     | '/lobbies/$lobbyId/'
     | '/quizzes/$quizId/'
     | '/quizzes/$quizId/answer/'
@@ -270,6 +290,7 @@ export interface RootRouteChildren {
   LoginIndexRoute: typeof LoginIndexRoute
   QuizzesIndexRoute: typeof QuizzesIndexRoute
   RegisterIndexRoute: typeof RegisterIndexRoute
+  UsersIndexRoute: typeof UsersIndexRoute
   LobbiesLobbyIdIndexRoute: typeof LobbiesLobbyIdIndexRoute
   QuizzesQuizIdIndexRoute: typeof QuizzesQuizIdIndexRoute
   QuizzesQuizIdAnswerIndexRoute: typeof QuizzesQuizIdAnswerIndexRoute
@@ -284,6 +305,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginIndexRoute: LoginIndexRoute,
   QuizzesIndexRoute: QuizzesIndexRoute,
   RegisterIndexRoute: RegisterIndexRoute,
+  UsersIndexRoute: UsersIndexRoute,
   LobbiesLobbyIdIndexRoute: LobbiesLobbyIdIndexRoute,
   QuizzesQuizIdIndexRoute: QuizzesQuizIdIndexRoute,
   QuizzesQuizIdAnswerIndexRoute: QuizzesQuizIdAnswerIndexRoute,
@@ -307,6 +329,7 @@ export const routeTree = rootRoute
         "/login/",
         "/quizzes/",
         "/register/",
+        "/users/",
         "/lobbies/$lobbyId/",
         "/quizzes/$quizId/",
         "/quizzes/$quizId/answer/",
@@ -331,6 +354,9 @@ export const routeTree = rootRoute
     },
     "/register/": {
       "filePath": "register/index.tsx"
+    },
+    "/users/": {
+      "filePath": "users/index.tsx"
     },
     "/lobbies/$lobbyId/": {
       "filePath": "lobbies/$lobbyId/index.tsx"

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   QuizChangeQuestionRequest,
   QuizStartRequest,
+  QuizUpdateStatusRequest,
   WebSocketEvent,
   WebSocketRequest,
   WebSocketResponse,
@@ -22,7 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ApiResponse, ApiResponseStatus } from "@/lib/api/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, PlayIcon } from "lucide-react";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -31,10 +32,11 @@ import {
   MultipleChoiceInput,
   WrittenAnswerInput,
 } from "../answer/-components/schema";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { getCurrentUser } from "@/lib/server";
 import { UserRole } from "@/lib/user/types";
 import { Player } from "./-components/player";
+import PlayerFullscreen from "./-components/player-fullscreen";
 
 export const Route = createFileRoute("/quizzes/$quizId/view/")({
   component: RouteComponent,
@@ -58,15 +60,60 @@ export const Route = createFileRoute("/quizzes/$quizId/view/")({
 // Admin can see the players' current answers in real-time
 // Admin can move to the next/previous question
 
+export type AdminViewQuizContextType = {
+  players: QuizUser | undefined;
+  adminViewing: boolean;
+
+  quizQuestion: QuizQuestion | null;
+  playerCurrentAnswer: PlayerCurrentAnswer,
+  playerCurrentResult: QuizResult;
+
+  currentPlayerViewing: number;
+
+  setPlayerViewing: () => void;
+  setCurrentPlayerViewing: (index: number) => void;
+}
+
+export const AdminViewQuizContext = createContext<Partial<AdminViewQuizContextType>>({})
+
 function RouteComponent(): JSX.Element {
   const params = Route.useParams();
 
   //const [playerResults, setPlayerResults] = useState<
   //  Map<string, PlayerAnswerState>
   //>(new Map());
+
+  const [selectedPlayers, setSelectedPlayers] = useState<QuizUser | undefined>();
+  const [isAdminViewing, setAdminViewing] = useState(false);
+  const [quizQuestion, setQuizQuestion] = useState<QuizQuestion | null>();
+  const [currentPlayerAnswer, setCurrentPlayerAnswer] = useState<PlayerCurrentAnswer>();
+  const [currentPlayerResult, setCurrentPlayerResult] = useState<QuizResult>();
+  const [currentPlayerViewing, setCurrentPlayerViewing] = useState<number>();
+
+  useEffect(() => {
+    if (currentPlayerViewing == undefined) return;
+    const curplay = players.find((val, idx) => idx == currentPlayerViewing)
+    console.log(curplay)
+    if (!curplay || currentPlayerViewing < 0 || currentPlayerViewing > players.length - 1) return;
+    const answer = playerAnswers.get(curplay!.user_id);
+
+    const result = quizResults.find(
+      (result) => result.user_id === curplay!.user_id,
+    );
+
+    setCurrentPlayerAnswer(answer!);
+    setCurrentPlayerResult(result)
+    setSelectedPlayers(curplay);
+    setQuizQuestion(currentQuestion);
+
+    console.log(currentPlayerViewing)
+  }, [currentPlayerViewing])
+
+
   const [playerAnswers, setPlayerAnswers] = useState<
     Map<string, PlayerCurrentAnswer>
   >(new Map());
+  const [players, setPlayers] = useState<QuizUser[]>([])
 
   const quizQuery = useQuery({
     queryKey: ["quiz"],
@@ -91,19 +138,42 @@ function RouteComponent(): JSX.Element {
 
       switch (result.event) {
         case WebSocketEvent.UserJoin:
-          // NOTE:
-          // Probably not a good idea to constantly refetch on player join
-          await playersQuery.refetch();
+          {
+            console.log(result);
+
+            // TODO: Use this data to create mutate the state of a QuizUser array
+            const data = result.data as QuizUser;
+
+            //setPlayers() ???
+
+            // NOTE:
+            // Probably not a good idea to constantly refetch on player join
+            await playersQuery.refetch();
+          }
           break;
-        case WebSocketEvent.QuizStart:
-          toast.info("Quiz has started!");
+        case WebSocketEvent.QuizUpdateStatus:
+          {
+            const data = result.data as QuizUpdateStatusRequest;
+
+            await quizQuery.refetch();
+
+            switch (data.status) {
+              case QuizStatus.Started:
+                await currentQuestionQuery.refetch();
+                toast.info("Quiz has started!");
+                break;
+              default:
+                console.log("Quiz status updated:", data.status);
+            }
+          }
           break;
 
         case WebSocketEvent.QuizChangeQuestion:
-          toast.info("Next question!");
-
           // NOTE: Probably not the best idea but it works
           await currentQuestionQuery.refetch();
+
+          toast.info("Next question!");
+
           break;
 
         case WebSocketEvent.QuizSelectAnswer:
@@ -131,6 +201,12 @@ function RouteComponent(): JSX.Element {
                 event: WebSocketEvent.QuizTypeAnswer,
                 data,
               });
+
+              if (currentPlayerAnswer) {
+                // @ts-ignore
+                setCurrentPlayerAnswer(oldAnswer => newAnswers.values().find(val => val.data.quiz_answer_id == oldAnswer?.data.quiz_answer_id))
+              }
+
               return newAnswers;
             });
           }
@@ -140,6 +216,14 @@ function RouteComponent(): JSX.Element {
           // NOTE:
           // Probably not a good idea to constantly refetch on each submission
           await quizResultsQuery.refetch();
+          if (selectedPlayers) {
+            const result = quizResults.find(
+              (result) => result.user_id === selectedPlayers.user_id,
+            );
+
+            console.log("has player")
+            setCurrentPlayerResult(oldResult => result)
+          }
           break;
 
         default:
@@ -176,82 +260,145 @@ function RouteComponent(): JSX.Element {
 
   const quiz = quizQuery.data.data;
   const currentQuestion = currentQuestionQuery.data.data;
-  const players = playersQuery.data.data;
+  //const players = playersQuery.data.data;
   const quizResults = quizResultsQuery.data.data;
 
+  const maxScore = quiz.questions.reduce((prev, acc) => prev + acc.points, 0);
+  const contextValue = {
+    adminViewing: isAdminViewing,
+    playerCurrentAnswer: currentPlayerAnswer,
+    playerCurrentResult: currentPlayerResult,
+    players: selectedPlayers,
+    quizQuestion: quizQuestion,
+    currentPlayerViewing: currentPlayerViewing,
+    setPlayerViewing: () => setAdminViewing(false),
+    setCurrentPlayerViewing: (index: number) => {
+      setCurrentPlayerViewing(index)
+    }
+
+  } as AdminViewQuizContextType;
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-20 py-10 h-full flex flex-col items-center bg-secondary/50 ">
-        <Button
-          onClick={() =>
-            startQuiz(socket, {
-              quiz_id: params.quizId,
-              quiz_question_id: quiz.questions[0].quiz_question_id,
-              status: QuizStatus.Started,
-            })
-          }
-          disabled={socket.readyState !== ReadyState.OPEN}
-        >
-          Start
-        </Button>
-
-        <h2 className="text-2xl my-2 font-bold">Questions</h2>
-
-        <RadioGroup
-          className="grid-cols-4"
-          defaultValue={
-            currentQuestion
-              ? currentQuestion.quiz_question_id
-              : quiz.questions[0].quiz_question_id
-          }
-        >
-          {quiz.questions.map((question) => {
-            return (
-              <label
-                className="relative flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-input px-2 py-3 text-center shadow-sm shadow-black/5 ring-offset-background transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/70 has-[:focus-visible]:ring-offset-2"
-                key={question.quiz_question_id}
-              >
-                <RadioGroupItem
-                  id={question.quiz_question_id}
-                  value={question.quiz_question_id}
-                  className="sr-only after:absolute after:inset-0"
-                  onClick={() =>
-                    changeQuestion(socket, {
+    <AdminViewQuizContext.Provider value={contextValue}>
+      <div className="flex flex-col h-full">
+        <PlayerFullscreen />
+        <div className="h-full flex flex-col items-center bg-card">
+          <div className="px-10 py-10 max-w-7xl">
+            <div className="flex justify-center flex-col items-center gap-2 bg-card">
+              <h1 className="text-center font-['metropolis-bold'] text-3xl">
+                13th ITSO Quiz Bee
+              </h1>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    updateQuizStatus(socket, {
                       quiz_id: params.quizId,
-                      ...question,
-                    })
+                      quiz_question_id: quiz.questions[0].quiz_question_id,
+                      status: QuizStatus.Started,
+                    });
+                  }}
+                  disabled={
+                    socket.readyState !== ReadyState.OPEN ||
+                    quiz.status === QuizStatus.Started
                   }
-                  disabled={socket.readyState !== ReadyState.OPEN}
+                >
+                  <PlayIcon size={16} strokeWidth={2} />
+                  Start
+                </Button>
+
+                <Button
+                  onClick={() => {
+                    updateQuizStatus(socket, {
+                      quiz_id: params.quizId,
+                      status: QuizStatus.Open,
+                    });
+                  }}
+                  disabled={
+                    socket.readyState !== ReadyState.OPEN ||
+                    quiz.status === QuizStatus.Open
+                  }
+                >
+                  Open
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl my-2 font-['metropolis-bold']">
+                Questions
+              </h2>
+
+              <RadioGroup
+                className="grid-cols-2 lg:grid-cols-4"
+                defaultValue={
+                  currentQuestion
+                    ? currentQuestion.quiz_question_id
+                    : quiz.questions[0].quiz_question_id
+                }
+                value={
+                  currentQuestion
+                    ? currentQuestion.quiz_question_id
+                    : quiz.questions[0].quiz_question_id
+                }
+              >
+                {quiz.questions.map((question) => {
+                  return (
+                    <label
+                      className="relative h-28 flex cursor-pointer bg-background/50 flex-col items-center gap-3 rounded-lg border border-input px-3 py-2 justify-center text-center shadow-sm shadow-black/5 ring-offset-background transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent has-[[data-state=checked]]:text-background has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/70 has-[:focus-visible]:ring-offset-2"
+                      key={question.quiz_question_id}
+                    >
+                      <span className="absolute top-2 left-3 text-sm">
+                        {question.order_number}
+                      </span>
+                      <RadioGroupItem
+                        id={question.quiz_question_id}
+                        value={question.quiz_question_id}
+                        className="sr-only after:absolute after:inset-0"
+                        onClick={() =>
+                          changeQuestion(socket, {
+                            quiz_id: params.quizId,
+                            ...question,
+                          })
+                        }
+                        disabled={socket.readyState !== ReadyState.OPEN}
+                      />
+                      <p>{question.content}</p>
+                    </label>
+                  );
+                })}
+              </RadioGroup>
+            </div>
+          </div>
+        </div>
+        <div className=" px-20 py-10 h-full flex flex-col w-full max-w-7xl mx-auto">
+          <h2 className="text-2xl my-2 font-['metropolis-bold']">Players</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {players.map((player, idx) => {
+              const answer = playerAnswers.get(player.user_id);
+
+              const result = quizResults.find(
+                (result) => result.user_id === player.user_id,
+              );
+
+
+              return (
+                <Player
+                  key={player.user_id}
+                  question={currentQuestion}
+                  maxScore={maxScore}
+                  player={player}
+                  answer={answer}
+                  result={result}
+                  onPlayerCardClicked={() => {
+                    setCurrentPlayerViewing(idx)
+                    setAdminViewing(true)
+                  }}
                 />
-                <p>{question.content}</p>
-              </label>
-            );
-          })}
-        </RadioGroup>
-      </div>
-
-      <div className=" px-20 py-10 h-full flex flex-col w-full max-w-5xl mx-auto">
-        <h2 className="text-2xl my-2 font-bold">Players</h2>
-        <div>
-          {players.map((player) => {
-            const answer = playerAnswers.get(player.user_id);
-            const result = quizResults.find(
-              (result) => result.user_id === player.user_id,
-            );
-
-            return (
-              <Player
-                key={player.user_id}
-                question={currentQuestion}
-                player={player}
-                answer={answer}
-                result={result}
-              />
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </AdminViewQuizContext.Provider>
   );
 }
 
@@ -297,14 +444,13 @@ async function getResults(quizId: string): Promise<ApiResponse<QuizResult[]>> {
   return result;
 }
 
-function startQuiz(socket: WebSocketHook, data: QuizStartRequest): void {
-  const message: WebSocketRequest<QuizStartRequest> = {
-    event: WebSocketEvent.QuizStart,
-    data: {
-      quiz_id: data.quiz_id,
-      status: data.status,
-      quiz_question_id: data.quiz_question_id,
-    },
+function updateQuizStatus(
+  socket: WebSocketHook,
+  data: QuizUpdateStatusRequest,
+): void {
+  const message: WebSocketRequest<QuizUpdateStatusRequest> = {
+    event: WebSocketEvent.QuizUpdateStatus,
+    data: data,
   };
 
   socket.sendJsonMessage(message);
@@ -336,4 +482,14 @@ function QueryError(props: QueryErrorProps): JSX.Element {
       <AlertDescription>{props.message}</AlertDescription>
     </Alert>
   );
+}
+
+export function useAdminView() {
+  const context = useContext(AdminViewQuizContext);
+  if (!context) {
+    throw new Error(
+      "useAdminView must be used within a LessonModalProvider"
+    );
+  }
+  return context;
 }
