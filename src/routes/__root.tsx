@@ -1,39 +1,32 @@
 import { Toaster } from "@/components/ui/sonner";
-import { Outlet, createRootRoute, useLocation } from "@tanstack/react-router";
+import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-const queryClient = new QueryClient();
-import "../index.css";
 import { Navbar } from "./-components/navbar";
-import SplashScreen from "./-components/splash";
+import "../index.css";
+import { AuthContextValue, useAuth } from "@/lib/auth/context";
 
-export const Route = createRootRoute({
-  component: RootComponent,
+type RouterContext = {
+	auth: AuthContextValue;
+};
+
+export const Route = createRootRouteWithContext<RouterContext>()({
+	component: RootComponent
 });
 
 function RootComponent() {
-  const location = useLocation();
+	const auth = useAuth();
 
-  return (
-    <>
-      <QueryClientProvider client={queryClient}>
-        <Toaster closeButton />
-        {/* <SplashScreen /> */}
+	return (
+		<>
+			<Toaster closeButton richColors />
 
-        {location.pathname.startsWith("/quizzes") &&
-        location.pathname.endsWith("answer") ? null : (
-          <Navbar />
-        )}
+			{auth.user !== null ? <Navbar /> : null}
 
-        <main className="h-[100svh]">
-          <div className="h-full pt-16">
-            <Outlet />
-          </div>
-        </main>
+			<main className={auth.user !== null ? "py-16" : ""}>
+				<Outlet />
+			</main>
 
-        <TanStackRouterDevtools position="bottom-right" />
-      </QueryClientProvider>
-    </>
-  );
+			<TanStackRouterDevtools position="bottom-right" />
+		</>
+	);
 }

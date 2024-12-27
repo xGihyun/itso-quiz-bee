@@ -11,243 +11,232 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as AboutImport } from './routes/about'
-import { Route as IndexImport } from './routes/index'
-import { Route as UsersIndexImport } from './routes/users/index'
-import { Route as RegisterIndexImport } from './routes/register/index'
-import { Route as QuizzesIndexImport } from './routes/quizzes/index'
-import { Route as LoginIndexImport } from './routes/login/index'
-import { Route as LobbiesIndexImport } from './routes/lobbies/index'
-import { Route as QuizzesQuizIdIndexImport } from './routes/quizzes/$quizId/index'
-import { Route as LobbiesLobbyIdIndexImport } from './routes/lobbies/$lobbyId/index'
-import { Route as QuizzesQuizIdViewIndexImport } from './routes/quizzes/$quizId/view/index'
-import { Route as QuizzesQuizIdEditIndexImport } from './routes/quizzes/$quizId/edit/index'
-import { Route as QuizzesQuizIdAnswerIndexImport } from './routes/quizzes/$quizId/answer/index'
+import { Route as AuthImport } from './routes/_auth'
+import { Route as AuthIndexImport } from './routes/_auth/index'
+import { Route as AuthUsersIndexImport } from './routes/_auth/users/index'
+import { Route as AuthQuizzesIndexImport } from './routes/_auth/quizzes/index'
+import { Route as authRegisterIndexImport } from './routes/(auth)/register/index'
+import { Route as authLoginIndexImport } from './routes/(auth)/login/index'
+import { Route as AuthQuizzesQuizIdIndexImport } from './routes/_auth/quizzes/$quizId/index'
+import { Route as AuthQuizzesQuizIdViewIndexImport } from './routes/_auth/quizzes/$quizId/view/index'
+import { Route as AuthQuizzesQuizIdEditIndexImport } from './routes/_auth/quizzes/$quizId/edit/index'
+import { Route as AuthQuizzesQuizIdAnswerIndexImport } from './routes/_auth/quizzes/$quizId/answer/index'
 
 // Create/Update Routes
 
-const AboutRoute = AboutImport.update({
-  id: '/about',
-  path: '/about',
+const AuthRoute = AuthImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRoute,
 } as any)
 
-const IndexRoute = IndexImport.update({
+const AuthIndexRoute = AuthIndexImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthRoute,
 } as any)
 
-const UsersIndexRoute = UsersIndexImport.update({
+const AuthUsersIndexRoute = AuthUsersIndexImport.update({
   id: '/users/',
   path: '/users/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthRoute,
 } as any)
 
-const RegisterIndexRoute = RegisterIndexImport.update({
-  id: '/register/',
+const AuthQuizzesIndexRoute = AuthQuizzesIndexImport.update({
+  id: '/quizzes/',
+  path: '/quizzes/',
+  getParentRoute: () => AuthRoute,
+} as any)
+
+const authRegisterIndexRoute = authRegisterIndexImport.update({
+  id: '/(auth)/register/',
   path: '/register/',
   getParentRoute: () => rootRoute,
 } as any)
 
-const QuizzesIndexRoute = QuizzesIndexImport.update({
-  id: '/quizzes/',
-  path: '/quizzes/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const LoginIndexRoute = LoginIndexImport.update({
-  id: '/login/',
+const authLoginIndexRoute = authLoginIndexImport.update({
+  id: '/(auth)/login/',
   path: '/login/',
   getParentRoute: () => rootRoute,
 } as any)
 
-const LobbiesIndexRoute = LobbiesIndexImport.update({
-  id: '/lobbies/',
-  path: '/lobbies/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const QuizzesQuizIdIndexRoute = QuizzesQuizIdIndexImport.update({
+const AuthQuizzesQuizIdIndexRoute = AuthQuizzesQuizIdIndexImport.update({
   id: '/quizzes/$quizId/',
   path: '/quizzes/$quizId/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthRoute,
 } as any)
 
-const LobbiesLobbyIdIndexRoute = LobbiesLobbyIdIndexImport.update({
-  id: '/lobbies/$lobbyId/',
-  path: '/lobbies/$lobbyId/',
-  getParentRoute: () => rootRoute,
-} as any)
+const AuthQuizzesQuizIdViewIndexRoute = AuthQuizzesQuizIdViewIndexImport.update(
+  {
+    id: '/quizzes/$quizId/view/',
+    path: '/quizzes/$quizId/view/',
+    getParentRoute: () => AuthRoute,
+  } as any,
+)
 
-const QuizzesQuizIdViewIndexRoute = QuizzesQuizIdViewIndexImport.update({
-  id: '/quizzes/$quizId/view/',
-  path: '/quizzes/$quizId/view/',
-  getParentRoute: () => rootRoute,
-} as any)
+const AuthQuizzesQuizIdEditIndexRoute = AuthQuizzesQuizIdEditIndexImport.update(
+  {
+    id: '/quizzes/$quizId/edit/',
+    path: '/quizzes/$quizId/edit/',
+    getParentRoute: () => AuthRoute,
+  } as any,
+)
 
-const QuizzesQuizIdEditIndexRoute = QuizzesQuizIdEditIndexImport.update({
-  id: '/quizzes/$quizId/edit/',
-  path: '/quizzes/$quizId/edit/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const QuizzesQuizIdAnswerIndexRoute = QuizzesQuizIdAnswerIndexImport.update({
-  id: '/quizzes/$quizId/answer/',
-  path: '/quizzes/$quizId/answer/',
-  getParentRoute: () => rootRoute,
-} as any)
+const AuthQuizzesQuizIdAnswerIndexRoute =
+  AuthQuizzesQuizIdAnswerIndexImport.update({
+    id: '/quizzes/$quizId/answer/',
+    path: '/quizzes/$quizId/answer/',
+    getParentRoute: () => AuthRoute,
+  } as any)
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthImport
+      parentRoute: typeof rootRoute
+    }
+    '/_auth/': {
+      id: '/_auth/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof AuthIndexImport
+      parentRoute: typeof AuthImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutImport
-      parentRoute: typeof rootRoute
-    }
-    '/lobbies/': {
-      id: '/lobbies/'
-      path: '/lobbies'
-      fullPath: '/lobbies'
-      preLoaderRoute: typeof LobbiesIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/login/': {
-      id: '/login/'
+    '/(auth)/login/': {
+      id: '/(auth)/login/'
       path: '/login'
       fullPath: '/login'
-      preLoaderRoute: typeof LoginIndexImport
+      preLoaderRoute: typeof authLoginIndexImport
       parentRoute: typeof rootRoute
     }
-    '/quizzes/': {
-      id: '/quizzes/'
-      path: '/quizzes'
-      fullPath: '/quizzes'
-      preLoaderRoute: typeof QuizzesIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/register/': {
-      id: '/register/'
+    '/(auth)/register/': {
+      id: '/(auth)/register/'
       path: '/register'
       fullPath: '/register'
-      preLoaderRoute: typeof RegisterIndexImport
+      preLoaderRoute: typeof authRegisterIndexImport
       parentRoute: typeof rootRoute
     }
-    '/users/': {
-      id: '/users/'
+    '/_auth/quizzes/': {
+      id: '/_auth/quizzes/'
+      path: '/quizzes'
+      fullPath: '/quizzes'
+      preLoaderRoute: typeof AuthQuizzesIndexImport
+      parentRoute: typeof AuthImport
+    }
+    '/_auth/users/': {
+      id: '/_auth/users/'
       path: '/users'
       fullPath: '/users'
-      preLoaderRoute: typeof UsersIndexImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof AuthUsersIndexImport
+      parentRoute: typeof AuthImport
     }
-    '/lobbies/$lobbyId/': {
-      id: '/lobbies/$lobbyId/'
-      path: '/lobbies/$lobbyId'
-      fullPath: '/lobbies/$lobbyId'
-      preLoaderRoute: typeof LobbiesLobbyIdIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/quizzes/$quizId/': {
-      id: '/quizzes/$quizId/'
+    '/_auth/quizzes/$quizId/': {
+      id: '/_auth/quizzes/$quizId/'
       path: '/quizzes/$quizId'
       fullPath: '/quizzes/$quizId'
-      preLoaderRoute: typeof QuizzesQuizIdIndexImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof AuthQuizzesQuizIdIndexImport
+      parentRoute: typeof AuthImport
     }
-    '/quizzes/$quizId/answer/': {
-      id: '/quizzes/$quizId/answer/'
+    '/_auth/quizzes/$quizId/answer/': {
+      id: '/_auth/quizzes/$quizId/answer/'
       path: '/quizzes/$quizId/answer'
       fullPath: '/quizzes/$quizId/answer'
-      preLoaderRoute: typeof QuizzesQuizIdAnswerIndexImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof AuthQuizzesQuizIdAnswerIndexImport
+      parentRoute: typeof AuthImport
     }
-    '/quizzes/$quizId/edit/': {
-      id: '/quizzes/$quizId/edit/'
+    '/_auth/quizzes/$quizId/edit/': {
+      id: '/_auth/quizzes/$quizId/edit/'
       path: '/quizzes/$quizId/edit'
       fullPath: '/quizzes/$quizId/edit'
-      preLoaderRoute: typeof QuizzesQuizIdEditIndexImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof AuthQuizzesQuizIdEditIndexImport
+      parentRoute: typeof AuthImport
     }
-    '/quizzes/$quizId/view/': {
-      id: '/quizzes/$quizId/view/'
+    '/_auth/quizzes/$quizId/view/': {
+      id: '/_auth/quizzes/$quizId/view/'
       path: '/quizzes/$quizId/view'
       fullPath: '/quizzes/$quizId/view'
-      preLoaderRoute: typeof QuizzesQuizIdViewIndexImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof AuthQuizzesQuizIdViewIndexImport
+      parentRoute: typeof AuthImport
     }
   }
 }
 
 // Create and export the route tree
 
+interface AuthRouteChildren {
+  AuthIndexRoute: typeof AuthIndexRoute
+  AuthQuizzesIndexRoute: typeof AuthQuizzesIndexRoute
+  AuthUsersIndexRoute: typeof AuthUsersIndexRoute
+  AuthQuizzesQuizIdIndexRoute: typeof AuthQuizzesQuizIdIndexRoute
+  AuthQuizzesQuizIdAnswerIndexRoute: typeof AuthQuizzesQuizIdAnswerIndexRoute
+  AuthQuizzesQuizIdEditIndexRoute: typeof AuthQuizzesQuizIdEditIndexRoute
+  AuthQuizzesQuizIdViewIndexRoute: typeof AuthQuizzesQuizIdViewIndexRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthIndexRoute: AuthIndexRoute,
+  AuthQuizzesIndexRoute: AuthQuizzesIndexRoute,
+  AuthUsersIndexRoute: AuthUsersIndexRoute,
+  AuthQuizzesQuizIdIndexRoute: AuthQuizzesQuizIdIndexRoute,
+  AuthQuizzesQuizIdAnswerIndexRoute: AuthQuizzesQuizIdAnswerIndexRoute,
+  AuthQuizzesQuizIdEditIndexRoute: AuthQuizzesQuizIdEditIndexRoute,
+  AuthQuizzesQuizIdViewIndexRoute: AuthQuizzesQuizIdViewIndexRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/lobbies': typeof LobbiesIndexRoute
-  '/login': typeof LoginIndexRoute
-  '/quizzes': typeof QuizzesIndexRoute
-  '/register': typeof RegisterIndexRoute
-  '/users': typeof UsersIndexRoute
-  '/lobbies/$lobbyId': typeof LobbiesLobbyIdIndexRoute
-  '/quizzes/$quizId': typeof QuizzesQuizIdIndexRoute
-  '/quizzes/$quizId/answer': typeof QuizzesQuizIdAnswerIndexRoute
-  '/quizzes/$quizId/edit': typeof QuizzesQuizIdEditIndexRoute
-  '/quizzes/$quizId/view': typeof QuizzesQuizIdViewIndexRoute
+  '': typeof AuthRouteWithChildren
+  '/': typeof AuthIndexRoute
+  '/login': typeof authLoginIndexRoute
+  '/register': typeof authRegisterIndexRoute
+  '/quizzes': typeof AuthQuizzesIndexRoute
+  '/users': typeof AuthUsersIndexRoute
+  '/quizzes/$quizId': typeof AuthQuizzesQuizIdIndexRoute
+  '/quizzes/$quizId/answer': typeof AuthQuizzesQuizIdAnswerIndexRoute
+  '/quizzes/$quizId/edit': typeof AuthQuizzesQuizIdEditIndexRoute
+  '/quizzes/$quizId/view': typeof AuthQuizzesQuizIdViewIndexRoute
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/lobbies': typeof LobbiesIndexRoute
-  '/login': typeof LoginIndexRoute
-  '/quizzes': typeof QuizzesIndexRoute
-  '/register': typeof RegisterIndexRoute
-  '/users': typeof UsersIndexRoute
-  '/lobbies/$lobbyId': typeof LobbiesLobbyIdIndexRoute
-  '/quizzes/$quizId': typeof QuizzesQuizIdIndexRoute
-  '/quizzes/$quizId/answer': typeof QuizzesQuizIdAnswerIndexRoute
-  '/quizzes/$quizId/edit': typeof QuizzesQuizIdEditIndexRoute
-  '/quizzes/$quizId/view': typeof QuizzesQuizIdViewIndexRoute
+  '/': typeof AuthIndexRoute
+  '/login': typeof authLoginIndexRoute
+  '/register': typeof authRegisterIndexRoute
+  '/quizzes': typeof AuthQuizzesIndexRoute
+  '/users': typeof AuthUsersIndexRoute
+  '/quizzes/$quizId': typeof AuthQuizzesQuizIdIndexRoute
+  '/quizzes/$quizId/answer': typeof AuthQuizzesQuizIdAnswerIndexRoute
+  '/quizzes/$quizId/edit': typeof AuthQuizzesQuizIdEditIndexRoute
+  '/quizzes/$quizId/view': typeof AuthQuizzesQuizIdViewIndexRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/lobbies/': typeof LobbiesIndexRoute
-  '/login/': typeof LoginIndexRoute
-  '/quizzes/': typeof QuizzesIndexRoute
-  '/register/': typeof RegisterIndexRoute
-  '/users/': typeof UsersIndexRoute
-  '/lobbies/$lobbyId/': typeof LobbiesLobbyIdIndexRoute
-  '/quizzes/$quizId/': typeof QuizzesQuizIdIndexRoute
-  '/quizzes/$quizId/answer/': typeof QuizzesQuizIdAnswerIndexRoute
-  '/quizzes/$quizId/edit/': typeof QuizzesQuizIdEditIndexRoute
-  '/quizzes/$quizId/view/': typeof QuizzesQuizIdViewIndexRoute
+  '/_auth': typeof AuthRouteWithChildren
+  '/_auth/': typeof AuthIndexRoute
+  '/(auth)/login/': typeof authLoginIndexRoute
+  '/(auth)/register/': typeof authRegisterIndexRoute
+  '/_auth/quizzes/': typeof AuthQuizzesIndexRoute
+  '/_auth/users/': typeof AuthUsersIndexRoute
+  '/_auth/quizzes/$quizId/': typeof AuthQuizzesQuizIdIndexRoute
+  '/_auth/quizzes/$quizId/answer/': typeof AuthQuizzesQuizIdAnswerIndexRoute
+  '/_auth/quizzes/$quizId/edit/': typeof AuthQuizzesQuizIdEditIndexRoute
+  '/_auth/quizzes/$quizId/view/': typeof AuthQuizzesQuizIdViewIndexRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | ''
     | '/'
-    | '/about'
-    | '/lobbies'
     | '/login'
-    | '/quizzes'
     | '/register'
+    | '/quizzes'
     | '/users'
-    | '/lobbies/$lobbyId'
     | '/quizzes/$quizId'
     | '/quizzes/$quizId/answer'
     | '/quizzes/$quizId/edit'
@@ -255,62 +244,39 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/about'
-    | '/lobbies'
     | '/login'
-    | '/quizzes'
     | '/register'
+    | '/quizzes'
     | '/users'
-    | '/lobbies/$lobbyId'
     | '/quizzes/$quizId'
     | '/quizzes/$quizId/answer'
     | '/quizzes/$quizId/edit'
     | '/quizzes/$quizId/view'
   id:
     | '__root__'
-    | '/'
-    | '/about'
-    | '/lobbies/'
-    | '/login/'
-    | '/quizzes/'
-    | '/register/'
-    | '/users/'
-    | '/lobbies/$lobbyId/'
-    | '/quizzes/$quizId/'
-    | '/quizzes/$quizId/answer/'
-    | '/quizzes/$quizId/edit/'
-    | '/quizzes/$quizId/view/'
+    | '/_auth'
+    | '/_auth/'
+    | '/(auth)/login/'
+    | '/(auth)/register/'
+    | '/_auth/quizzes/'
+    | '/_auth/users/'
+    | '/_auth/quizzes/$quizId/'
+    | '/_auth/quizzes/$quizId/answer/'
+    | '/_auth/quizzes/$quizId/edit/'
+    | '/_auth/quizzes/$quizId/view/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
-  LobbiesIndexRoute: typeof LobbiesIndexRoute
-  LoginIndexRoute: typeof LoginIndexRoute
-  QuizzesIndexRoute: typeof QuizzesIndexRoute
-  RegisterIndexRoute: typeof RegisterIndexRoute
-  UsersIndexRoute: typeof UsersIndexRoute
-  LobbiesLobbyIdIndexRoute: typeof LobbiesLobbyIdIndexRoute
-  QuizzesQuizIdIndexRoute: typeof QuizzesQuizIdIndexRoute
-  QuizzesQuizIdAnswerIndexRoute: typeof QuizzesQuizIdAnswerIndexRoute
-  QuizzesQuizIdEditIndexRoute: typeof QuizzesQuizIdEditIndexRoute
-  QuizzesQuizIdViewIndexRoute: typeof QuizzesQuizIdViewIndexRoute
+  AuthRoute: typeof AuthRouteWithChildren
+  authLoginIndexRoute: typeof authLoginIndexRoute
+  authRegisterIndexRoute: typeof authRegisterIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  LobbiesIndexRoute: LobbiesIndexRoute,
-  LoginIndexRoute: LoginIndexRoute,
-  QuizzesIndexRoute: QuizzesIndexRoute,
-  RegisterIndexRoute: RegisterIndexRoute,
-  UsersIndexRoute: UsersIndexRoute,
-  LobbiesLobbyIdIndexRoute: LobbiesLobbyIdIndexRoute,
-  QuizzesQuizIdIndexRoute: QuizzesQuizIdIndexRoute,
-  QuizzesQuizIdAnswerIndexRoute: QuizzesQuizIdAnswerIndexRoute,
-  QuizzesQuizIdEditIndexRoute: QuizzesQuizIdEditIndexRoute,
-  QuizzesQuizIdViewIndexRoute: QuizzesQuizIdViewIndexRoute,
+  AuthRoute: AuthRouteWithChildren,
+  authLoginIndexRoute: authLoginIndexRoute,
+  authRegisterIndexRoute: authRegisterIndexRoute,
 }
 
 export const routeTree = rootRoute
@@ -323,55 +289,56 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/",
-        "/about",
-        "/lobbies/",
-        "/login/",
-        "/quizzes/",
-        "/register/",
-        "/users/",
-        "/lobbies/$lobbyId/",
-        "/quizzes/$quizId/",
-        "/quizzes/$quizId/answer/",
-        "/quizzes/$quizId/edit/",
-        "/quizzes/$quizId/view/"
+        "/_auth",
+        "/(auth)/login/",
+        "/(auth)/register/"
       ]
     },
-    "/": {
-      "filePath": "index.tsx"
+    "/_auth": {
+      "filePath": "_auth.tsx",
+      "children": [
+        "/_auth/",
+        "/_auth/quizzes/",
+        "/_auth/users/",
+        "/_auth/quizzes/$quizId/",
+        "/_auth/quizzes/$quizId/answer/",
+        "/_auth/quizzes/$quizId/edit/",
+        "/_auth/quizzes/$quizId/view/"
+      ]
     },
-    "/about": {
-      "filePath": "about.tsx"
+    "/_auth/": {
+      "filePath": "_auth/index.tsx",
+      "parent": "/_auth"
     },
-    "/lobbies/": {
-      "filePath": "lobbies/index.tsx"
+    "/(auth)/login/": {
+      "filePath": "(auth)/login/index.tsx"
     },
-    "/login/": {
-      "filePath": "login/index.tsx"
+    "/(auth)/register/": {
+      "filePath": "(auth)/register/index.tsx"
     },
-    "/quizzes/": {
-      "filePath": "quizzes/index.tsx"
+    "/_auth/quizzes/": {
+      "filePath": "_auth/quizzes/index.tsx",
+      "parent": "/_auth"
     },
-    "/register/": {
-      "filePath": "register/index.tsx"
+    "/_auth/users/": {
+      "filePath": "_auth/users/index.tsx",
+      "parent": "/_auth"
     },
-    "/users/": {
-      "filePath": "users/index.tsx"
+    "/_auth/quizzes/$quizId/": {
+      "filePath": "_auth/quizzes/$quizId/index.tsx",
+      "parent": "/_auth"
     },
-    "/lobbies/$lobbyId/": {
-      "filePath": "lobbies/$lobbyId/index.tsx"
+    "/_auth/quizzes/$quizId/answer/": {
+      "filePath": "_auth/quizzes/$quizId/answer/index.tsx",
+      "parent": "/_auth"
     },
-    "/quizzes/$quizId/": {
-      "filePath": "quizzes/$quizId/index.tsx"
+    "/_auth/quizzes/$quizId/edit/": {
+      "filePath": "_auth/quizzes/$quizId/edit/index.tsx",
+      "parent": "/_auth"
     },
-    "/quizzes/$quizId/answer/": {
-      "filePath": "quizzes/$quizId/answer/index.tsx"
-    },
-    "/quizzes/$quizId/edit/": {
-      "filePath": "quizzes/$quizId/edit/index.tsx"
-    },
-    "/quizzes/$quizId/view/": {
-      "filePath": "quizzes/$quizId/view/index.tsx"
+    "/_auth/quizzes/$quizId/view/": {
+      "filePath": "_auth/quizzes/$quizId/view/index.tsx",
+      "parent": "/_auth"
     }
   }
 }

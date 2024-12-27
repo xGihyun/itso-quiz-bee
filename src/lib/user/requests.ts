@@ -1,17 +1,15 @@
 import { ApiResponse } from "../api/types";
 import { User } from "./types";
 
-export async function getCurrentUser(): Promise<ApiResponse<User>> {
-  const response = await fetch(
-    `${import.meta.env.VITE_BACKEND_URL}/api/session`,
-    {
-      method: "GET",
-      credentials: "include",
-    },
-  );
+export async function getUserById(userId: string): Promise<ApiResponse<User>> {
+	const response = await fetch(
+		`${import.meta.env.VITE_BACKEND_URL}/api/users/${userId}`,
+		{
+			method: "GET"
+		}
+	);
 
-  const result: ApiResponse<User> = await response.json();
+	const result: ApiResponse<User> = await response.json();
 
-  return result;
+	return result;
 }
-
