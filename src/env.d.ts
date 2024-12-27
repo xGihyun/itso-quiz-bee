@@ -1,8 +1,11 @@
-/// <reference path="../.astro/types.d.ts" />
+/// <reference types="vite/client" />
 
-/// <reference types="astro/client" />
-declare namespace App {
-  interface Locals {
-    user: import("./lib/types/user").User | null;
-  }
+interface ImportMetaEnv {
+  readonly VITE_BACKEND_URL: string;
+  readonly VITE_HOST: string;
+  readonly VITE_PORT: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
 }
