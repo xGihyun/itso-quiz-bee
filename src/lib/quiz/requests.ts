@@ -1,4 +1,4 @@
-import { ApiResponse } from "../api/types";
+import { ApiResponse, ApiResponseStatus } from "../api/types";
 import {
 	GetWrittenAnswerResponse,
 	Quiz,
@@ -10,10 +10,15 @@ export async function getQuizzes(): Promise<ApiResponse<QuizBasicInfo[]>> {
 	const response = await fetch(
 		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes`,
 		{
-			method: "GET"
+			method: "GET",
+			credentials: "include"
 		}
 	);
 	const result: ApiResponse<QuizBasicInfo[]> = await response.json();
+
+	if (result.status !== ApiResponseStatus.Success) {
+		throw new Error(result.message);
+	}
 
 	return result;
 }
@@ -30,8 +35,6 @@ export async function getCurrentQuestion(
 	);
 
 	const result: ApiResponse<QuizQuestion | null> = await response.json();
-
-	console.log(result);
 
 	return result;
 }
@@ -50,8 +53,6 @@ export async function getCurrentAnswer(
 	const result: ApiResponse<GetWrittenAnswerResponse | null> =
 		await response.json();
 
-	console.log(result);
-
 	return result;
 }
 
@@ -66,7 +67,9 @@ export async function getQuiz(quizId: string): Promise<ApiResponse<Quiz>> {
 
 	const result: ApiResponse<Quiz> = await response.json();
 
-	console.log(result);
+	if (result.status !== ApiResponseStatus.Success && result.status_code !== 404) {
+		throw new Error(result.message);
+	}
 
 	return result;
 }

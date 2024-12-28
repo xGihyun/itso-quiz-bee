@@ -1,18 +1,18 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_auth")({
+export const Route = createFileRoute("/_authed")({
 	component: RouteComponent,
 	beforeLoad: async ({ context }) => {
 		const session = await context.auth.validateSession();
-		if (session !== null) {
-			throw redirect({ to: "/" });
+		if (session === null) {
+			throw redirect({ to: "/login" });
 		}
 	}
 });
 
 function RouteComponent() {
 	return (
-		<div className="h-svh content-center">
+		<div>
 			<Outlet />
 		</div>
 	);

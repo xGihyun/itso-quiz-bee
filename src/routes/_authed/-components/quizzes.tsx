@@ -1,6 +1,3 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-import { ApiResponse, ApiResponseStatus } from "@/lib/api/types";
 import useWebSocket from "react-use-websocket";
 import {
 	Card,
@@ -16,68 +13,48 @@ import gsap from "gsap";
 import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { ErrorAlert } from "@/components/error-alert";
-import { getQuizzes } from "@/lib/quiz/requests";
 import { useAuth } from "@/lib/auth/context";
+import { QuizBasicInfo } from "@/lib/quiz/types";
 
-export function Quizzes(): JSX.Element {
+type Props = {
+	quizzes: QuizBasicInfo[];
+};
+
+export function Quizzes(props: Props): JSX.Element {
 	const auth = useAuth();
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS
 	});
 	const navigate = useNavigate({ from: "/" });
-	const query = useQuery({
-		queryKey: ["quizzes"],
-		queryFn: getQuizzes
-	});
 
 	const quizzesRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		setTimeout(() => {
-			if (query.isSuccess && quizzesRef.current) {
-				gsap.fromTo(
-					quizzesRef.current.children,
-					{ opacity: 0, y: 20 },
-					{
-						opacity: 1,
-						y: 0,
-						duration: 0.6,
-						stagger: 0.1,
-						ease: "power2.out"
-					}
-				);
+			if (!quizzesRef.current) {
+				return;
 			}
+
+			gsap.fromTo(
+				quizzesRef.current.children,
+				{ opacity: 0, y: 20 },
+				{
+					opacity: 1,
+					y: 0,
+					duration: 0.6,
+					stagger: 0.1,
+					ease: "power2.out"
+				}
+			);
 		}, 1000);
-	}, [query.isSuccess]);
-
-	if (query.isPending) {
-		return (
-			<div className="grid grid-cols-4">
-				<Skeleton className="h-full w-full" />
-				<Skeleton className="h-full w-full" />
-				<Skeleton className="h-full w-full" />
-				<Skeleton className="h-full w-full" />
-			</div>
-		);
-	}
-
-	if (query.isError) {
-		return <ErrorAlert message={query.error.message} />;
-	}
-
-	if (query.data.status !== ApiResponseStatus.Success) {
-		return <ErrorAlert message={query.data.message} />;
-	}
-
-	const quizzes = query.data.data;
+	}, []);
 
 	return (
 		<div
 			className="grid grid-cols-4 gap-4 py-4"
 			ref={quizzesRef} // Attach ref to the container
 		>
-			{quizzes.map((quiz) => (
+			{props.quizzes.map((quiz) => (
 				<button
 					key={quiz.quiz_id}
 					onClick={async () => {

@@ -4,9 +4,11 @@ import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { Navbar } from "./-components/navbar";
 import "../index.css";
 import { AuthContextValue, useAuth } from "@/lib/auth/context";
+import { QueryClient } from "@tanstack/react-query";
 
 type RouterContext = {
 	auth: AuthContextValue;
+	queryClient: QueryClient;
 };
 
 export const Route = createRootRouteWithContext<RouterContext>()({

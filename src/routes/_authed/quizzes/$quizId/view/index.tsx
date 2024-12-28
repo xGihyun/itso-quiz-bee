@@ -33,7 +33,7 @@ import { createContext, JSX, useContext, useState } from 'react'
 import { Player } from './-components/player'
 import { PlayerFullscreen } from './-components/player-fullscreen'
 
-export const Route = createFileRoute('/_auth/quizzes/$quizId/view/')({
+export const Route = createFileRoute('/_authed/quizzes/$quizId/view/')({
   component: RouteComponent,
 })
 
@@ -64,7 +64,7 @@ export const AdminViewQuizContext = createContext<
 >({})
 
 function RouteComponent(): JSX.Element {
-    return (<div>TODO</div>)
+  return <div>TODO</div>
   //const queryClient = useQueryClient()
   //const params = Route.useParams()
   //

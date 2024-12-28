@@ -1,7 +1,7 @@
 import {
 	MultipleChoiceInput,
 	WrittenAnswerInput
-} from "@/routes/_auth/quizzes/$quizId/answer/-components/schema";
+} from "@/routes/_authed/quizzes/$quizId/answer/-components/schema";
 import { WebSocketEvent } from "../websocket/types";
 
 export enum QuizStatus {

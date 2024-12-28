@@ -28,10 +28,6 @@ type AuthProviderProps = {
 export function AuthProvider(props: AuthProviderProps): JSX.Element {
 	const [user, setUser] = useState<User | null>(null);
 
-	useEffect(() => {
-		validateSession();
-	}, []);
-
 	async function validateSession(): Promise<User | null> {
 		const session = getCookie("session");
 
@@ -52,6 +48,10 @@ export function AuthProvider(props: AuthProviderProps): JSX.Element {
 		setUser(response.data);
 		return response.data;
 	}
+
+	useEffect(() => {
+		validateSession();
+	}, []);
 
 	return (
 		<AuthContext value={{ user, validateSession }}>

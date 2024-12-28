@@ -20,7 +20,7 @@ import { useEffect, useRef, useState } from 'react'
 import { hasSubscribers } from 'diagnostics_channel'
 import gsap from 'gsap'
 
-export const Route = createFileRoute('/_auth/quizzes/$quizId/answer/')({
+export const Route = createFileRoute('/_authed/quizzes/$quizId/answer/')({
   component: RouteComponent,
 })
 

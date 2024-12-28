@@ -4,12 +4,15 @@ import { routeTree } from "./routeTree.gen";
 import { AuthProvider, useAuth } from "./lib/auth/context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+const queryClient = new QueryClient();
+
 // Set up a Router instance
 const router = createRouter({
 	routeTree,
 	defaultPreload: "intent",
 	context: {
-		auth: undefined! // Will be set from the component
+		auth: undefined!, // Will be set from the component
+		queryClient
 	}
 });
 
@@ -24,7 +27,6 @@ const rootElement = document.getElementById("app")!;
 
 if (!rootElement.innerHTML) {
 	const root = ReactDOM.createRoot(rootElement);
-	const queryClient = new QueryClient();
 	root.render(
 		<QueryClientProvider client={queryClient}>
 			<AuthProvider>
