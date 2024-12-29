@@ -1,9 +1,3 @@
-import {
-	MultipleChoiceInput,
-	WrittenAnswerInput
-} from "@/routes/_authed/quizzes/$quizId/answer/-components/schema";
-import { WebSocketEvent } from "../websocket/types";
-
 export enum QuizStatus {
 	Open = "open",
 	Started = "started",
@@ -15,11 +9,6 @@ export type QuizBasicInfo = {
 	quiz_id: string;
 	name: string;
 	description?: string;
-	status: QuizStatus;
-};
-
-export type UpdateQuizStatusRequest = {
-	quiz_id: string;
 	status: QuizStatus;
 };
 
@@ -45,7 +34,7 @@ export type QuizQuestion = {
 	variant: QuizQuestionVariant;
 	points: number;
 	order_number: number;
-	duration: number; // nanoseconds
+	duration: number; // seconds
 	answers: QuizAnswer[];
 };
 
@@ -63,37 +52,22 @@ export type QuizResult = {
 	answers: PlayerAnswer[];
 } & PlayerScore;
 
-export type GetAnswerRequest = {
-	quiz_question_id: string;
-};
-
 export type GetWrittenAnswerResponse = {
 	player_written_answer_id: string;
 	content: string;
 };
 
-export type PlayerCurrentAnswer =
-	| {
-			event: WebSocketEvent.QuizSelectAnswer;
-			data: MultipleChoiceInput;
-	  }
-	| {
-			event: WebSocketEvent.QuizTypeAnswer;
-			data: WrittenAnswerInput;
-	  };
-
-export type QuizUser = {
-	user_id: string;
-	first_name: string;
-	middle_name?: string;
-	last_name: string;
+export type QuizUpdateStatusRequest = {
+	quiz_id: string;
+	status: QuizStatus;
 };
 
-type PlayerAnswerState = {
-	current: PlayerCurrentAnswer;
-	result: QuizResult;
-};
+export type QuizUpdatePlayersQuestionRequest = {
+	quiz_id: string;
+} & QuizQuestion;
 
-export type QuizWrittenAnswerRequest = {
+export type CreateWrittenAnswerRequest = {
+	content: string;
+	quiz_question_id: string;
 	user_id: string;
-} & WrittenAnswerInput;
+};

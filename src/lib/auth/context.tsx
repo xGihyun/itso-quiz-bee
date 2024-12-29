@@ -11,9 +11,14 @@ import { getCookie } from "typescript-cookie";
 import { getUserById } from "../user/requests";
 import { ApiResponseStatus } from "../api/types";
 
+type AuthSession = {
+	user: User;
+	session: string;
+};
+
 export type AuthContextValue = {
 	user: User | null;
-	validateSession: () => Promise<User | null>;
+	validateSession: () => Promise<AuthSession | null>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
@@ -28,7 +33,7 @@ type AuthProviderProps = {
 export function AuthProvider(props: AuthProviderProps): JSX.Element {
 	const [user, setUser] = useState<User | null>(null);
 
-	async function validateSession(): Promise<User | null> {
+	async function validateSession(): Promise<AuthSession | null> {
 		const session = getCookie("session");
 
 		if (!session) {
@@ -46,7 +51,11 @@ export function AuthProvider(props: AuthProviderProps): JSX.Element {
 		}
 
 		setUser(response.data);
-		return response.data;
+		return {
+			// Ideally a random ID, but this works for now
+			session: response.data.user_id,
+			user: response.data
+		};
 	}
 
 	useEffect(() => {

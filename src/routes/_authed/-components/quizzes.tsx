@@ -75,12 +75,10 @@ export function Quizzes(props: Props): JSX.Element {
 					className="contents"
 				>
 					<Card
-						className={`relative cursor-pointer transition-transform hover:scale-95`}
+						className={`relative cursor-pointer overflow-hidden transition-transform`}
 					>
-						<div className="absolute -bottom-3 right-4 rounded-xl bg-green-400 px-2">
-							<span className="text-center text-sm font-bold text-black">
-								{quiz.status}
-							</span>
+						<div className="absolute left-0 top-0 rounded-br-lg bg-green-400 px-2">
+							<span className="text-xs text-background">{quiz.status}</span>
 						</div>
 						<CardHeader>
 							<CardTitle>{quiz.name}</CardTitle>

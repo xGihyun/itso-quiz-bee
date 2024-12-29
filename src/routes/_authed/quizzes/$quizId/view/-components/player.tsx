@@ -10,12 +10,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  PlayerCurrentAnswer,
+    CreateWrittenAnswerRequest,
   QuizQuestion,
   QuizResult,
-  QuizUser,
 } from "@/lib/quiz/types";
-import { WebSocketEvent } from "@/lib/websocket/types";
+import { User } from "@/lib/user/types";
 import {
   CheckCircleIcon,
   PenLineIcon,
@@ -23,10 +22,11 @@ import {
   UserIcon,
   XCircleIcon,
 } from "lucide-react";
+import { JSX } from "react";
 
 type PlayerProps = {
-  player: QuizUser;
-  answer?: PlayerCurrentAnswer;
+  player: User;
+  answer?: CreateWrittenAnswerRequest;
   question: QuizQuestion | null;
   maxScore: number;
   result?: QuizResult;
@@ -37,14 +37,7 @@ export function Player(props: PlayerProps): JSX.Element {
   let answerContent: string | undefined;
 
   if (props.question) {
-    if (props.answer?.event === WebSocketEvent.QuizSelectAnswer) {
-      const answerId = props.answer.data.quiz_answer_id;
-      answerContent =
-        props.question.answers.find((value) => value.quiz_answer_id == answerId)
-          ?.content || "No answer.";
-    } else {
       answerContent = props.answer?.data.content;
-    }
   }
 
   return (

@@ -1,10 +1,3 @@
-import {
-	QuizQuestion,
-	QuizQuestionVariant,
-	QuizStatus,
-	UpdateQuizStatusRequest
-} from "../quiz/types";
-
 export enum WebSocketEvent {
 	QuizUpdateStatus = "quiz-update-status",
 
@@ -27,7 +20,7 @@ export enum WebSocketEvent {
 	Heartbeat = "heartbeat"
 }
 
-export type WebSocketRequest<T = unknown> = {
+export type WebSocketRequest<T = any> = {
 	event: WebSocketEvent;
 	data: T;
 };

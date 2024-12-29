@@ -1,9 +1,20 @@
-import { QuizQuestionVariant } from "@/lib/quiz/types";
+import { QuizQuestionVariant, QuizStatus } from "@/lib/quiz/types";
 import {
+	CreateQuizInput,
 	type CreateAnswerInput,
 	type CreateQuestionInput
 } from "../-components/schema";
 import { v4 as uuidv4 } from "uuid";
+
+export function createDefaultQuiz(quizId: string): CreateQuizInput {
+	return {
+		quiz_id: quizId,
+		name: "Untitled Quiz",
+		description: "",
+		status: QuizStatus.Closed,
+		questions: [createDefaultQuestion()]
+	};
+}
 
 export function createDefaultQuestion(): CreateQuestionInput {
 	return {
@@ -11,8 +22,8 @@ export function createDefaultQuestion(): CreateQuestionInput {
 		points: 1,
 		answers: [createDefaultAnswer()],
 		content: "Untitled Question",
-        // The questions for the quiz bee are always written 
-		variant: QuizQuestionVariant.Written,
+		// The questions for the quiz bee are always written
+		variant: QuizQuestionVariant.Written
 	};
 }
 

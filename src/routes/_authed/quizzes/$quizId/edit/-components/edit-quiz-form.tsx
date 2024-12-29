@@ -15,8 +15,8 @@ import { useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ApiResponse } from "@/lib/api/types";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
-import { Quiz, QuizStatus } from "@/lib/quiz/types";
-import { createDefaultQuestion } from "../-constants";
+import { Quiz } from "@/lib/quiz/types";
+import { createDefaultQuestion, createDefaultQuiz } from "../-constants";
 import { JSX } from "react";
 
 type Props = {
@@ -28,14 +28,7 @@ export function EditQuizForm(props: Props): JSX.Element {
 
 	const form = useForm<CreateQuizInput>({
 		resolver: zodResolver(CreateQuizSchema),
-		defaultValues: {
-			quiz_id: params.quizId,
-			name: "Untitled Quiz",
-			description: "",
-			status: QuizStatus.Closed,
-			questions: [createDefaultQuestion()]
-		},
-		values: props.quiz
+		defaultValues: props.quiz || createDefaultQuiz(params.quizId)
 	});
 
 	const formQuestions = useFieldArray({
@@ -47,7 +40,6 @@ export function EditQuizForm(props: Props): JSX.Element {
 		let toastId = toast.loading("Creating quiz...");
 
 		console.log(value);
-		return;
 
 		const response = await fetch(
 			`${import.meta.env.VITE_BACKEND_URL}/api/quizzes`,
@@ -117,21 +109,17 @@ export function EditQuizForm(props: Props): JSX.Element {
 								<FormField
 									control={form.control}
 									name={`questions.${i}.content`}
-									render={({ field }) => {
-										console.log(field);
-
-										return (
-											<FormItem>
-												<FormControl>
-													<AutosizeTextarea
-														placeholder="Insert question"
-														{...field}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										);
-									}}
+									render={({ field }) => (
+										<FormItem>
+											<FormControl>
+												<AutosizeTextarea
+													placeholder="Insert question"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
 								/>
 
 								<FormField

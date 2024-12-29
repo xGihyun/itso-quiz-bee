@@ -1,9 +1,11 @@
 import { ApiResponse, ApiResponseStatus } from "../api/types";
+import { User } from "../user/types";
 import {
 	GetWrittenAnswerResponse,
 	Quiz,
 	QuizBasicInfo,
-	QuizQuestion
+	QuizQuestion,
+	QuizResult
 } from "./types";
 
 export async function getQuizzes(): Promise<ApiResponse<QuizBasicInfo[]>> {
@@ -25,7 +27,7 @@ export async function getQuizzes(): Promise<ApiResponse<QuizBasicInfo[]>> {
 
 export async function getCurrentQuestion(
 	quizId: string
-): Promise<ApiResponse<QuizQuestion | null>> {
+): Promise<ApiResponse<QuizQuestion>> {
 	const response = await fetch(
 		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/questions/current`,
 		{
@@ -34,7 +36,7 @@ export async function getCurrentQuestion(
 		}
 	);
 
-	const result: ApiResponse<QuizQuestion | null> = await response.json();
+	const result: ApiResponse<QuizQuestion> = await response.json();
 
 	return result;
 }
@@ -67,9 +69,42 @@ export async function getQuiz(quizId: string): Promise<ApiResponse<Quiz>> {
 
 	const result: ApiResponse<Quiz> = await response.json();
 
-	if (result.status !== ApiResponseStatus.Success && result.status_code !== 404) {
+	if (
+		result.status !== ApiResponseStatus.Success &&
+		result.status_code !== 404
+	) {
 		throw new Error(result.message);
 	}
+
+	return result;
+}
+
+export async function getPlayers(quizId: string): Promise<ApiResponse<User[]>> {
+	const response = await fetch(
+		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/players`,
+		{
+			method: "GET",
+			credentials: "include"
+		}
+	);
+
+	const result: ApiResponse<User[]> = await response.json();
+
+	return result;
+}
+
+export async function getResults(
+	quizId: string
+): Promise<ApiResponse<QuizResult[]>> {
+	const response = await fetch(
+		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/results`,
+		{
+			method: "GET",
+			credentials: "include"
+		}
+	);
+
+	const result: ApiResponse<QuizResult[]> = await response.json();
 
 	return result;
 }

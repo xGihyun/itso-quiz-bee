@@ -1,15 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EditQuizForm } from "./-components/edit-quiz-form";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { getQuiz } from "@/lib/quiz/requests";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { JSX } from "react";
 import { ErrorAlert } from "@/components/error-alert";
-
-const quizQueryOptions = (quizId: string) =>
-	queryOptions({
-		queryKey: ["quiz", quizId],
-		queryFn: () => getQuiz(quizId)
-	});
+import { quizQueryOptions } from "@/lib/quiz/query";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/edit/")({
 	component: RouteComponent,

@@ -1,476 +1,283 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { Button } from '@/components/ui/button'
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import {
-  WebSocketEvent,
-  WebSocketRequest,
-  WebSocketResponse,
-} from '@/lib/websocket/types'
+	WebSocketEvent,
+	WebSocketRequest,
+	WebSocketResponse
+} from "@/lib/websocket/types";
 import {
-  PlayerCurrentAnswer,
-  Quiz,
-  QuizQuestion,
-  QuizQuestionVariant,
-  QuizResult,
-  QuizStatus,
-  QuizUser,
-} from '@/lib/quiz/types'
-import useWebSocket, { ReadyState } from 'react-use-websocket'
-import { toast } from 'sonner'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiResponse, ApiResponseStatus } from '@/lib/api/types'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, PlayIcon } from 'lucide-react'
-import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from '@/lib/websocket/constants'
-import { WebSocketHook } from 'react-use-websocket/dist/lib/types'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { getCurrentQuestion, getQuiz } from '@/lib/quiz/requests'
+	CreateWrittenAnswerRequest,
+	QuizQuestion,
+	QuizResult,
+	QuizStatus,
+	QuizUpdatePlayersQuestionRequest,
+	QuizUpdateStatusRequest
+} from "@/lib/quiz/types";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+import { toast } from "sonner";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { PlayIcon } from "lucide-react";
+import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
+import { WebSocketHook } from "react-use-websocket/dist/lib/types";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { createContext, JSX, useState } from "react";
+import { Player } from "./-components/player";
+import { User, UserRole } from "@/lib/user/types";
 import {
-  MultipleChoiceInput,
-  WrittenAnswerInput,
-} from '../answer/-components/schema'
-import { createContext, JSX, useContext, useState } from 'react'
-import { Player } from './-components/player'
-import { PlayerFullscreen } from './-components/player-fullscreen'
+	quizCurrentQuestionQueryOptions,
+	quizPlayersQueryOptions,
+	quizQueryOptions
+} from "@/lib/quiz/query";
+import { ErrorAlert } from "@/components/error-alert";
 
-export const Route = createFileRoute('/_authed/quizzes/$quizId/view/')({
-  component: RouteComponent,
-})
+export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
+	component: RouteComponent,
+	beforeLoad: async ({ context }) => {
+		const session = await context.auth.validateSession();
+		if (session === null) {
+			throw redirect({ to: "/login" });
+		}
+
+		if (session.user.role !== UserRole.Admin) {
+			throw redirect({ to: "/" });
+		}
+	},
+	loader: ({ context, params }) => {
+		const quiz = context.queryClient.ensureQueryData(
+			quizQueryOptions(params.quizId)
+		);
+		const players = context.queryClient.ensureQueryData(
+			quizPlayersQueryOptions(params.quizId)
+		);
+		const currentQuestion = context.queryClient.ensureQueryData(
+			quizCurrentQuestionQueryOptions(params.quizId)
+		);
+
+		return {
+			quiz,
+			players,
+			currentQuestion
+		};
+	},
+	errorComponent: ({ error }) => {
+		return <ErrorAlert message={error.message} />;
+	},
+	pendingComponent: () => <div>Loading...</div>
+});
 
 // NOTE:
 // This is where admin will view all the current participants
 // Admin can see the players' current answers in real-time
 // Admin can move to the next/previous question
 
-export type AdminViewQuizContextType = {
-  player: QuizUser | undefined
-  isAdminViewing: boolean
-
-  quizQuestion: QuizQuestion | null
-  currentPlayerAnswer: PlayerCurrentAnswer
-  setCurrentPlayerAnswer: React.Dispatch<
-    React.SetStateAction<PlayerCurrentAnswer | undefined>
-  >
-  currentPlayerResult: QuizResult
-  setCurrentPlayerResult: React.Dispatch<
-    React.SetStateAction<QuizResult | undefined>
-  >
-
-  setPlayerViewing: () => void
-}
-
-export const AdminViewQuizContext = createContext<
-  Partial<AdminViewQuizContextType>
->({})
-
 function RouteComponent(): JSX.Element {
-  return <div>TODO</div>
-  //const queryClient = useQueryClient()
-  //const params = Route.useParams()
-  //
-  ////const [playerResults, setPlayerResults] = useState<
-  ////  Map<string, PlayerAnswerState>
-  ////>(new Map());
-  //
-  //const [selectedPlayer, setSelectedPlayer] = useState<QuizUser | undefined>()
-  //const [isAdminViewing, setAdminViewing] = useState(false)
-  //const [quizQuestion, setQuizQuestion] = useState<QuizQuestion | null>()
-  //const [currentPlayerAnswer, setCurrentPlayerAnswer] =
-  //  useState<PlayerCurrentAnswer>()
-  //const [currentPlayerResult, setCurrentPlayerResult] = useState<QuizResult>()
-  //
-  //const [playerAnswers, setPlayerAnswers] = useState<
-  //  Map<string, PlayerCurrentAnswer>
-  //>(new Map())
-  //
-  //const quizQuery = useQuery({
-  //  queryKey: ['quiz', params.quizId],
-  //  queryFn: () => getQuiz(params.quizId),
-  //})
-  //const currentQuestionQuery = useQuery({
-  //  queryKey: ['quiz', 'question', 'current', params.quizId],
-  //  queryFn: () => getCurrentQuestion(params.quizId),
-  //})
-  //const playersQuery = useQuery({
-  //  queryKey: ['quiz', 'players', params.quizId],
-  //  queryFn: () => getPlayers(params.quizId),
-  //})
-  //const quizResultsQuery = useQuery({
-  //  queryKey: ['quiz', 'results', params.quizId],
-  //  queryFn: () => getResults(params.quizId),
-  //})
-  //
-  //const socket = useWebSocket(WEBSOCKET_URL, {
-  //  onMessage: async (event) => {
-  //    const result: WebSocketResponse = await JSON.parse(event.data)
-  //
-  //    switch (result.event) {
-  //      case WebSocketEvent.UserJoin:
-  //        {
-  //          const data = result.data as QuizUser | null
-  //
-  //          if (!data) {
-  //            return
-  //          }
-  //
-  //          queryClient.setQueryData(
-  //            ['quiz', 'players', params.quizId],
-  //            (prev: QuizUser[]) => {
-  //              return [...prev, data]
-  //            },
-  //          )
-  //        }
-  //        break
-  //      case WebSocketEvent.QuizUpdateStatus:
-  //        {
-  //          const data = result.data as QuizUpdateStatusRequest
-  //
-  //          //queryClient.setQueryData(["quiz", params.quizId], (prev: Quiz) => ({
-  //          //  ...prev,
-  //          //  status: data.status,
-  //          //}));
-  //          await quizQuery.refetch()
-  //
-  //          switch (data.status) {
-  //            case QuizStatus.Started:
-  //              await currentQuestionQuery.refetch()
-  //              toast.info('Quiz has started!')
-  //              break
-  //            default:
-  //              console.log('Quiz status updated:', data.status)
-  //          }
-  //        }
-  //        break
-  //
-  //      case WebSocketEvent.QuizChangeQuestion:
-  //        {
-  //          // NOTE: Probably not the best idea but it works
-  //          await currentQuestionQuery.refetch()
-  //
-  //          // NOTE: Doesn't work???
-  //          //const data = result.data as QuizChangeQuestionRequest;
-  //          //
-  //          //queryClient.setQueryData(
-  //          //  ["quiz", "question", "current", params.quizId],
-  //          //  data,
-  //          //);
-  //
-  //          toast.info('Next question!')
-  //        }
-  //
-  //        break
-  //
-  //      case WebSocketEvent.QuizSelectAnswer:
-  //        {
-  //          const data = result.data as MultipleChoiceInput
-  //
-  //          setPlayerAnswers((prevAnswers) => {
-  //            const newAnswers = new Map(prevAnswers)
-  //            newAnswers.set(result.user_id, {
-  //              event: WebSocketEvent.QuizSelectAnswer,
-  //              data,
-  //            })
-  //            return newAnswers
-  //          })
-  //        }
-  //        break
-  //
-  //      case WebSocketEvent.QuizTypeAnswer:
-  //        {
-  //          const data = result.data as WrittenAnswerInput
-  //
-  //          setPlayerAnswers((prevAnswers) => {
-  //            const newAnswers = new Map(prevAnswers)
-  //            newAnswers.set(result.user_id, {
-  //              event: WebSocketEvent.QuizTypeAnswer,
-  //              data,
-  //            })
-  //
-  //            if (currentPlayerAnswer) {
-  //              // @ts-ignore
-  //              setCurrentPlayerAnswer((oldAnswer) =>
-  //                newAnswers
-  //                  .values()
-  //                  .find(
-  //                    (val) =>
-  //                      val.data.quiz_answer_id ==
-  //                      oldAnswer?.data.quiz_answer_id,
-  //                  ),
-  //              )
-  //            }
-  //
-  //            return newAnswers
-  //          })
-  //        }
-  //        break
-  //
-  //      case WebSocketEvent.QuizSubmitAnswer:
-  //        // NOTE:
-  //        // Apparently this doesn't work? It refetches the previous state or
-  //        // something
-  //        //await quizResultsQuery.refetch();
-  //
-  //        //if (selectedPlayer) {
-  //        //  const result = quizResults.find(
-  //        //    (result) => result.user_id === selectedPlayer.user_id,
-  //        //  );
-  //        //
-  //        //  console.log("has player", result);
-  //        //  //setCurrentPlayerResult((oldResult) => ({...result}));
-  //        //}
-  //        break
-  //
-  //      default:
-  //        console.warn('Unknown event type:', result.event)
-  //    }
-  //  },
-  //  ...WEBSOCKET_OPTIONS,
-  //})
-  //
-  //if (
-  //  quizQuery.isPending ||
-  //  currentQuestionQuery.isPending ||
-  //  playersQuery.isPending ||
-  //  quizResultsQuery.isPending
-  //) {
-  //  return <Skeleton className="w-20 h-20" />
-  //}
-  //
-  //if (quizQuery.isError) {
-  //  return <QueryError message={quizQuery.error.message} />
-  //}
-  //
-  //if (currentQuestionQuery.isError) {
-  //  return <QueryError message={currentQuestionQuery.error.message} />
-  //}
-  //
-  //if (playersQuery.isError) {
-  //  return <QueryError message={playersQuery.error.message} />
-  //}
-  //
-  //if (quizResultsQuery.isError) {
-  //  return <QueryError message={quizResultsQuery.error.message} />
-  //}
-  //
-  //const quiz = quizQuery.data.data
-  //const currentQuestion = currentQuestionQuery.data.data
-  //const players = playersQuery.data.data
-  //const quizResults = quizResultsQuery.data.data
-  //
-  //const maxScore = quiz.questions.reduce((prev, acc) => prev + acc.points, 0)
-  //const contextValue = {
-  //  isAdminViewing: isAdminViewing,
-  //  currentPlayerAnswer: currentPlayerAnswer,
-  //  setCurrentPlayerAnswer: setCurrentPlayerAnswer,
-  //  currentPlayerResult: currentPlayerResult,
-  //  setCurrentPlayerResult: setCurrentPlayerResult,
-  //  player: selectedPlayer,
-  //  quizQuestion: quizQuestion,
-  //  setPlayerViewing: () => setAdminViewing(false),
-  //} as AdminViewQuizContextType
-  //
-  //return (
-  //  <AdminViewQuizContext.Provider value={contextValue}>
-  //    <div className="flex flex-col h-full">
-  //      <PlayerFullscreen />
-  //      <div className="h-full flex flex-col items-center bg-card">
-  //        <div className="px-10 py-10 max-w-7xl">
-  //          <div className="flex justify-center flex-col items-center gap-2 bg-card">
-  //            <h1 className="text-center font-['metropolis-bold'] text-3xl">
-  //              13th ITSO Quiz Bee
-  //            </h1>
-  //            <div className="flex gap-2">
-  //              <Button
-  //                onClick={() => {
-  //                  updateQuizStatus(socket, {
-  //                    quiz_id: params.quizId,
-  //                    quiz_question_id: quiz.questions[0].quiz_question_id,
-  //                    status: QuizStatus.Started,
-  //                  })
-  //                }}
-  //                disabled={
-  //                  socket.readyState !== ReadyState.OPEN ||
-  //                  quiz.status === QuizStatus.Started
-  //                }
-  //              >
-  //                <PlayIcon size={16} strokeWidth={2} />
-  //                Start
-  //              </Button>
-  //
-  //              <Button
-  //                onClick={() => {
-  //                  updateQuizStatus(socket, {
-  //                    quiz_id: params.quizId,
-  //                    status: QuizStatus.Open,
-  //                  })
-  //                }}
-  //                disabled={
-  //                  socket.readyState !== ReadyState.OPEN ||
-  //                  quiz.status === QuizStatus.Open
-  //                }
-  //              >
-  //                Open
-  //              </Button>
-  //            </div>
-  //          </div>
-  //
-  //          <div>
-  //            <h2 className="text-2xl my-2 font-['metropolis-bold']">
-  //              Questions
-  //            </h2>
-  //
-  //            <RadioGroup
-  //              className="grid-cols-2 lg:grid-cols-4"
-  //              defaultValue={
-  //                currentQuestion
-  //                  ? currentQuestion.quiz_question_id
-  //                  : quiz.questions[0].quiz_question_id
-  //              }
-  //              value={
-  //                currentQuestion
-  //                  ? currentQuestion.quiz_question_id
-  //                  : quiz.questions[0].quiz_question_id
-  //              }
-  //            >
-  //              {quiz.questions.map((question) => {
-  //                return (
-  //                  <label
-  //                    className="relative h-28 flex cursor-pointer bg-background/50 flex-col items-center gap-3 rounded-lg border border-input px-3 py-2 justify-center text-center shadow-sm shadow-black/5 ring-offset-background transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent has-[[data-state=checked]]:text-background has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/70 has-[:focus-visible]:ring-offset-2"
-  //                    key={question.quiz_question_id}
-  //                  >
-  //                    <span className="absolute top-2 left-3 text-sm">
-  //                      {question.order_number}
-  //                    </span>
-  //                    <RadioGroupItem
-  //                      id={question.quiz_question_id}
-  //                      value={question.quiz_question_id}
-  //                      className="sr-only after:absolute after:inset-0"
-  //                      onClick={() =>
-  //                        changeQuestion(socket, {
-  //                          quiz_id: params.quizId,
-  //                          ...question,
-  //                        })
-  //                      }
-  //                      disabled={socket.readyState !== ReadyState.OPEN}
-  //                    />
-  //                    <p>{question.content}</p>
-  //                  </label>
-  //                )
-  //              })}
-  //            </RadioGroup>
-  //          </div>
-  //        </div>
-  //      </div>
-  //      <div className=" px-20 py-10 h-full flex flex-col w-full max-w-7xl mx-auto">
-  //        <h2 className="text-2xl my-2 font-['metropolis-bold']">Players</h2>
-  //        <div className="grid md:grid-cols-2 lg:grid-cols-3">
-  //          {players.map((player) => {
-  //            const answer = playerAnswers.get(player.user_id)
-  //
-  //            const result = quizResults.find(
-  //              (result) => result.user_id === player.user_id,
-  //            )
-  //
-  //            return (
-  //              <Player
-  //                key={player.user_id}
-  //                question={currentQuestion}
-  //                maxScore={maxScore}
-  //                player={player}
-  //                answer={answer}
-  //                result={result}
-  //                onPlayerCardClicked={() => {
-  //                  setCurrentPlayerAnswer(answer!)
-  //                  setCurrentPlayerResult(result)
-  //                  setSelectedPlayer(player)
-  //                  console.log(player)
-  //                  setQuizQuestion(currentQuestion)
-  //                  setAdminViewing(true)
-  //                }}
-  //              />
-  //            )
-  //          })}
-  //        </div>
-  //      </div>
-  //    </div>
-  //  </AdminViewQuizContext.Provider>
-  //)
+	const params = Route.useParams();
+	const quizQuery = useSuspenseQuery(quizQueryOptions(params.quizId));
+	const playersQuery = useSuspenseQuery(quizPlayersQueryOptions(params.quizId));
+	const currentQuestionQuery = useSuspenseQuery(
+		quizCurrentQuestionQueryOptions(params.quizId)
+	);
+
+	const quiz = quizQuery.data.data;
+	const players = playersQuery.data.data;
+	const currentQuestion = currentQuestionQuery.data.data;
+
+	const [quizQuestion, setQuizQuestion] =
+		useState<QuizQuestion>(currentQuestion);
+
+	const socket = useWebSocket(WEBSOCKET_URL, {
+		onMessage: async (event) => {
+			const result: WebSocketResponse = await JSON.parse(event.data);
+
+			switch (result.event) {
+				case WebSocketEvent.PlayerJoin:
+					{
+						const player = result.data as User;
+
+						// TODO: Add `player` to players[]
+					}
+					break;
+				case WebSocketEvent.QuizUpdateStatus:
+					{
+						const status = result.data as QuizStatus;
+
+						// TODO: Do something with the new status
+					}
+					break;
+				case WebSocketEvent.QuizStart:
+					{
+						const firstQuestion = result.data as QuizQuestion;
+
+						// TODO: Update the current question
+
+						toast.info("Good luck!");
+					}
+					break;
+
+				case WebSocketEvent.QuizUpdateQuestion:
+					{
+						const question = result.data as QuizQuestion;
+
+						// TODO: Update the current question
+
+						toast.info("Next question!");
+					}
+
+					break;
+
+				case WebSocketEvent.PlayerTypeAnswer:
+					{
+						const answer = result.data as CreateWrittenAnswerRequest;
+
+						// TODO: Update player's current answer
+					}
+					break;
+
+				case WebSocketEvent.PlayerSubmitAnswer:
+					{
+						const answer = result.data as CreateWrittenAnswerRequest;
+
+						// TODO: Update player's answer history
+					}
+					break;
+
+				default:
+					console.warn("Unknown event type:", result.event);
+			}
+		},
+		...WEBSOCKET_OPTIONS
+	});
+
+	const maxScore = quiz.questions.reduce((prev, acc) => prev + acc.points, 0);
+
+	return (
+		<div className="flex h-full flex-col">
+			<div className="flex h-full flex-col items-center bg-card">
+				<div className="max-w-7xl px-10 py-10">
+					<div className="flex flex-col items-center justify-center gap-2 bg-card">
+						<h1 className="text-center font-['metropolis-bold'] text-3xl">
+							13th ITSO Quiz Bee
+						</h1>
+						<div className="flex gap-2">
+							<Button
+								onClick={() => {
+									startQuiz(socket, params.quizId);
+								}}
+								disabled={
+									socket.readyState !== ReadyState.OPEN ||
+									quiz.status === QuizStatus.Started
+								}
+							>
+								<PlayIcon size={16} strokeWidth={2} />
+								Start
+							</Button>
+
+							<Button
+								onClick={() => {
+									updateQuizStatus(socket, {
+										quiz_id: params.quizId,
+										status: QuizStatus.Open
+									});
+								}}
+								disabled={
+									socket.readyState !== ReadyState.OPEN ||
+									quiz.status === QuizStatus.Open
+								}
+							>
+								Open
+							</Button>
+						</div>
+					</div>
+
+					<div>
+						<h2 className="my-2 font-['metropolis-bold'] text-2xl">
+							Questions
+						</h2>
+
+						<RadioGroup
+							className="grid-cols-2 lg:grid-cols-4"
+							defaultValue={
+								currentQuestion
+									? currentQuestion.quiz_question_id
+									: quiz.questions[0].quiz_question_id
+							}
+							value={
+								currentQuestion
+									? currentQuestion.quiz_question_id
+									: quiz.questions[0].quiz_question_id
+							}
+						>
+							{quiz.questions.map((question) => {
+								return (
+									<label
+										className="relative flex h-28 cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-input bg-background/50 px-3 py-2 text-center shadow-sm shadow-black/5 ring-offset-background transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent has-[[data-state=checked]]:text-background has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/70 has-[:focus-visible]:ring-offset-2"
+										key={question.quiz_question_id}
+									>
+										<span className="absolute left-3 top-2 text-sm">
+											{question.order_number}
+										</span>
+										<RadioGroupItem
+											id={question.quiz_question_id}
+											value={question.quiz_question_id}
+											className="sr-only after:absolute after:inset-0"
+											onClick={() =>
+												updatePlayersQuestion(socket, {
+													...question,
+													quiz_id: params.quizId
+												})
+											}
+											disabled={socket.readyState !== ReadyState.OPEN}
+										/>
+										<p>{question.content}</p>
+									</label>
+								);
+							})}
+						</RadioGroup>
+					</div>
+				</div>
+			</div>
+
+			<div className="mx-auto flex h-full w-full max-w-7xl flex-col px-20 py-10">
+				<h2 className="my-2 font-['metropolis-bold'] text-2xl">Players</h2>
+				<div className="grid md:grid-cols-2 lg:grid-cols-3">
+					{players.map((player) => {
+						return <div>{player.name}</div>;
+					})}
+				</div>
+			</div>
+		</div>
+	);
 }
 
-//async function getPlayers(quizId: string): Promise<ApiResponse<QuizUser[]>> {
-//  const response = await fetch(
-//    `${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/users`,
-//    {
-//      method: 'GET',
-//      credentials: 'include',
-//    },
-//  )
-//
-//  const result: ApiResponse<QuizUser[]> = await response.json()
-//
-//  return result
-//}
-//
-//export async function getResults(
-//  quizId: string,
-//): Promise<ApiResponse<QuizResult[]>> {
-//  const response = await fetch(
-//    `${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/results`,
-//    {
-//      method: 'GET',
-//      credentials: 'include',
-//    },
-//  )
-//
-//  const result: ApiResponse<QuizResult[]> = await response.json()
-//
-//  return result
-//}
-//
-//function updateQuizStatus(
-//  socket: WebSocketHook,
-//  data: QuizUpdateStatusRequest,
-//): void {
-//  const message: WebSocketRequest<QuizUpdateStatusRequest> = {
-//    event: WebSocketEvent.QuizUpdateStatus,
-//    data: data,
-//  }
-//
-//  socket.sendJsonMessage(message)
-//}
-//
-//function changeQuestion(
-//  socket: WebSocketHook,
-//  data: QuizChangeQuestionRequest,
-//): void {
-//  const message: WebSocketRequest<QuizChangeQuestionRequest> = {
-//    event: WebSocketEvent.QuizChangeQuestion,
-//    data,
-//  }
-//
-//  socket.sendJsonMessage(message)
-//}
-//
-//// NOTE: This could be a global component
-//
-//type QueryErrorProps = {
-//  message: string
-//}
-//
-//function QueryError(props: QueryErrorProps): JSX.Element {
-//  return (
-//    <Alert variant="destructive">
-//      <AlertCircle className="h-4 w-4" />
-//      <AlertTitle>Error</AlertTitle>
-//      <AlertDescription>{props.message}</AlertDescription>
-//    </Alert>
-//  )
-//}
-//
-//export function useAdminView() {
-//  const context = useContext(AdminViewQuizContext)
-//  if (!context) {
-//    throw new Error('useAdminView must be used within a LessonModalProvider')
-//  }
-//  return context
-//}
+function updateQuizStatus(
+	socket: WebSocketHook,
+	data: QuizUpdateStatusRequest
+): void {
+	const message: WebSocketRequest<QuizUpdateStatusRequest> = {
+		event: WebSocketEvent.QuizUpdateStatus,
+		data: data
+	};
+
+	socket.sendJsonMessage(message);
+}
+
+function startQuiz(socket: WebSocketHook, quizId: string) {
+	const message: WebSocketRequest<string> = {
+		event: WebSocketEvent.QuizStart,
+		data: quizId
+	};
+
+	socket.sendJsonMessage(message);
+}
+
+function updatePlayersQuestion(
+	socket: WebSocketHook,
+	data: QuizUpdatePlayersQuestionRequest
+): void {
+	const message: WebSocketRequest<QuizUpdatePlayersQuestionRequest> = {
+		event: WebSocketEvent.QuizUpdateQuestion,
+		data
+	};
+
+	socket.sendJsonMessage(message);
+}
