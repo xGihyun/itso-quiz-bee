@@ -1,113 +1,100 @@
 import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-    CreateWrittenAnswerRequest,
-  QuizQuestion,
-  QuizResult,
+	PlayerResult,
 } from "@/lib/quiz/types";
-import { User } from "@/lib/user/types";
 import {
-  CheckCircleIcon,
-  PenLineIcon,
-  TrophyIcon,
-  UserIcon,
-  XCircleIcon,
+	CheckCircleIcon,
+	PenLineIcon,
+	TrophyIcon,
+	UserIcon,
+	XCircleIcon
 } from "lucide-react";
 import { JSX } from "react";
 
-type PlayerProps = {
-  player: User;
-  answer?: CreateWrittenAnswerRequest;
-  question: QuizQuestion | null;
-  maxScore: number;
-  result?: QuizResult;
-  onPlayerCardClicked?: () => void;
+type Props = {
+	player: PlayerResult;
+    quizMaxScore: number
 };
 
-export function Player(props: PlayerProps): JSX.Element {
-  let answerContent: string | undefined;
+export function Player(props: Props): JSX.Element {
+	return (
+		<Card
+			className="cursor-pointer transition-all hover:scale-95 hover:opacity-90"
+		>
+			<CardHeader>
+				<CardTitle className="flex flex-row items-center gap-2">
+					<UserIcon size={24} />
+					<p className="font-metropolis-medium">
+						{props.player.name}
+					</p>
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				<div className="flex items-center gap-2">
+					<TrophyIcon size={16} />
+					{props.player.score} / {props.quizMaxScore}
+				</div>
 
-  if (props.question) {
-      answerContent = props.answer?.data.content;
-  }
+				<div className="relative">
+					<Input
+						className="rounded-b-none rounded-t border-b-2 border-b-secondary/50 bg-muted ps-9 read-only:bg-muted/50"
+						value={props.player.answers.at(-1)?.content}
+						placeholder="No answer."
+						readOnly
+					/>
+					<div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3">
+						<PenLineIcon size={16} strokeWidth={2} aria-hidden="true" />
+					</div>
+				</div>
 
-  return (
-    <Card className="hover:opacity-90 hover:scale-95 cursor-pointer transition-all" onClick={() => props.onPlayerCardClicked?.()}>
-      <CardHeader>
-        <CardTitle className="flex-row flex items-center gap-2">
-          <UserIcon size={24} />
-          <p className="font-['metropolis-medium']">
-            {props.player.first_name} {props.player.last_name}
-          </p>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex gap-2 items-center">
-          <TrophyIcon size={16} />
-          {props.result?.score || 0} / {props.maxScore}
-        </div>
+				<div>
+					<h2 className="mb-2 flex items-center gap-2 font-medium">
+						<CheckCircleIcon size={16} />
+						Submitted Answers
+					</h2>
 
-        <div className="relative">
-          <Input
-            className="ps-9 read-only:bg-muted/50 bg-muted border-b-2 border-b-secondary/50 rounded-t rounded-b-none"
-            value={answerContent}
-            placeholder="No answer."
-            readOnly
-          />
-          <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3">
-            <PenLineIcon size={16} strokeWidth={2} aria-hidden="true" />
-          </div>
-        </div>
+					{props.player.answers.length > 0 ? (
+						<ScrollArea className="h-48 w-full rounded-md border bg-muted/50 p-4">
+							{props.player.answers.map((answer, i) => (
+								<div
+									key={answer.player_answer_id}
+									className="mb-2 flex items-center space-x-2"
+								>
+									<Badge className="mt-1">#{i + 1}</Badge>
 
-        <div>
-          <h2 className="font-medium flex items-center gap-2 mb-2">
-            <CheckCircleIcon size={16} />
-            Submitted Answers
-          </h2>
+									<div className="flex items-center gap-2">
+										<p>{answer.content}</p>
 
-          {props.result && props.result.answers.length > 0 ? (
-            <ScrollArea className="h-48 w-full rounded-md border p-4 bg-muted/50">
-              {props.result.answers.map((answer, i) => (
-                <div
-                  key={answer.player_answer_id}
-                  className="flex items-center space-x-2 mb-2"
-                >
-                  <Badge className="mt-1">#{i + 1}</Badge>
-
-                  <div className="flex gap-2 items-center">
-                    <p>{answer.content}</p>
-
-                    {answer.is_correct ? (
-                      <CheckCircleIcon
-                        size={16}
-                        strokeWidth={2}
-                        className="text-green-500"
-                      />
-                    ) : (
-                      <XCircleIcon
-                        size={16}
-                        strokeWidth={2}
-                        className="text-destructive"
-                      />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </ScrollArea>
-          ) : (
-            <p className="text-muted-foreground">No submitted answers yet.</p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+										{answer.is_correct ? (
+											<CheckCircleIcon
+												size={16}
+												strokeWidth={2}
+												className="text-green-500"
+											/>
+										) : (
+											<XCircleIcon
+												size={16}
+												strokeWidth={2}
+												className="text-destructive"
+											/>
+										)}
+									</div>
+								</div>
+							))}
+						</ScrollArea>
+					) : (
+						<p className="text-muted-foreground">No submitted answers yet.</p>
+					)}
+				</div>
+			</CardContent>
+		</Card>
+	);
 }

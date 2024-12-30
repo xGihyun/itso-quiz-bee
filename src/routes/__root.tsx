@@ -20,7 +20,7 @@ function RootComponent() {
 
 	return (
 		<>
-			<Toaster closeButton richColors />
+			<Toaster closeButton />
 
 			{auth.user !== null ? <Navbar /> : null}
 

@@ -1,9 +1,7 @@
 import useWebSocket from "react-use-websocket";
 import {
 	Card,
-	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle
 } from "@/components/ui/card";
@@ -15,6 +13,7 @@ import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { useAuth } from "@/lib/auth/context";
 import { QuizBasicInfo } from "@/lib/quiz/types";
+import { UserRole } from "@/lib/user/types";
 
 type Props = {
 	quizzes: QuizBasicInfo[];
@@ -62,13 +61,22 @@ export function Quizzes(props: Props): JSX.Element {
 							return;
 						}
 
+						if (auth.user.role === UserRole.Admin) {
+							await navigate({
+								to: "/quizzes/$quizId/view",
+								params: { quizId: quiz.quiz_id }
+							});
+
+							return;
+						}
+
 						joinQuiz(socket, {
 							quiz_id: quiz.quiz_id,
 							user_id: auth.user.user_id
 						});
 
 						await navigate({
-							to: "/quizzes/$quizId/view",
+							to: "/quizzes/$quizId",
 							params: { quizId: quiz.quiz_id }
 						});
 					}}

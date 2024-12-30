@@ -8,55 +8,64 @@ import {
 import {
 	CreateWrittenAnswerRequest,
 	QuizQuestion,
-	QuizResult,
 	QuizStatus,
 	QuizUpdatePlayersQuestionRequest,
 	QuizUpdateStatusRequest
 } from "@/lib/quiz/types";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { toast } from "sonner";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { PlayIcon } from "lucide-react";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { createContext, JSX, useState } from "react";
+import { JSX, useState } from "react";
 import { Player } from "./-components/player";
 import { User, UserRole } from "@/lib/user/types";
 import {
+	playerResultsQueryOptions,
 	quizCurrentQuestionQueryOptions,
-	quizPlayersQueryOptions,
 	quizQueryOptions
 } from "@/lib/quiz/query";
 import { ErrorAlert } from "@/components/error-alert";
+import { ApiResponseStatus } from "@/lib/api/types";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
 	beforeLoad: async ({ context }) => {
-		const session = await context.auth.validateSession();
-		if (session === null) {
-			throw redirect({ to: "/login" });
-		}
-
-		if (session.user.role !== UserRole.Admin) {
+		if (context.session.user.role !== UserRole.Admin) {
 			throw redirect({ to: "/" });
 		}
 	},
-	loader: ({ context, params }) => {
-		const quiz = context.queryClient.ensureQueryData(
+	loader: async ({ context, params }) => {
+		const quizQuery = await context.queryClient.ensureQueryData(
 			quizQueryOptions(params.quizId)
 		);
-		const players = context.queryClient.ensureQueryData(
-			quizPlayersQueryOptions(params.quizId)
+
+		if (quizQuery.status !== ApiResponseStatus.Success) {
+			throw new Error(quizQuery.message);
+		}
+
+		const playerResultsQuery = await context.queryClient.ensureQueryData(
+			playerResultsQueryOptions(params.quizId)
 		);
-		const currentQuestion = context.queryClient.ensureQueryData(
+
+		if (playerResultsQuery.status !== ApiResponseStatus.Success) {
+			throw new Error(playerResultsQuery.message);
+		}
+
+		const currentQuestionQuery = await context.queryClient.ensureQueryData(
 			quizCurrentQuestionQueryOptions(params.quizId)
 		);
 
+
+		if (currentQuestionQuery.status !== ApiResponseStatus.Success) {
+			throw new Error(currentQuestionQuery.message);
+		}
+
 		return {
-			quiz,
-			players,
-			currentQuestion
+			quiz: quizQuery.data,
+			players: playerResultsQuery.data,
+			currentQuestion: currentQuestionQuery.data
 		};
 	},
 	errorComponent: ({ error }) => {
@@ -66,24 +75,21 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 });
 
 // NOTE:
-// This is where admin will view all the current participants
-// Admin can see the players' current answers in real-time
-// Admin can move to the next/previous question
+// This is where admin will view all the current participants.
+// Admin can see the players' current answers in real-time.
+// Admin can move to the next/previous question.
 
 function RouteComponent(): JSX.Element {
 	const params = Route.useParams();
-	const quizQuery = useSuspenseQuery(quizQueryOptions(params.quizId));
-	const playersQuery = useSuspenseQuery(quizPlayersQueryOptions(params.quizId));
-	const currentQuestionQuery = useSuspenseQuery(
-		quizCurrentQuestionQueryOptions(params.quizId)
+	const loaderData = Route.useLoaderData();
+
+	const [quiz, setQuiz] = useState(loaderData.quiz);
+	const [players, setPlayers] = useState(loaderData.players);
+	const [currentQuestion, setCurrentQuestion] = useState(
+		loaderData.currentQuestion
 	);
 
-	const quiz = quizQuery.data.data;
-	const players = playersQuery.data.data;
-	const currentQuestion = currentQuestionQuery.data.data;
-
-	const [quizQuestion, setQuizQuestion] =
-		useState<QuizQuestion>(currentQuestion);
+    console.log(currentQuestion)
 
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		onMessage: async (event) => {
@@ -92,52 +98,105 @@ function RouteComponent(): JSX.Element {
 			switch (result.event) {
 				case WebSocketEvent.PlayerJoin:
 					{
-						const player = result.data as User;
+						const newPlayer = result.data as User;
 
-						// TODO: Add `player` to players[]
+						if (players.some((p) => p.user_id === newPlayer.user_id)) {
+							return;
+						}
+
+						setPlayers([
+							...players,
+							{
+								...newPlayer,
+								answers: [],
+								score: 0
+							}
+						]);
 					}
 					break;
 				case WebSocketEvent.QuizUpdateStatus:
 					{
 						const status = result.data as QuizStatus;
 
-						// TODO: Do something with the new status
+						setQuiz((q) => ({ ...q, status }));
 					}
 					break;
 				case WebSocketEvent.QuizStart:
 					{
 						const firstQuestion = result.data as QuizQuestion;
-
-						// TODO: Update the current question
-
-						toast.info("Good luck!");
+						setCurrentQuestion(firstQuestion);
 					}
 					break;
 
 				case WebSocketEvent.QuizUpdateQuestion:
 					{
 						const question = result.data as QuizQuestion;
-
-						// TODO: Update the current question
-
+						setCurrentQuestion(question);
 						toast.info("Next question!");
 					}
-
 					break;
 
 				case WebSocketEvent.PlayerTypeAnswer:
 					{
-						const answer = result.data as CreateWrittenAnswerRequest;
+						const currentAnswer = result.data as CreateWrittenAnswerRequest;
 
-						// TODO: Update player's current answer
+						const p = players.map((player) => {
+							if (player.user_id !== currentAnswer.user_id) {
+								return player;
+							}
+
+							const newAnswer = player.answers.map((answer) => {
+								if (
+									answer.quiz_question_id !== currentAnswer.quiz_question_id
+								) {
+									return answer;
+								}
+
+								return {
+									...answer,
+									content: currentAnswer.content
+								};
+							});
+
+							return {
+								...player,
+								answers: newAnswer
+							};
+						});
+
+						setPlayers(p);
 					}
 					break;
 
 				case WebSocketEvent.PlayerSubmitAnswer:
 					{
-						const answer = result.data as CreateWrittenAnswerRequest;
+						const currentAnswer = result.data as CreateWrittenAnswerRequest;
 
-						// TODO: Update player's answer history
+						const p = players.map((player) => {
+							if (player.user_id !== currentAnswer.user_id) {
+								return player;
+							}
+
+							const newAnswer = player.answers.map((answer) => {
+								if (
+									answer.quiz_question_id !== currentAnswer.quiz_question_id
+								) {
+									return answer;
+								}
+
+								return {
+									...answer,
+									content: currentAnswer.content
+								};
+							});
+
+							return {
+								...player,
+								answers: newAnswer
+							};
+						});
+
+						setPlayers(p);
 					}
 					break;
 
@@ -155,7 +214,7 @@ function RouteComponent(): JSX.Element {
 			<div className="flex h-full flex-col items-center bg-card">
 				<div className="max-w-7xl px-10 py-10">
 					<div className="flex flex-col items-center justify-center gap-2 bg-card">
-						<h1 className="text-center font-['metropolis-bold'] text-3xl">
+						<h1 className="text-center font-metropolis-bold text-3xl">
 							13th ITSO Quiz Bee
 						</h1>
 						<div className="flex gap-2">
@@ -241,7 +300,7 @@ function RouteComponent(): JSX.Element {
 				<h2 className="my-2 font-['metropolis-bold'] text-2xl">Players</h2>
 				<div className="grid md:grid-cols-2 lg:grid-cols-3">
 					{players.map((player) => {
-						return <div>{player.name}</div>;
+						return <Player player={player} quizMaxScore={maxScore} />;
 					})}
 				</div>
 			</div>

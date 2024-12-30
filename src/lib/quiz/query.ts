@@ -1,6 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getCurrentQuestion, getPlayers, getQuiz } from "./requests";
-import { getResults } from "@/routes/_authed/quizzes/$quizId/view";
+import { getCurrentQuestion, getPlayers, getQuiz, getResults } from "./requests";
 
 export const quizQueryOptions = (quizId: string) =>
 	queryOptions({
@@ -8,7 +7,7 @@ export const quizQueryOptions = (quizId: string) =>
 		queryFn: () => getQuiz(quizId)
 	});
 
-export const quizResultQueryOptions = (quizId: string) =>
+export const playerResultsQueryOptions = (quizId: string) =>
 	queryOptions({
 		queryKey: ["quiz", "results", quizId],
 		queryFn: () => getResults(quizId)

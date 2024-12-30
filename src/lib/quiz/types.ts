@@ -1,3 +1,5 @@
+import { User } from "../user/types";
+
 export enum QuizStatus {
 	Open = "open",
 	Started = "started",
@@ -45,10 +47,9 @@ export type PlayerAnswer = {
 
 export type PlayerScore = {
 	score: number;
-	user_id: string;
-};
+} & User;
 
-export type QuizResult = {
+export type PlayerResult = {
 	answers: PlayerAnswer[];
 } & PlayerScore;
 
