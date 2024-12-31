@@ -27,7 +27,7 @@ type Props = {
 export function Player(props: Props): JSX.Element {
 	return (
 		<Card
-			className="cursor-pointer transition-all hover:scale-95 hover:opacity-90"
+			className="cursor-pointer"
 		>
 			<CardHeader>
 				<CardTitle className="flex flex-row items-center gap-2">
@@ -46,7 +46,7 @@ export function Player(props: Props): JSX.Element {
 				<div className="relative">
 					<Input
 						className="rounded-b-none rounded-t border-b-2 border-b-secondary/50 bg-muted ps-9 read-only:bg-muted/50"
-						value={props.player.answers.at(-1)?.content}
+						value={props.player.currentAnswer}
 						placeholder="No answer."
 						readOnly
 					/>

@@ -51,6 +51,7 @@ export type PlayerScore = {
 
 export type PlayerResult = {
 	answers: PlayerAnswer[];
+    currentAnswer?: string
 } & PlayerScore;
 
 export type GetWrittenAnswerResponse = {
@@ -71,4 +72,5 @@ export type CreateWrittenAnswerRequest = {
 	content: string;
 	quiz_question_id: string;
 	user_id: string;
+    quiz_id: string;
 };

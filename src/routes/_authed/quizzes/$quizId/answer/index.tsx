@@ -1,166 +1,114 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { WebSocketEvent, WebSocketRequest } from '@/lib/websocket/types'
-import useWebSocket from 'react-use-websocket'
-import { toast } from 'sonner'
-import { useQuery } from '@tanstack/react-query'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
-import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from '@/lib/websocket/constants'
-import {
-  GetWrittenAnswerResponse,
-  QuizQuestion,
-  QuizQuestionVariant,
-} from '@/lib/quiz/types'
-import { getCurrentAnswer, getCurrentQuestion } from '@/lib/quiz/requests'
-import { MultipleChoiceForm } from './-components/multiple-choice-form'
-import { WrittenAnswerForm } from './-components/written-form'
-import { WebSocketHook } from 'react-use-websocket/dist/lib/types'
-import { useEffect, useRef, useState } from 'react'
-import { hasSubscribers } from 'diagnostics_channel'
-import gsap from 'gsap'
+import { createFileRoute } from "@tanstack/react-router";
+import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
+import useWebSocket from "react-use-websocket";
+import { toast } from "sonner";
+import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
+import { CreateWrittenAnswerRequest, QuizQuestion } from "@/lib/quiz/types";
+import { JSX, useEffect, useRef, useState } from "react";
+import { quizCurrentQuestionQueryOptions } from "@/lib/quiz/query";
+import { ApiResponseStatus } from "@/lib/api/types";
+import { ErrorAlert } from "@/components/error-alert";
+import { WrittenAnswerForm } from "./-components/written-form";
+import gsap from "gsap";
 
-export const Route = createFileRoute('/_authed/quizzes/$quizId/answer/')({
-  component: RouteComponent,
-})
+export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
+	component: RouteComponent,
+	loader: async ({ context, params }) => {
+		const queries = await Promise.all([
+			context.queryClient.ensureQueryData(
+				quizCurrentQuestionQueryOptions(params.quizId)
+			)
+		]);
 
-// NOTE:
-// This is where the players would answer the quiz
-// Redirect here once admin starts the quiz
+		queries.forEach((query) => {
+			if (query.status !== ApiResponseStatus.Success) {
+				throw new Error(query.message);
+			}
+		});
 
-// TODO: (IMPORTANT!!!)
-// Prevent answer resubmission
+		const [currentQuestionQuery] = queries;
+
+		return {
+			currentQuestion: currentQuestionQuery.data,
+			user: context.session.user
+		};
+	},
+	errorComponent: ({ error }) => {
+		return <ErrorAlert message={error.message} />;
+	},
+	pendingComponent: () => <div>Loading...</div>
+});
+
+// TODO: Prevent answer resubmission
 
 function RouteComponent(): JSX.Element {
-  const params = Route.useParams()
-  const currentQuestionQuery = useQuery({
-    queryKey: ['current-question'],
-    queryFn: () => getCurrentQuestion(params.quizId),
-  })
-  const currentAnswerQuery = useQuery({
-    queryKey: ['current-answer'],
-    queryFn: () => getCurrentAnswer(params.quizId),
-  })
+	const loaderData = Route.useLoaderData();
 
-  const [hasSubmitted, setHasSubmitted] = useState(false)
+	const [hasSubmitted, setHasSubmitted] = useState(false);
+	const [currentQuestion, setCurrentQuestion] = useState(
+		loaderData.currentQuestion
+	);
 
-  const socket = useWebSocket(WEBSOCKET_URL, {
-    onMessage: async (event) => {
-      const result: WebSocketRequest<QuizQuestion> = await JSON.parse(
-        event.data,
-      )
+	const _ = useWebSocket(WEBSOCKET_URL, {
+		...WEBSOCKET_OPTIONS,
+		onMessage: async (event) => {
+			const result: WebSocketResponse = await JSON.parse(event.data);
 
-      switch (result.event) {
-        case WebSocketEvent.QuizChangeQuestion:
-          await currentQuestionQuery.refetch()
+			switch (result.event) {
+				case WebSocketEvent.QuizUpdateQuestion:
+					{
+						const question = result.data as QuizQuestion;
+						setCurrentQuestion(question);
+						toast.info("Next question!");
+					}
+					break;
 
-          setHasSubmitted(false)
+				case WebSocketEvent.PlayerSubmitAnswer:
+					{
+						const currentAnswer = result.data as CreateWrittenAnswerRequest;
+						//setHasSubmitted(true);
+						toast.info("Submitted answer!");
+					}
+					break;
 
-          toast.info('Next question!')
-          break
-        case WebSocketEvent.QuizSubmitAnswer:
-          setHasSubmitted(true)
-          toast.info('Submitted answer!')
-          break
-        case WebSocketEvent.QuizTypeAnswer:
-          break
-        default:
-          console.warn('Unknown event type:', result.event)
-      }
-    },
-    ...WEBSOCKET_OPTIONS,
-  })
+				default:
+					console.warn("Unknown event type:", result.event);
+			}
+		}
+	});
 
-  if (currentQuestionQuery.isPending || currentAnswerQuery.isPending) {
-    return <Skeleton className="w-20 h-20" />
-  }
+	const containerElement = useRef<HTMLDivElement>(null);
 
-  if (currentQuestionQuery.isError) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>
-          {currentQuestionQuery.data?.message}
-        </AlertDescription>
-      </Alert>
-    )
-  }
+	useEffect(() => {
+		gsap.fromTo(
+			containerElement.current,
+			{
+				scale: 0,
+				opacity: 0
+			},
+			{
+				scale: 1,
+				opacity: 1
+			}
+		);
+	}, []);
 
-  if (currentAnswerQuery.isError) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{currentAnswerQuery.data?.message}</AlertDescription>
-      </Alert>
-    )
-  }
+	return (
+		<div ref={containerElement} className="flex h-full flex-col">
+			<div className="flex h-full items-center px-20 py-10">
+				<p className="mx-auto mb-5 max-w-5xl text-center font-['metropolis-bold'] text-3xl">
+					{currentQuestion.content}
+				</p>
+			</div>
 
-  const question = currentQuestionQuery.data.data
-  const answer = currentAnswerQuery.data.data
-
-  if (question === null) {
-    return <div>No questions available.</div>
-  }
-
-  return (
-    <Answer
-      socket={socket}
-      question={question}
-      quizId={params.quizId}
-      answer={answer}
-      hasSubmitted={hasSubmitted}
-    />
-  )
-}
-
-export type AnswerProps = {
-  socket: WebSocketHook
-  question: QuizQuestion
-  quizId: string
-  answer: GetWrittenAnswerResponse | null
-  hasSubmitted: boolean
-}
-
-function Answer(props: AnswerProps): JSX.Element {
-  const mainElement = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    gsap.fromTo(
-      mainElement.current,
-      {
-        scale: 0,
-        opacity: 0,
-      },
-      {
-        scale: 1,
-        opacity: 1,
-      },
-    )
-  }, [])
-
-  return (
-    <div ref={mainElement} className="flex flex-col h-full">
-      <div className="px-20 py-10 h-full flex items-center">
-        <p className="mb-5 font-['metropolis-bold'] text-3xl max-w-5xl mx-auto text-center">
-          {props.question.content}
-        </p>
-      </div>
-
-      <div className="bg-card px-20 py-10 h-full flex w-full mx-auto">
-        <div className="max-w-5xl mx-auto w-full">
-          {props.question.variant === QuizQuestionVariant.Written ? (
-            <WrittenAnswerForm {...props} />
-          ) : (
-            <MultipleChoiceForm
-              socket={props.socket}
-              question={props.question}
-              quizId={props.quizId}
-            />
-          )}
-        </div>
-      </div>
-    </div>
-  )
+			<div className="mx-auto flex h-full w-full bg-card px-20 py-10">
+				<div className="mx-auto w-full max-w-5xl">
+					<WrittenAnswerForm
+						question={currentQuestion}
+						user={loaderData.user}
+					/>
+				</div>
+			</div>
+		</div>
+	);
 }
