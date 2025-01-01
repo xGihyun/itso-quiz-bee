@@ -28,7 +28,10 @@
         --chart-3: 197 37% 24%;
         --chart-4: 43 74% 66%;
         --chart-5: 27 87% 67%;
-        --radius: 0.5rem
+        --radius: 0.5rem;
+
+        --success: 155 95% 58%;
+        --success-foreground: 224 83% 7%;
     }
 
     .dark {
@@ -46,7 +49,7 @@
         --muted-foreground: 215 20.2% 65.1%;
         --accent: 155 95% 58%;
         --accent-foreground: 224 83% 7%;
-        --destructive: 0 62.8% 40%;
+        --destructive: 350 90% 65%;
         --destructive-foreground: 193 87% 94%;
         --border: 224 35% 20%;
         --input: 224 35% 20%;
@@ -55,7 +58,10 @@
         --chart-2: 160 60% 45%;
         --chart-3: 30 80% 55%;
         --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%
+        --chart-5: 340 75% 55%;
+
+        --success: 155 95% 58%;
+        --success-foreground: 224 83% 7%;
     }
 
     @font-face {

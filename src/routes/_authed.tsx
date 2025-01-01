@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authed")({
 
 function RouteComponent() {
 	return (
-		<div>
+		<div className="h-full pt-16">
 			<Outlet />
 		</div>
 	);

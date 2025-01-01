@@ -77,7 +77,7 @@ export function Player(props: Props): JSX.Element {
 											<CheckCircleIcon
 												size={16}
 												strokeWidth={2}
-												className="text-green-500"
+												className="text-success"
 											/>
 										) : (
 											<XCircleIcon

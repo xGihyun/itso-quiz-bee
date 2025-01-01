@@ -4,6 +4,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { JSX } from "react";
 import { removeCookie } from "typescript-cookie";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import foo from "../-images/itso-umak-logo.webp";
 
 export function Navbar(): JSX.Element {
 	const auth = useAuth();
@@ -17,12 +18,13 @@ export function Navbar(): JSX.Element {
 
 	return (
 		<nav className="fixed inset-0 z-[998] flex h-16 w-full items-center justify-between border-b border-b-border bg-background px-10">
-			<div className="space-x-2">
+			<div className="h-full py-2">
 				<Link href="/" className="h-full content-center">
-					Home
-				</Link>
-				<Link href="/quizzes" className="h-full content-center">
-					Quiz
+					<img
+						src={foo}
+						alt="ITSO Logo"
+						className="h-full w-full object-cover"
+					/>
 				</Link>
 			</div>
 

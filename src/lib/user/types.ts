@@ -9,4 +9,5 @@ export type User = {
 	username: string;
 	name: string;
 	role: UserRole;
+	avatar_url?: string;
 };

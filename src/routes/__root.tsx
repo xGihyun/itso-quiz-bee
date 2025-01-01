@@ -24,7 +24,7 @@ function RootComponent() {
 
 			{auth.user !== null ? <Navbar /> : null}
 
-			<main className={auth.user !== null ? "py-16" : ""}>
+			<main className={auth.user !== null ? "h-svh" : ""}>
 				<Outlet />
 			</main>
 

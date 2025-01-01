@@ -12,7 +12,7 @@ import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { useAuth } from "@/lib/auth/context";
-import { QuizBasicInfo } from "@/lib/quiz/types";
+import { QuizBasicInfo, QuizStatus } from "@/lib/quiz/types";
 import { UserRole } from "@/lib/user/types";
 
 type Props = {
@@ -21,9 +21,7 @@ type Props = {
 
 export function Quizzes(props: Props): JSX.Element {
 	const auth = useAuth();
-	const socket = useWebSocket(WEBSOCKET_URL, {
-		...WEBSOCKET_OPTIONS
-	});
+	const socket = useWebSocket(WEBSOCKET_URL, WEBSOCKET_OPTIONS);
 	const navigate = useNavigate({ from: "/" });
 
 	const quizzesRef = useRef<HTMLDivElement>(null);
@@ -74,6 +72,14 @@ export function Quizzes(props: Props): JSX.Element {
 							quiz_id: quiz.quiz_id,
 							user_id: auth.user.user_id
 						});
+
+						if (quiz.status === QuizStatus.Started) {
+							await navigate({
+								to: "/quizzes/$quizId/answer",
+								params: { quizId: quiz.quiz_id }
+							});
+							return;
+						}
 
 						await navigate({
 							to: "/quizzes/$quizId",

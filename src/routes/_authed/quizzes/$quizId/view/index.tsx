@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
 import {
@@ -28,7 +28,6 @@ import {
 	updateQuizStatus
 } from "./-functions/websocket";
 import { updatePlayerAnswer, updatePlayerResult } from "./-functions/helper";
-import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -76,8 +75,6 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 function RouteComponent(): JSX.Element {
 	const params = Route.useParams();
 	const loaderData = Route.useLoaderData();
-	const queryClient = useQueryClient();
-    const router = useRouter()
 
 	const [quiz, setQuiz] = useState(loaderData.quiz);
 	const [players, setPlayers] = useState(loaderData.players);
@@ -142,7 +139,7 @@ function RouteComponent(): JSX.Element {
 				case WebSocketEvent.PlayerSubmitAnswer:
 					{
 						const newPlayerResult = result.data as PlayerResult;
-                        const results = updatePlayerResult(players, newPlayerResult)
+						const results = updatePlayerResult(players, newPlayerResult);
 						setPlayers(results);
 					}
 					break;
@@ -204,7 +201,7 @@ function RouteComponent(): JSX.Element {
 							{quiz.questions.map((question) => {
 								return (
 									<label
-										className="relative flex h-28 cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-input bg-background/50 px-3 py-2 text-center shadow-sm shadow-black/5 ring-offset-background transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-accent has-[[data-state=checked]]:text-background has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/70 has-[:focus-visible]:ring-offset-2"
+										className="relative flex h-28 cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-input bg-background/50 px-3 py-2 text-center shadow-sm shadow-black/5 ring-offset-background transition-colors has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-primary has-[[data-state=checked]]:text-background has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/70 has-[:focus-visible]:ring-offset-2"
 										key={question.quiz_question_id}
 									>
 										<span className="absolute left-3 top-2 text-sm">

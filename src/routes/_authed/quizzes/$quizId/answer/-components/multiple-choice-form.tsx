@@ -22,6 +22,8 @@ import {
 } from "@/lib/websocket/types";
 import { CheckIcon } from "lucide-react";
 
+// NOTE: Not used
+
 type Props = {
   socket: WebSocketHook;
   question: QuizQuestion;

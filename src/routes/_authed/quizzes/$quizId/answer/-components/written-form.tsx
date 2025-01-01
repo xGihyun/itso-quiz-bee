@@ -19,6 +19,7 @@ import { JSX } from "react";
 import { User } from "@/lib/user/types";
 import { submitAnswer, typeAnswer } from "../-functions/websocket";
 import { useParams } from "@tanstack/react-router";
+import { IconPen } from "@/lib/icons";
 
 type Props = {
 	user: User;
@@ -57,8 +58,6 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 	});
 
 	async function onSubmit(value: WrittenAnswerInput): Promise<void> {
-		console.log(value);
-
 		submitAnswer(socket, {
 			...value,
 			user_id: props.user.user_id,
@@ -73,22 +72,27 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 					control={form.control}
 					name="content"
 					render={({ field }) => (
-						<FormItem>
+						<FormItem className="space-y-1">
 							<FormControl>
-								<Input
-									{...field}
-									className="h-auto rounded-b-none rounded-t border-b-2 border-b-secondary/50 bg-muted read-only:bg-muted/50 focus:border-b-primary focus-visible:ring-transparent md:px-4 md:py-2 md:text-xl"
-									placeholder="Type your answer"
-									onChange={(event) => {
-										typeAnswer(socket, {
-											quiz_question_id: props.question.quiz_question_id,
-											content: event.target.value,
-											user_id: props.user.user_id,
-											quiz_id: params.quizId
-										});
-										return field.onChange(event);
-									}}
-								/>
+								<div className="relative">
+									<Input
+										{...field}
+										className="h-auto rounded-b-none rounded-t border-b-2 border-b-secondary/50 bg-card read-only:bg-muted/50 focus:border-b-primary focus-visible:ring-transparent md:px-4 md:py-2 md:ps-11 md:text-lg peer"
+										placeholder="Type your answer"
+										onChange={(event) => {
+											typeAnswer(socket, {
+												quiz_question_id: props.question.quiz_question_id,
+												content: event.target.value,
+												user_id: props.user.user_id,
+												quiz_id: params.quizId
+											});
+											return field.onChange(event);
+										}}
+									/>
+									<div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+										<IconPen className="size-6" />
+									</div>
+								</div>
 							</FormControl>
 							<FormMessage />
 						</FormItem>

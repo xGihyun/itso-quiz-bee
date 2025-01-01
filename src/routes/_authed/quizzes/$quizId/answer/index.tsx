@@ -9,7 +9,9 @@ import { quizCurrentQuestionQueryOptions } from "@/lib/quiz/query";
 import { ApiResponseStatus } from "@/lib/api/types";
 import { ErrorAlert } from "@/components/error-alert";
 import { WrittenAnswerForm } from "./-components/written-form";
-import gsap from "gsap";
+import { gsap } from "gsap";
+
+// TODO: Persist submitted answer
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 	component: RouteComponent,
@@ -77,31 +79,34 @@ function RouteComponent(): JSX.Element {
 		}
 	});
 
-	const containerElement = useRef<HTMLDivElement>(null);
+	const questionRef = useRef<HTMLParagraphElement>(null);
 
 	useEffect(() => {
 		gsap.fromTo(
-			containerElement.current,
+			questionRef.current,
 			{
-				scale: 0,
-				opacity: 0
+				opacity: 0,
+				ease: "power3.out"
 			},
 			{
-				scale: 1,
-				opacity: 1
+				opacity: 1,
+				ease: "power3.out"
 			}
 		);
-	}, []);
+	}, [currentQuestion]);
 
 	return (
-		<div ref={containerElement} className="flex h-full flex-col">
-			<div className="flex h-full items-center px-20 py-10">
-				<p className="mx-auto mb-5 max-w-5xl text-center font-['metropolis-bold'] text-3xl">
+		<div className="flex h-full flex-col">
+			<div className="flex h-full items-center bg-card px-20 py-10">
+				<p
+					className="mx-auto mb-5 max-w-5xl text-center font-metropolis-bold text-3xl"
+					ref={questionRef}
+				>
 					{currentQuestion.content}
 				</p>
 			</div>
 
-			<div className="mx-auto flex h-full w-full bg-card px-20 py-10">
+			<div className="mx-auto flex h-full w-full px-20 py-10">
 				<div className="mx-auto w-full max-w-5xl">
 					<WrittenAnswerForm
 						question={currentQuestion}
