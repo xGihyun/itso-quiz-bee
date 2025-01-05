@@ -1,5 +1,3 @@
-import { User } from "../user/types";
-
 export enum QuizStatus {
 	Open = "open",
 	Started = "started",
@@ -40,25 +38,6 @@ export type QuizQuestion = {
 	answers: QuizAnswer[];
 };
 
-export type PlayerAnswer = {
-	player_answer_id: string;
-	quiz_question_id: string;
-} & QuizAnswer;
-
-export type PlayerScore = {
-	score: number;
-} & User;
-
-export type PlayerResult = {
-	answers: PlayerAnswer[];
-    currentAnswer?: string
-} & PlayerScore;
-
-export type GetWrittenAnswerResponse = {
-	player_written_answer_id: string;
-	content: string;
-};
-
 export type QuizUpdateStatusRequest = {
 	quiz_id: string;
 	status: QuizStatus;
@@ -72,5 +51,5 @@ export type CreateWrittenAnswerRequest = {
 	content: string;
 	quiz_question_id: string;
 	user_id: string;
-    quiz_id: string;
+	quiz_id: string;
 };

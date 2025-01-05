@@ -1,15 +1,16 @@
-import { CreateWrittenAnswerRequest, PlayerResult } from "@/lib/quiz/types";
+import { Player } from "@/lib/quiz/player/types";
+import { CreateWrittenAnswerRequest } from "@/lib/quiz/types";
 
 export function updatePlayerAnswer(
-	players: PlayerResult[],
+	players: Player[],
 	currentAnswer: CreateWrittenAnswerRequest
-): PlayerResult[] {
+): Player[] {
 	const p = players.map((player) => {
 		if (player.user_id !== currentAnswer.user_id) {
 			return player;
 		}
 
-		player.currentAnswer = currentAnswer.content;
+		player.result.currentAnswer = currentAnswer.content;
 
 		return player;
 	});
@@ -17,10 +18,7 @@ export function updatePlayerAnswer(
 	return p;
 }
 
-export function updatePlayerResult(
-	players: PlayerResult[],
-	newResult: PlayerResult
-): PlayerResult[] {
+export function updatePlayer(players: Player[], newResult: Player): Player[] {
 	const p = players.map((player) => {
 		if (player.user_id !== newResult.user_id) {
 			return player;

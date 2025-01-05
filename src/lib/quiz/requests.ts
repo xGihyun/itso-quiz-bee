@@ -1,12 +1,6 @@
 import { ApiResponse } from "../api/types";
-import { User } from "../user/types";
-import {
-	GetWrittenAnswerResponse,
-	PlayerResult,
-	Quiz,
-	QuizBasicInfo,
-	QuizQuestion,
-} from "./types";
+import { GetWrittenAnswerResponse, Player } from "./player/types";
+import { Quiz, QuizBasicInfo, QuizQuestion } from "./types";
 
 export async function getQuizzes(): Promise<ApiResponse<QuizBasicInfo[]>> {
 	const response = await fetch(
@@ -68,7 +62,9 @@ export async function getQuiz(quizId: string): Promise<ApiResponse<Quiz>> {
 	return result;
 }
 
-export async function getPlayers(quizId: string): Promise<ApiResponse<User[]>> {
+export async function getPlayers(
+	quizId: string
+): Promise<ApiResponse<Player[]>> {
 	const response = await fetch(
 		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/players`,
 		{
@@ -77,23 +73,7 @@ export async function getPlayers(quizId: string): Promise<ApiResponse<User[]>> {
 		}
 	);
 
-	const result: ApiResponse<User[]> = await response.json();
-
-	return result;
-}
-
-export async function getResults(
-	quizId: string
-): Promise<ApiResponse<PlayerResult[]>> {
-	const response = await fetch(
-		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}/results`,
-		{
-			method: "GET",
-			credentials: "include"
-		}
-	);
-
-	const result: ApiResponse<PlayerResult[]> = await response.json();
+	const result: ApiResponse<Player[]> = await response.json();
 
 	return result;
 }

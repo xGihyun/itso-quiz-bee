@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getCurrentQuestion, getPlayers, getQuiz, getResults } from "./requests";
+import { getCurrentQuestion, getPlayers, getQuiz } from "./requests";
 
 export const quizQueryOptions = (quizId: string) =>
 	queryOptions({
@@ -7,13 +7,7 @@ export const quizQueryOptions = (quizId: string) =>
 		queryFn: () => getQuiz(quizId)
 	});
 
-export const playerResultsQueryOptions = (quizId: string) =>
-	queryOptions({
-		queryKey: ["quiz", "results", quizId],
-		queryFn: () => getResults(quizId)
-	});
-
-export const quizPlayersQueryOptions = (quizId: string) =>
+export const playersQueryOptions = (quizId: string) =>
 	queryOptions({
 		queryKey: ["quiz", "players", quizId],
 		queryFn: () => getPlayers(quizId)
