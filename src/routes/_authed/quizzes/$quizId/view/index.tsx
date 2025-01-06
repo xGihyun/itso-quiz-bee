@@ -20,9 +20,10 @@ import { ApiResponseStatus } from "@/lib/api/types";
 import { updatePlayer, updatePlayerAnswer } from "./-functions/helper";
 import { Player } from "@/lib/quiz/player/types";
 import { QuizViewSchema } from "./-schemas";
-import { PlayerListItem } from "./-components/player";
+import { PlayerListItem } from "./-components/player-list-item";
 import { QuestionListItem } from "./-components/question-list-item";
 import { Controls } from "./-components/controls";
+import { QuestionActive } from "./-components/question-active";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -145,8 +146,8 @@ function RouteComponent(): JSX.Element {
 	});
 
 	return (
-		<div className="relative h-full">
-			<div className="mx-auto max-w-screen-2xl p-10">
+		<div className="relative h-full pb-16">
+			<div className="mx-auto max-w-screen-2xl p-10 h-full">
 				<div className="grid grid-cols-2 gap-20">
 					<section className="flex h-full flex-col gap-2">
 						{players.map((player) => {
@@ -161,11 +162,7 @@ function RouteComponent(): JSX.Element {
 					</section>
 
 					<section className="space-y-8">
-						<div>
-							<p className="font-metropolis-bold text-2xl">
-								{currentQuestion.content}
-							</p>
-						</div>
+						<QuestionActive question={currentQuestion} />
 
 						<div className="space-y-2">
 							{quiz.questions.map((question) => (
@@ -183,7 +180,7 @@ function RouteComponent(): JSX.Element {
 				</div>
 			</div>
 
-            <Controls quiz={quiz} />
+			<Controls quiz={quiz} />
 		</div>
 	);
 }

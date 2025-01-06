@@ -47,7 +47,7 @@
         --secondary-foreground: 224 83% 7%;
         --muted: 217.2 32.6% 17.5%;
         --muted-foreground: 215 20.2% 65.1%;
-        --accent: 155 95% 58%;
+        --accent: 41 86% 83%;
         --accent-foreground: 224 83% 7%;
         --destructive: 350 90% 65%;
         --destructive-foreground: 193 87% 94%;
@@ -108,7 +108,6 @@
 
     * {
         font-family: metropolis, sans-serif;
-        /* border: 1px solid red;  */
     }
 
     body {

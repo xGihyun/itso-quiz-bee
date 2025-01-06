@@ -9,6 +9,8 @@ type Props = {
 	quiz: Quiz;
 };
 
+// NOTE: Not used
+
 export function PlayerDetails(props: Props): JSX.Element {
 	return (
 		<div className="space-y-10">

@@ -10,10 +10,13 @@ import useWebSocket from "react-use-websocket";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { Quiz, QuizStatus } from "@/lib/quiz/types";
 import { updateQuizStatus } from "../-functions/websocket";
+import { IconAuto, IconTimer } from "@/lib/icons";
 
 type Props = {
 	quiz: Quiz;
 };
+
+// TODO: Make timer work
 
 export function Controls(props: Props): JSX.Element {
 	const socket = useWebSocket(WEBSOCKET_URL, {
@@ -22,9 +25,9 @@ export function Controls(props: Props): JSX.Element {
 	});
 
 	return (
-		<div className="fixed bottom-0 left-0 grid w-full grid-cols-3 border-t bg-card px-10 py-4">
+		<div className="fixed bottom-0 left-0 grid h-16 w-full grid-cols-3 items-center border-t bg-card px-10">
 			<div className="content-center">
-				<p>{props.quiz.name}</p>
+				<p className="font-metropolis-bold">{props.quiz.name}</p>
 			</div>
 
 			<div className="mx-auto">
@@ -51,7 +54,10 @@ export function Controls(props: Props): JSX.Element {
 				</Select>
 			</div>
 
-			<div></div>
+			<div className="flex w-full items-center justify-end gap-2">
+				<IconAuto className="size-6" />
+				<IconTimer className="size-6" />
+			</div>
 		</div>
 	);
 }

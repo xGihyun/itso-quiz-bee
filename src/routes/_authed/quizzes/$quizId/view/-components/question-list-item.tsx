@@ -19,7 +19,7 @@ export function QuestionListItem(props: Props): JSX.Element {
 
 	return (
 		<button
-			className={`block w-full rounded border px-3 py-2 text-start ${props.isActive ? "bg-primary text-primary-foreground" : "bg-card"}`}
+			className={`flex gap-4 w-full rounded border px-4 py-3 text-start ${props.isActive ? "bg-primary text-primary-foreground" : "bg-card"}`}
 			onClick={() =>
 				updatePlayersQuestion(socket, {
 					...props.question,
@@ -27,10 +27,19 @@ export function QuestionListItem(props: Props): JSX.Element {
 				})
 			}
 		>
-			<p className="line-clamp-1">{props.question.content}</p>
-			<div className={ `space-x-1 ${props.isActive ? "text-primary-foreground/80" : "text-muted-foreground"}` }>
-				<span className="text-sm">{props.question.points}</span>
-				<span className="text-xs">pts.</span>
+			<div className="content-center font-metropolis-bold text-lg">
+				{props.question.order_number}
+			</div>
+
+			<div>
+				<p className="line-clamp-1">{props.question.content}</p>
+
+				<div
+					className={`space-x-1 ${props.isActive ? "text-primary-foreground/80" : "text-muted-foreground"}`}
+				>
+					<span className="text-sm">{props.question.points}</span>
+					<span className="text-xs">pts.</span>
+				</div>
 			</div>
 		</button>
 	);
