@@ -9,7 +9,7 @@ type Props = {
 // TODO: Click to reveal answer
 export function QuestionActive(props: Props): JSX.Element {
 	return (
-		<div className="h-60 content-center space-y-2 rounded border bg-card p-6">
+		<div className="h-full content-center space-y-2 rounded border bg-card p-6 overflow-auto">
 			<p className="text-center font-metropolis-bold text-2xl">
 				{props.question.content}
 			</p>

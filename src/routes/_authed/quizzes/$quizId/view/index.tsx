@@ -24,6 +24,12 @@ import { PlayerListItem } from "./-components/player-list-item";
 import { QuestionListItem } from "./-components/question-list-item";
 import { Controls } from "./-components/controls";
 import { QuestionActive } from "./-components/question-active";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+	ResizableHandle,
+	ResizablePanel,
+	ResizablePanelGroup
+} from "@/components/ui/resizable";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -147,37 +153,49 @@ function RouteComponent(): JSX.Element {
 
 	return (
 		<div className="relative h-full pb-16">
-			<div className="mx-auto max-w-screen-2xl p-10 h-full">
-				<div className="grid grid-cols-2 gap-20">
-					<section className="flex h-full flex-col gap-2">
-						{players.map((player) => {
-							return (
-								<PlayerListItem
-									player={player}
-									isActive={selectedPlayer?.user_id === player.user_id}
-									key={player.user_id}
-								/>
-							);
-						})}
-					</section>
+			<div className="mx-auto h-full max-w-screen-2xl p-10">
+				<ResizablePanelGroup direction="horizontal" className="gap-3">
+					<ResizablePanel minSize={20}>
+						<section className="flex h-full flex-col gap-2 overflow-y-auto">
+							{players.map((player) => {
+								return (
+									<PlayerListItem
+										player={player}
+										isActive={selectedPlayer?.user_id === player.user_id}
+										key={player.user_id}
+									/>
+								);
+							})}
+						</section>
+					</ResizablePanel>
 
-					<section className="space-y-8">
-						<QuestionActive question={currentQuestion} />
+					<ResizableHandle withHandle />
 
-						<div className="space-y-2">
-							{quiz.questions.map((question) => (
-								<QuestionListItem
-									question={question}
-									isActive={
-										currentQuestion.quiz_question_id ===
-										question.quiz_question_id
-									}
-									key={question.quiz_question_id}
-								/>
-							))}
-						</div>
-					</section>
-				</div>
+					<ResizablePanel minSize={20}>
+						<ResizablePanelGroup direction="vertical" className="gap-3">
+							<ResizablePanel minSize={10}>
+								<QuestionActive question={currentQuestion} />
+							</ResizablePanel>
+
+							<ResizableHandle withHandle />
+
+							<ResizablePanel minSize={10}>
+								<div className="space-y-2 overflow-y-scroll h-full">
+									{quiz.questions.map((question) => (
+										<QuestionListItem
+											question={question}
+											isActive={
+												currentQuestion.quiz_question_id ===
+												question.quiz_question_id
+											}
+											key={question.quiz_question_id}
+										/>
+									))}
+								</div>
+							</ResizablePanel>
+						</ResizablePanelGroup>
+					</ResizablePanel>
+				</ResizablePanelGroup>
 			</div>
 
 			<Controls quiz={quiz} />
