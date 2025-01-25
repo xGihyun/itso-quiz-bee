@@ -8,7 +8,7 @@ import {
 	FormControl,
 	FormField,
 	FormItem,
-	FormMessage
+	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
@@ -20,9 +20,10 @@ import { User } from "@/lib/user/types";
 import { submitAnswer, typeAnswer } from "../-functions/websocket";
 import { useParams } from "@tanstack/react-router";
 import { IconPen } from "@/lib/icons";
+import { Player } from "@/lib/quiz/player/types";
 
 type Props = {
-	user: User;
+	player: Player;
 	question: QuizQuestion;
 };
 
@@ -32,8 +33,8 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 		resolver: zodResolver(WrittenAnswerSchema),
 		defaultValues: {
 			content: "",
-			quiz_question_id: props.question.quiz_question_id
-		}
+			quiz_question_id: props.question.quiz_question_id,
+		},
 	});
 
 	const socket = useWebSocket(WEBSOCKET_URL, {
@@ -47,23 +48,27 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 					const data = result.data as QuizQuestion;
 					form.reset({
 						content: "",
-						quiz_question_id: data.quiz_question_id
+						quiz_question_id: data.quiz_question_id,
 					});
 					break;
 
 				default:
 					console.warn("Unknown event type:", result.event);
 			}
-		}
+		},
 	});
 
 	async function onSubmit(value: WrittenAnswerInput): Promise<void> {
 		submitAnswer(socket, {
 			...value,
-			user_id: props.user.user_id,
-			quiz_id: params.quizId
+			user_id: props.player.user_id,
+			quiz_id: params.quizId,
 		});
 	}
+
+	const currentAnswer = props.player.result.answers.find(
+		(answer) => answer.quiz_question_id === props.question.quiz_question_id,
+	);
 
 	return (
 		<Form {...form}>
@@ -83,11 +88,12 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 											typeAnswer(socket, {
 												quiz_question_id: props.question.quiz_question_id,
 												content: event.target.value,
-												user_id: props.user.user_id,
-												quiz_id: params.quizId
+												user_id: props.player.user_id,
+												quiz_id: params.quizId,
 											});
 											return field.onChange(event);
 										}}
+										value={currentAnswer?.content}
 									/>
 									<div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
 										<IconPen className="size-6" />

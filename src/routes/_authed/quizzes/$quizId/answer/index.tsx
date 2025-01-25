@@ -5,50 +5,57 @@ import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { CreateWrittenAnswerRequest, QuizQuestion } from "@/lib/quiz/types";
 import { JSX, useEffect, useRef, useState } from "react";
-import { quizCurrentQuestionQueryOptions } from "@/lib/quiz/query";
+import {
+	playerQueryOptions,
+	quizCurrentQuestionQueryOptions,
+} from "@/lib/quiz/query";
 import { ApiResponseStatus } from "@/lib/api/types";
 import { ErrorAlert } from "@/components/error-alert";
 import { WrittenAnswerForm } from "./-components/written-form";
 import { gsap } from "gsap";
-
-// TODO: Persist submitted answer
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 	component: RouteComponent,
 	loader: async ({ context, params }) => {
 		const queries = await Promise.all([
 			context.queryClient.ensureQueryData(
-				quizCurrentQuestionQueryOptions(params.quizId)
-			)
+				quizCurrentQuestionQueryOptions(params.quizId),
+			),
+			context.queryClient.ensureQueryData(
+				playerQueryOptions(params.quizId, context.session.user.user_id),
+			),
 		]);
 
 		queries.forEach((query) => {
-			if (query.status !== ApiResponseStatus.Success) {
+			if (query.status === ApiResponseStatus.Error) {
 				throw new Error(query.message);
 			}
 		});
 
-		const [currentQuestionQuery] = queries;
+		const [currentQuestionQuery, playerQuery] = queries;
 
 		return {
 			currentQuestion: currentQuestionQuery.data,
-			user: context.session.user
+			user: context.session.user,
+			player: playerQuery.data,
 		};
 	},
 	errorComponent: ({ error }) => {
 		return <ErrorAlert message={error.message} />;
 	},
-	pendingComponent: () => <div>Loading...</div>
+	pendingComponent: () => <div>Loading...</div>,
 });
 
-// TODO: Prevent answer resubmission
+// TODO:
+// - Persist submitted answer
+// - Prevent answer resubmission
 
 function RouteComponent(): JSX.Element {
 	const loaderData = Route.useLoaderData();
 
 	const [hasSubmitted, setHasSubmitted] = useState(false);
 	const [currentQuestion, setCurrentQuestion] = useState(
-		loaderData.currentQuestion
+		loaderData.currentQuestion,
 	);
 
 	const _ = useWebSocket(WEBSOCKET_URL, {
@@ -76,7 +83,7 @@ function RouteComponent(): JSX.Element {
 				default:
 					console.warn("Unknown event type:", result.event);
 			}
-		}
+		},
 	});
 
 	const questionRef = useRef<HTMLParagraphElement>(null);
@@ -86,12 +93,12 @@ function RouteComponent(): JSX.Element {
 			questionRef.current,
 			{
 				opacity: 0,
-				ease: "power3.out"
+				ease: "power3.out",
 			},
 			{
 				opacity: 1,
-				ease: "power3.out"
-			}
+				ease: "power3.out",
+			},
 		);
 	}, [currentQuestion]);
 
@@ -110,7 +117,7 @@ function RouteComponent(): JSX.Element {
 				<div className="mx-auto w-full max-w-5xl">
 					<WrittenAnswerForm
 						question={currentQuestion}
-						user={loaderData.user}
+						player={loaderData.player}
 					/>
 				</div>
 			</div>

@@ -3,7 +3,7 @@ import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
 import {
 	CreateWrittenAnswerRequest,
 	QuizQuestion,
-	QuizStatus
+	QuizStatus,
 } from "@/lib/quiz/types";
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { User, UserRole } from "@/lib/user/types";
 import {
 	playersQueryOptions,
 	quizCurrentQuestionQueryOptions,
-	quizQueryOptions
+	quizQueryOptions,
 } from "@/lib/quiz/query";
 import { ErrorAlert } from "@/components/error-alert";
 import { ApiResponseStatus } from "@/lib/api/types";
@@ -28,7 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	ResizableHandle,
 	ResizablePanel,
-	ResizablePanelGroup
+	ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
@@ -44,28 +44,28 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 			context.queryClient.ensureQueryData(quizQueryOptions(params.quizId)),
 			context.queryClient.ensureQueryData(playersQueryOptions(params.quizId)),
 			context.queryClient.ensureQueryData(
-				quizCurrentQuestionQueryOptions(params.quizId)
-			)
+				quizCurrentQuestionQueryOptions(params.quizId),
+			),
 		]);
 
-		queries.forEach((query) => {
-			if (query.status !== ApiResponseStatus.Success) {
-				throw new Error(query.message);
-			}
-		});
+		//queries.forEach((query) => {
+		//	if (query.status !== ApiResponseStatus.Success) {
+		//		throw new Error(query.message);
+		//	}
+		//});
 
 		const [quizQuery, playersQuery, currentQuestionQuery] = queries;
 
 		return {
 			quiz: quizQuery.data,
 			players: playersQuery.data,
-			currentQuestion: currentQuestionQuery.data
+			currentQuestion: currentQuestionQuery.data,
 		};
 	},
 	errorComponent: ({ error }) => {
 		return <ErrorAlert message={error.message} />;
 	},
-	pendingComponent: () => <div>Loading...</div>
+	pendingComponent: () => <div>Loading...</div>,
 });
 
 function RouteComponent(): JSX.Element {
@@ -74,8 +74,8 @@ function RouteComponent(): JSX.Element {
 
 	const [quiz, setQuiz] = useState(loaderData.quiz);
 	const [players, setPlayers] = useState(loaderData.players);
-	const [currentQuestion, setCurrentQuestion] = useState(
-		loaderData.currentQuestion
+	const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(
+		loaderData.currentQuestion,
 	);
 
 	const selectedPlayer = players.find((p) => p.user_id === search.playerId);
@@ -100,9 +100,9 @@ function RouteComponent(): JSX.Element {
 								...newPlayer,
 								result: {
 									answers: [],
-									score: 0
-								}
-							}
+									score: 0,
+								},
+							},
 						]);
 					}
 					break;
@@ -148,7 +148,7 @@ function RouteComponent(): JSX.Element {
 				default:
 					console.warn("Unknown event type:", result.event);
 			}
-		}
+		},
 	});
 
 	return (
@@ -157,11 +157,12 @@ function RouteComponent(): JSX.Element {
 				<ResizablePanelGroup direction="horizontal" className="gap-3">
 					<ResizablePanel minSize={20}>
 						<section className="flex h-full flex-col gap-2 overflow-y-auto">
-							{players.map((player) => {
+							{players.map((player, i) => {
 								return (
 									<PlayerListItem
 										player={player}
 										isActive={selectedPlayer?.user_id === player.user_id}
+										rank={i + 1}
 										key={player.user_id}
 									/>
 								);
@@ -174,7 +175,9 @@ function RouteComponent(): JSX.Element {
 					<ResizablePanel minSize={20}>
 						<ResizablePanelGroup direction="vertical" className="gap-3">
 							<ResizablePanel minSize={10}>
-								<QuestionActive question={currentQuestion} />
+								{currentQuestion ? (
+									<QuestionActive question={currentQuestion} />
+								) : null}
 							</ResizablePanel>
 
 							<ResizableHandle withHandle />
@@ -185,7 +188,7 @@ function RouteComponent(): JSX.Element {
 										<QuestionListItem
 											question={question}
 											isActive={
-												currentQuestion.quiz_question_id ===
+												currentQuestion?.quiz_question_id ===
 												question.quiz_question_id
 											}
 											key={question.quiz_question_id}

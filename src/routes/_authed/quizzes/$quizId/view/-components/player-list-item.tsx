@@ -6,6 +6,7 @@ import { Player } from "@/lib/quiz/player/types";
 type Props = {
 	player: Player;
 	isActive: boolean;
+	rank: number;
 };
 
 export function PlayerListItem(props: Props): JSX.Element {
@@ -17,8 +18,11 @@ export function PlayerListItem(props: Props): JSX.Element {
 			to="."
 			search={(prev) => ({ ...prev, playerId: props.player.user_id })}
 			key={props.player.user_id}
+			disabled
 		>
-			<div className="content-center font-metropolis-bold text-lg">#1</div>
+			<div className="content-center font-metropolis-bold text-lg">
+				#{props.rank}
+			</div>
 
 			<div className="flex w-full items-center gap-2">
 				<Avatar className="size-12">
@@ -47,9 +51,7 @@ export function PlayerListItem(props: Props): JSX.Element {
 				<span className="font-metropolis-bold text-lg">
 					{props.player.result.score}
 				</span>
-				<span className="font-metropolis-bold text-sm">
-					pts.
-				</span>
+				<span className="font-metropolis-bold text-sm">pts.</span>
 			</div>
 		</Link>
 	);
