@@ -30,6 +30,7 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { PlayerFullscreen } from "./-components/player-fullscreen";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -48,11 +49,11 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 			),
 		]);
 
-		//queries.forEach((query) => {
-		//	if (query.status !== ApiResponseStatus.Success) {
-		//		throw new Error(query.message);
-		//	}
-		//});
+		queries.forEach((query) => {
+			if (query.status === ApiResponseStatus.Error) {
+				throw new Error(query.message);
+			}
+		});
 
 		const [quizQuery, playersQuery, currentQuestionQuery] = queries;
 
@@ -151,8 +152,20 @@ function RouteComponent(): JSX.Element {
 		},
 	});
 
+	const focusedPlayer = players.find(
+		(player) => player.user_id === search.playerId,
+	);
+
 	return (
 		<div className="relative h-full pb-16">
+			{focusedPlayer ? (
+				<PlayerFullscreen
+					player={focusedPlayer}
+					question={currentQuestion}
+					quiz={quiz}
+				/>
+			) : null}
+
 			<div className="mx-auto h-full max-w-screen-2xl p-10">
 				<ResizablePanelGroup direction="horizontal" className="gap-3">
 					<ResizablePanel minSize={20}>
@@ -163,6 +176,7 @@ function RouteComponent(): JSX.Element {
 										player={player}
 										isActive={selectedPlayer?.user_id === player.user_id}
 										rank={i + 1}
+										question={currentQuestion}
 										key={player.user_id}
 									/>
 								);

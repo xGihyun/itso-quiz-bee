@@ -15,7 +15,7 @@ import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
 import { CheckIcon } from "lucide-react";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { QuizQuestion } from "@/lib/quiz/types";
-import { JSX } from "react";
+import { JSX, useState } from "react";
 import { User } from "@/lib/user/types";
 import { submitAnswer, typeAnswer } from "../-functions/websocket";
 import { useParams } from "@tanstack/react-router";
@@ -37,6 +37,12 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 		},
 	});
 
+	const [currentAnswer, setCurrentAnswer] = useState(
+		props.player.result.answers.find(
+			(answer) => answer.quiz_question_id === props.question.quiz_question_id,
+		),
+	);
+
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
 		share: true,
@@ -46,6 +52,11 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 			switch (result.event) {
 				case WebSocketEvent.QuizUpdateQuestion:
 					const data = result.data as QuizQuestion;
+					const newCurrentAnswer = props.player.result.answers.find(
+						(answer) => answer.quiz_question_id === data.quiz_question_id,
+					);
+					setCurrentAnswer(newCurrentAnswer);
+
 					form.reset({
 						content: "",
 						quiz_question_id: data.quiz_question_id,
@@ -65,10 +76,6 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 			quiz_id: params.quizId,
 		});
 	}
-
-	const currentAnswer = props.player.result.answers.find(
-		(answer) => answer.quiz_question_id === props.question.quiz_question_id,
-	);
 
 	return (
 		<Form {...form}>
@@ -93,7 +100,8 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 											});
 											return field.onChange(event);
 										}}
-										value={currentAnswer?.content}
+										value={currentAnswer?.content ?? field.value}
+                                        disabled={currentAnswer !== undefined}
 									/>
 									<div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
 										<IconPen className="size-6" />
