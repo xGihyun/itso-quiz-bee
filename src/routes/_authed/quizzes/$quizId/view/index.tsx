@@ -24,7 +24,6 @@ import { PlayerListItem } from "./-components/player-list-item";
 import { QuestionListItem } from "./-components/question-list-item";
 import { Controls } from "./-components/controls";
 import { QuestionActive } from "./-components/question-active";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -78,6 +77,7 @@ function RouteComponent(): JSX.Element {
 	const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(
 		loaderData.currentQuestion,
 	);
+	const [remainingTime, setRemainingTime] = useState(0);
 
 	const selectedPlayer = players.find((p) => p.user_id === search.playerId);
 
@@ -145,6 +145,14 @@ function RouteComponent(): JSX.Element {
 						setPlayers(results);
 					}
 					break;
+				case WebSocketEvent.QuizTimerPass:
+					{
+						const time = result.data.remaining_time as number;
+
+						setRemainingTime(time);
+						console.log("Timer pass.");
+					}
+					break;
 
 				default:
 					console.warn("Unknown event type:", result.event);
@@ -152,17 +160,19 @@ function RouteComponent(): JSX.Element {
 		},
 	});
 
-	const focusedPlayer = players.find(
+	const focusedPlayerIndex = players.findIndex(
 		(player) => player.user_id === search.playerId,
 	);
+	const focusedPlayer = players[focusedPlayerIndex];
 
 	return (
 		<div className="relative h-full pb-16">
-			{focusedPlayer ? (
+			{focusedPlayerIndex !== -1 ? (
 				<PlayerFullscreen
 					player={focusedPlayer}
 					question={currentQuestion}
 					quiz={quiz}
+					rank={focusedPlayerIndex + 1}
 				/>
 			) : null}
 
@@ -189,6 +199,7 @@ function RouteComponent(): JSX.Element {
 					<ResizablePanel minSize={20}>
 						<ResizablePanelGroup direction="vertical" className="gap-3">
 							<ResizablePanel minSize={10}>
+								Time: {remainingTime}
 								{currentQuestion ? (
 									<QuestionActive question={currentQuestion} />
 								) : null}

@@ -57,6 +57,7 @@ function RouteComponent(): JSX.Element {
 	const [currentQuestion, setCurrentQuestion] = useState(
 		loaderData.currentQuestion,
 	);
+	const [remainingTime, setRemainingTime] = useState(0);
 
 	const _ = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
@@ -77,6 +78,14 @@ function RouteComponent(): JSX.Element {
 						const currentAnswer = result.data as CreateWrittenAnswerRequest;
 						//setHasSubmitted(true);
 						toast.info("Submitted answer!");
+					}
+					break;
+				case WebSocketEvent.QuizTimerPass:
+					{
+						const time = result.data.remaining_time as number;
+
+						setRemainingTime(time);
+						console.log("Timer pass.");
 					}
 					break;
 
@@ -105,6 +114,7 @@ function RouteComponent(): JSX.Element {
 	return (
 		<div className="flex h-full flex-col">
 			<div className="flex h-full items-center bg-card px-20 py-10">
+				Time: {remainingTime}
 				<p
 					className="mx-auto mb-5 max-w-5xl text-center font-metropolis-bold text-3xl"
 					ref={questionRef}

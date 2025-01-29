@@ -38,6 +38,22 @@ export function Controls(props: Props): JSX.Element {
 							quiz_id: props.quiz.quiz_id,
 							status: v as QuizStatus
 						})
+
+                        // TODO: Try to implement this
+						//if (status === QuizStatus.Started) {
+						//	const firstQuestion = quiz.questions.find(
+						//		(q) => q.order_number === 1,
+						//	);
+						//
+						//	if (!firstQuestion) {
+						//		return;
+						//	}
+						//
+						//	updatePlayersQuestion(socket, {
+						//		...firstQuestion,
+						//		quiz_id: quiz.quiz_id,
+						//	});
+						//}
 					}
 				>
 					<SelectTrigger className="w-40">
