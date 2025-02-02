@@ -9,15 +9,16 @@ export enum WebSocketEvent {
 	QuizUpdateQuestion = "quiz-update-question",
 	QuizDisableAnswering = "quiz-disable-answering",
 
-	QuizStartTimer = "quiz-start-timer",
-	QuizTimerPass = "quiz-timer-pass",
+	TimerPass = "timer-pass",
+	TimerUpdateMode = "timer-update-mode",
+	TimerDone = "timer-done",
 
 	PlayerJoin = "player-join",
 	PlayerLeave = "player-leave",
 	PlayerSubmitAnswer = "player-submit-answer",
 	PlayerTypeAnswer = "player-type-answer",
 
-	Heartbeat = "heartbeat"
+	Heartbeat = "heartbeat",
 }
 
 export type WebSocketRequest<T = any> = {

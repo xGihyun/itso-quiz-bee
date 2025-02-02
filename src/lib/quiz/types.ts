@@ -2,7 +2,7 @@ export enum QuizStatus {
 	Open = "open",
 	Started = "started",
 	Paused = "paused",
-	Closed = "closed"
+	Closed = "closed",
 }
 
 export type QuizBasicInfo = {
@@ -25,7 +25,7 @@ export type QuizAnswer = {
 export enum QuizQuestionVariant {
 	MultipleChoice = "multiple-choice",
 	Boolean = "boolean",
-	Written = "written"
+	Written = "written",
 }
 
 export type QuizQuestion = {
@@ -52,4 +52,10 @@ export type CreateWrittenAnswerRequest = {
 	quiz_question_id: string;
 	user_id: string;
 	quiz_id: string;
+};
+
+export type QuizQuestionTimer = {
+	question: QuizQuestion;
+	remaining_time: number;
+	is_timer_auto: boolean;
 };

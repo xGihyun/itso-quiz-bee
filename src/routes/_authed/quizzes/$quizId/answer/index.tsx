@@ -3,7 +3,7 @@ import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { CreateWrittenAnswerRequest, QuizQuestion } from "@/lib/quiz/types";
+import { CreateWrittenAnswerRequest, QuizQuestion, QuizQuestionTimer } from "@/lib/quiz/types";
 import { JSX, useEffect, useRef, useState } from "react";
 import {
 	playerQueryOptions,
@@ -80,12 +80,11 @@ function RouteComponent(): JSX.Element {
 						toast.info("Submitted answer!");
 					}
 					break;
-				case WebSocketEvent.QuizTimerPass:
+				case WebSocketEvent.TimerPass:
 					{
-						const time = result.data.remaining_time as number;
+						const questionTimer = result.data as QuizQuestionTimer;
 
-						setRemainingTime(time);
-						console.log("Timer pass.");
+						setRemainingTime(questionTimer.remaining_time);
 					}
 					break;
 

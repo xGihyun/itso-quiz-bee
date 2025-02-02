@@ -3,6 +3,7 @@ import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
 import {
 	CreateWrittenAnswerRequest,
 	QuizQuestion,
+	QuizQuestionTimer,
 	QuizStatus,
 } from "@/lib/quiz/types";
 import useWebSocket from "react-use-websocket";
@@ -30,6 +31,7 @@ import {
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { PlayerFullscreen } from "./-components/player-fullscreen";
+import { updatePlayersQuestion } from "./-functions/websocket";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -81,7 +83,7 @@ function RouteComponent(): JSX.Element {
 
 	const selectedPlayer = players.find((p) => p.user_id === search.playerId);
 
-	const _ = useWebSocket(WEBSOCKET_URL, {
+	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
@@ -107,6 +109,7 @@ function RouteComponent(): JSX.Element {
 						]);
 					}
 					break;
+
 				case WebSocketEvent.QuizUpdateStatus:
 					{
 						const status = result.data as QuizStatus;
@@ -145,12 +148,35 @@ function RouteComponent(): JSX.Element {
 						setPlayers(results);
 					}
 					break;
-				case WebSocketEvent.QuizTimerPass:
-					{
-						const time = result.data.remaining_time as number;
 
-						setRemainingTime(time);
-						console.log("Timer pass.");
+				case WebSocketEvent.TimerPass:
+					{
+						const questionTimer = result.data as QuizQuestionTimer;
+
+						setRemainingTime(questionTimer.remaining_time);
+					}
+					break;
+
+				case WebSocketEvent.TimerDone:
+					{
+						if (currentQuestion === null) {
+							return;
+						}
+
+						const nextQuestion = quiz.questions.find(
+							(question) =>
+								question.order_number === currentQuestion.order_number + 1,
+						);
+
+						if (!nextQuestion) {
+							console.log("No more questions.");
+							return;
+						}
+
+						updatePlayersQuestion(socket, {
+							...nextQuestion,
+							quiz_id: quiz.quiz_id,
+						});
 					}
 					break;
 

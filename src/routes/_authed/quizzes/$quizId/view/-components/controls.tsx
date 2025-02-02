@@ -4,13 +4,16 @@ import {
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
-	SelectValue
+	SelectValue,
 } from "@/components/ui/select";
 import useWebSocket from "react-use-websocket";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { Quiz, QuizStatus } from "@/lib/quiz/types";
 import { updateQuizStatus } from "../-functions/websocket";
 import { IconAuto, IconTimer } from "@/lib/icons";
+import { Toggle } from "@/components/ui/toggle";
+import { WebSocketHook } from "react-use-websocket/dist/lib/types";
+import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 
 type Props = {
 	quiz: Quiz;
@@ -21,7 +24,7 @@ type Props = {
 export function Controls(props: Props): JSX.Element {
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
-		share: true
+		share: true,
 	});
 
 	return (
@@ -33,13 +36,14 @@ export function Controls(props: Props): JSX.Element {
 			<div className="mx-auto">
 				<Select
 					value={props.quiz.status}
-					onValueChange={(v) =>
-						updateQuizStatus(socket, {
-							quiz_id: props.quiz.quiz_id,
-							status: v as QuizStatus
-						})
+					onValueChange={
+						(v) =>
+							updateQuizStatus(socket, {
+								quiz_id: props.quiz.quiz_id,
+								status: v as QuizStatus,
+							})
 
-                        // TODO: Try to implement this
+						// TODO: Try to implement this
 						//if (status === QuizStatus.Started) {
 						//	const firstQuestion = quiz.questions.find(
 						//		(q) => q.order_number === 1,
@@ -71,9 +75,21 @@ export function Controls(props: Props): JSX.Element {
 			</div>
 
 			<div className="flex w-full items-center justify-end gap-2">
-				<IconAuto className="size-6" />
+				<Toggle onPressedChange={(v) => updateTimerMode(socket, v)}>
+					<IconAuto className="size-6" />
+				</Toggle>
+
 				<IconTimer className="size-6" />
 			</div>
 		</div>
 	);
+}
+
+function updateTimerMode(socket: WebSocketHook, isAuto: boolean) {
+	const message: WebSocketRequest<boolean> = {
+		event: WebSocketEvent.TimerUpdateMode,
+		data: isAuto,
+	};
+
+	socket.sendJsonMessage(message);
 }
