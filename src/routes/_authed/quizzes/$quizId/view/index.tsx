@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/resizable";
 import { PlayerFullscreen } from "./-components/player-fullscreen";
 import { updatePlayersQuestion } from "./-functions/websocket";
+import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -193,6 +194,8 @@ function RouteComponent(): JSX.Element {
 
 	return (
 		<div className="relative h-full pb-16">
+            <Progress value={remainingTime} max={currentQuestion?.duration} className="rounded-none" />
+
 			{focusedPlayerIndex !== -1 ? (
 				<PlayerFullscreen
 					player={focusedPlayer}
@@ -225,7 +228,6 @@ function RouteComponent(): JSX.Element {
 					<ResizablePanel minSize={20}>
 						<ResizablePanelGroup direction="vertical" className="gap-3">
 							<ResizablePanel minSize={10}>
-								Time: {remainingTime}
 								{currentQuestion ? (
 									<QuestionActive question={currentQuestion} />
 								) : null}
