@@ -53,9 +53,3 @@ export type CreateWrittenAnswerRequest = {
 	user_id: string;
 	quiz_id: string;
 };
-
-export type QuizQuestionTimer = {
-	question: QuizQuestion;
-	remaining_time: number;
-	is_timer_auto: boolean;
-};

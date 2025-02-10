@@ -152,32 +152,9 @@ function RouteComponent(): JSX.Element {
 
 				case WebSocketEvent.TimerPass:
 					{
-						const questionTimer = result.data as QuizQuestionTimer;
+						const remainingTime = result.data as number;
 
-						setRemainingTime(questionTimer.remaining_time);
-					}
-					break;
-
-				case WebSocketEvent.TimerDone:
-					{
-						if (currentQuestion === null) {
-							return;
-						}
-
-						const nextQuestion = quiz.questions.find(
-							(question) =>
-								question.order_number === currentQuestion.order_number + 1,
-						);
-
-						if (!nextQuestion) {
-							console.log("No more questions.");
-							return;
-						}
-
-						updatePlayersQuestion(socket, {
-							...nextQuestion,
-							quiz_id: quiz.quiz_id,
-						});
+						setRemainingTime(remainingTime);
 					}
 					break;
 

@@ -1,17 +1,17 @@
 import {
 	QuizUpdatePlayersQuestionRequest,
-	QuizUpdateStatusRequest
+	QuizUpdateStatusRequest,
 } from "@/lib/quiz/types";
 import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 
 export function updateQuizStatus(
 	socket: WebSocketHook,
-	data: QuizUpdateStatusRequest
+	data: QuizUpdateStatusRequest,
 ): void {
 	const message: WebSocketRequest<QuizUpdateStatusRequest> = {
 		event: WebSocketEvent.QuizUpdateStatus,
-		data: data
+		data: data,
 	};
 
 	socket.sendJsonMessage(message);
@@ -20,7 +20,7 @@ export function updateQuizStatus(
 export function startQuiz(socket: WebSocketHook, quizId: string) {
 	const message: WebSocketRequest<string> = {
 		event: WebSocketEvent.QuizStart,
-		data: quizId
+		data: quizId,
 	};
 
 	socket.sendJsonMessage(message);
@@ -28,11 +28,20 @@ export function startQuiz(socket: WebSocketHook, quizId: string) {
 
 export function updatePlayersQuestion(
 	socket: WebSocketHook,
-	data: QuizUpdatePlayersQuestionRequest
+	data: QuizUpdatePlayersQuestionRequest,
 ): void {
 	const message: WebSocketRequest<QuizUpdatePlayersQuestionRequest> = {
 		event: WebSocketEvent.QuizUpdateQuestion,
-		data
+		data,
+	};
+
+	socket.sendJsonMessage(message);
+}
+
+export function updateTimerMode(socket: WebSocketHook, isAuto: boolean) {
+	const message: WebSocketRequest<boolean> = {
+		event: WebSocketEvent.TimerUpdateMode,
+		data: isAuto,
 	};
 
 	socket.sendJsonMessage(message);
