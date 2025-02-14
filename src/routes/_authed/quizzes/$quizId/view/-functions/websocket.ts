@@ -1,6 +1,7 @@
 import {
 	QuizUpdatePlayersQuestionRequest,
 	QuizUpdateStatusRequest,
+	UpdateTimerModeRequest,
 } from "@/lib/quiz/types";
 import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
@@ -38,10 +39,13 @@ export function updatePlayersQuestion(
 	socket.sendJsonMessage(message);
 }
 
-export function updateTimerMode(socket: WebSocketHook, isAuto: boolean) {
-	const message: WebSocketRequest<boolean> = {
+export function updateTimerMode(
+	socket: WebSocketHook,
+	data: UpdateTimerModeRequest,
+) {
+	const message: WebSocketRequest<UpdateTimerModeRequest> = {
 		event: WebSocketEvent.TimerUpdateMode,
-		data: isAuto,
+		data: data,
 	};
 
 	socket.sendJsonMessage(message);

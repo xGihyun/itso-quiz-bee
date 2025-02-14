@@ -54,7 +54,15 @@ export function Controls(props: Props): JSX.Element {
 			</div>
 
 			<div className="flex w-full items-center justify-end gap-2">
-				<Toggle onPressedChange={(v) => updateTimerMode(socket, v)}>
+				<Toggle
+					pressed={props.quiz.is_timer_auto}
+					onPressedChange={(v) =>
+						updateTimerMode(socket, {
+							quiz_id: props.quiz.quiz_id,
+							is_timer_auto: v,
+						})
+					}
+				>
 					<IconAuto className="size-6" />
 				</Toggle>
 

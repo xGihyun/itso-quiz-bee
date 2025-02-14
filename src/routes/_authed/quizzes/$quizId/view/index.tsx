@@ -3,7 +3,6 @@ import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
 import {
 	CreateWrittenAnswerRequest,
 	QuizQuestion,
-	QuizQuestionTimer,
 	QuizStatus,
 } from "@/lib/quiz/types";
 import useWebSocket from "react-use-websocket";
@@ -31,7 +30,6 @@ import {
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { PlayerFullscreen } from "./-components/player-fullscreen";
-import { updatePlayersQuestion } from "./-functions/websocket";
 import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
@@ -84,8 +82,9 @@ function RouteComponent(): JSX.Element {
 
 	const selectedPlayer = players.find((p) => p.user_id === search.playerId);
 
-	const socket = useWebSocket(WEBSOCKET_URL, {
+	const _ = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
+		share: true,
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
 
@@ -158,6 +157,15 @@ function RouteComponent(): JSX.Element {
 					}
 					break;
 
+				case WebSocketEvent.TimerUpdateMode:
+					{
+						const isTimerAuto = result.data as boolean;
+
+						setQuiz({ ...quiz, is_timer_auto: isTimerAuto });
+						//setRemainingTime(remainingTime);
+					}
+					break;
+
 				default:
 					console.warn("Unknown event type:", result.event);
 			}
@@ -171,7 +179,11 @@ function RouteComponent(): JSX.Element {
 
 	return (
 		<div className="relative h-full pb-16">
-            <Progress value={remainingTime} max={currentQuestion?.duration} className="rounded-none" />
+			<Progress
+				value={remainingTime}
+				max={currentQuestion?.duration}
+				className="rounded-none"
+			/>
 
 			{focusedPlayerIndex !== -1 ? (
 				<PlayerFullscreen
