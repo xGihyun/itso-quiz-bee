@@ -18,14 +18,14 @@ export function updateQuizStatus(
 	socket.sendJsonMessage(message);
 }
 
-export function startQuiz(socket: WebSocketHook, quizId: string) {
-	const message: WebSocketRequest<string> = {
-		event: WebSocketEvent.QuizStart,
-		data: quizId,
-	};
-
-	socket.sendJsonMessage(message);
-}
+//export function startQuiz(socket: WebSocketHook, quizId: string) {
+//	const message: WebSocketRequest<string> = {
+//		event: WebSocketEvent.QuizStart,
+//		data: quizId,
+//	};
+//
+//	socket.sendJsonMessage(message);
+//}
 
 export function updatePlayersQuestion(
 	socket: WebSocketHook,
@@ -34,18 +34,6 @@ export function updatePlayersQuestion(
 	const message: WebSocketRequest<QuizUpdatePlayersQuestionRequest> = {
 		event: WebSocketEvent.QuizUpdateQuestion,
 		data,
-	};
-
-	socket.sendJsonMessage(message);
-}
-
-export function updateTimerMode(
-	socket: WebSocketHook,
-	data: UpdateTimerModeRequest,
-) {
-	const message: WebSocketRequest<UpdateTimerModeRequest> = {
-		event: WebSocketEvent.TimerUpdateMode,
-		data: data,
 	};
 
 	socket.sendJsonMessage(message);

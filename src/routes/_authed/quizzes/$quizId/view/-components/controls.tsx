@@ -9,9 +9,7 @@ import {
 import useWebSocket from "react-use-websocket";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { Quiz, QuizStatus } from "@/lib/quiz/types";
-import { updateQuizStatus, updateTimerMode } from "../-functions/websocket";
-import { IconAuto, IconTimer } from "@/lib/icons";
-import { Toggle } from "@/components/ui/toggle";
+import { updateQuizStatus } from "../-functions/websocket";
 
 type Props = {
 	quiz: Quiz;
@@ -51,24 +49,6 @@ export function Controls(props: Props): JSX.Element {
 						))}
 					</SelectContent>
 				</Select>
-			</div>
-
-			<div className="flex w-full items-center justify-end gap-2">
-				<Toggle
-					pressed={props.quiz.is_timer_auto}
-					onPressedChange={(v) =>
-						updateTimerMode(socket, {
-							quiz_id: props.quiz.quiz_id,
-							is_timer_auto: v,
-						})
-					}
-				>
-					<IconAuto className="size-6" />
-				</Toggle>
-
-				<Toggle>
-					<IconTimer className="size-6" />
-				</Toggle>
 			</div>
 		</div>
 	);

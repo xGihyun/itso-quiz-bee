@@ -3,7 +3,11 @@ import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { CreateWrittenAnswerRequest, QuizQuestion, QuizQuestionTimer } from "@/lib/quiz/types";
+import {
+	CreateWrittenAnswerRequest,
+	QuizQuestion,
+	QuizQuestionTimer,
+} from "@/lib/quiz/types";
 import { JSX, useEffect, useRef, useState } from "react";
 import {
 	playerQueryOptions,
@@ -13,6 +17,7 @@ import { ApiResponseStatus } from "@/lib/api/types";
 import { ErrorAlert } from "@/components/error-alert";
 import { WrittenAnswerForm } from "./-components/written-form";
 import { gsap } from "gsap";
+import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 	component: RouteComponent,
@@ -61,6 +66,7 @@ function RouteComponent(): JSX.Element {
 
 	const _ = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
+		share: true,
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
 
@@ -69,6 +75,7 @@ function RouteComponent(): JSX.Element {
 					{
 						const question = result.data as QuizQuestion;
 						setCurrentQuestion(question);
+						setRemainingTime(question.duration);
 						toast.info("Next question!");
 					}
 					break;
@@ -80,11 +87,17 @@ function RouteComponent(): JSX.Element {
 						toast.info("Submitted answer!");
 					}
 					break;
+
 				case WebSocketEvent.TimerPass:
 					{
-						const questionTimer = result.data as QuizQuestionTimer;
+						const remainingTime = result.data as number;
+						setRemainingTime(remainingTime);
+					}
+					break;
 
-						setRemainingTime(questionTimer.remaining_time);
+				case WebSocketEvent.TimerDone:
+					{
+						toast.info("Time is up!");
 					}
 					break;
 
@@ -112,8 +125,13 @@ function RouteComponent(): JSX.Element {
 
 	return (
 		<div className="flex h-full flex-col">
+			<Progress
+				value={remainingTime}
+				max={currentQuestion?.duration}
+				className="rounded-none"
+			/>
+
 			<div className="flex h-full items-center bg-card px-20 py-10">
-				Time: {remainingTime}
 				<p
 					className="mx-auto mb-5 max-w-5xl text-center font-metropolis-bold text-3xl"
 					ref={questionRef}

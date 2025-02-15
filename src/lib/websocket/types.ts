@@ -1,16 +1,10 @@
 export enum WebSocketEvent {
 	QuizUpdateStatus = "quiz-update-status",
-
-	QuizStart = "quiz-start",
-	//QuizPause = "quiz-pause",
-	//QuizResume = "quiz-resume",
-	//QuizEnd = "quiz-end",
-
 	QuizUpdateQuestion = "quiz-update-question",
 	QuizDisableAnswering = "quiz-disable-answering",
+	QuizShowLeaderboard = "quiz-show-leaderboard",
 
 	TimerPass = "timer-pass",
-	TimerUpdateMode = "timer-update-mode",
 	TimerDone = "timer-done",
 
 	PlayerJoin = "player-join",

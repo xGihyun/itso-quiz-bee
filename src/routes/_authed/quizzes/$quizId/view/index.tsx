@@ -117,18 +117,12 @@ function RouteComponent(): JSX.Element {
 						toast.info("Quiz has " + status + ".");
 					}
 					break;
-				case WebSocketEvent.QuizStart:
-					{
-						const firstQuestion = result.data as QuizQuestion;
-						setCurrentQuestion(firstQuestion);
-						setQuiz({ ...quiz, status: QuizStatus.Started });
-					}
-					break;
 
 				case WebSocketEvent.QuizUpdateQuestion:
 					{
 						const question = result.data as QuizQuestion;
 						setCurrentQuestion(question);
+						setRemainingTime(question.duration);
 						toast.info("Next question!");
 					}
 					break;
@@ -152,17 +146,13 @@ function RouteComponent(): JSX.Element {
 				case WebSocketEvent.TimerPass:
 					{
 						const remainingTime = result.data as number;
-
 						setRemainingTime(remainingTime);
 					}
 					break;
 
-				case WebSocketEvent.TimerUpdateMode:
+				case WebSocketEvent.TimerDone:
 					{
-						const isTimerAuto = result.data as boolean;
-
-						setQuiz({ ...quiz, is_timer_auto: isTimerAuto });
-						//setRemainingTime(remainingTime);
+						toast.info("Time is up!");
 					}
 					break;
 

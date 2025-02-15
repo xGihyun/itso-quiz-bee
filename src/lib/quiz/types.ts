@@ -7,10 +7,10 @@ export enum QuizStatus {
 
 export type QuizBasicInfo = {
 	quiz_id: string;
+    created_at: string;
 	name: string;
 	description?: string;
 	status: QuizStatus;
-	is_timer_auto: boolean;
 };
 
 export type Quiz = {
@@ -53,9 +53,4 @@ export type CreateWrittenAnswerRequest = {
 	quiz_question_id: string;
 	user_id: string;
 	quiz_id: string;
-};
-
-export type UpdateTimerModeRequest = {
-	quiz_id: string;
-	is_timer_auto: boolean;
 };
