@@ -9,7 +9,8 @@ import {
 import useWebSocket from "react-use-websocket";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { Quiz, QuizStatus } from "@/lib/quiz/types";
-import { updateQuizStatus } from "../-functions/websocket";
+import { showLeaderboard, updateQuizStatus } from "../-functions/websocket";
+import { Toggle } from "@/components/ui/toggle";
 
 type Props = {
 	quiz: Quiz;
@@ -49,6 +50,12 @@ export function Controls(props: Props): JSX.Element {
 						))}
 					</SelectContent>
 				</Select>
+			</div>
+
+			<div>
+				<Toggle onPressedChange={(v) => showLeaderboard(socket, v)}>
+					Leaderbaord
+				</Toggle>
 			</div>
 		</div>
 	);

@@ -79,6 +79,7 @@ function RouteComponent(): JSX.Element {
 		loaderData.currentQuestion,
 	);
 	const [remainingTime, setRemainingTime] = useState(0);
+	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
 
 	const selectedPlayer = players.find((p) => p.user_id === search.playerId);
 
@@ -124,6 +125,13 @@ function RouteComponent(): JSX.Element {
 						setCurrentQuestion(question);
 						setRemainingTime(question.duration);
 						toast.info("Next question!");
+					}
+					break;
+
+				case WebSocketEvent.QuizShowLeaderboard:
+					{
+						const isShown = result.data as boolean;
+						setIsLeaderboardShown(isShown);
 					}
 					break;
 

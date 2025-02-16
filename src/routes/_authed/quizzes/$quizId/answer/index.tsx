@@ -6,11 +6,11 @@ import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import {
 	CreateWrittenAnswerRequest,
 	QuizQuestion,
-	QuizQuestionTimer,
 } from "@/lib/quiz/types";
 import { JSX, useEffect, useRef, useState } from "react";
 import {
 	playerQueryOptions,
+	playersQueryOptions,
 	quizCurrentQuestionQueryOptions,
 } from "@/lib/quiz/query";
 import { ApiResponseStatus } from "@/lib/api/types";
@@ -18,6 +18,7 @@ import { ErrorAlert } from "@/components/error-alert";
 import { WrittenAnswerForm } from "./-components/written-form";
 import { gsap } from "gsap";
 import { Progress } from "@/components/ui/progress";
+import { Leaderboard } from "./-components/leaderboard";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 	component: RouteComponent,
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 			context.queryClient.ensureQueryData(
 				playerQueryOptions(params.quizId, context.session.user.user_id),
 			),
+			context.queryClient.ensureQueryData(playersQueryOptions(params.quizId)),
 		]);
 
 		queries.forEach((query) => {
@@ -37,12 +39,13 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 			}
 		});
 
-		const [currentQuestionQuery, playerQuery] = queries;
+		const [currentQuestionQuery, playerQuery, playersQuery] = queries;
 
 		return {
 			currentQuestion: currentQuestionQuery.data,
 			user: context.session.user,
 			player: playerQuery.data,
+			players: playersQuery.data,
 		};
 	},
 	errorComponent: ({ error }) => {
@@ -63,6 +66,7 @@ function RouteComponent(): JSX.Element {
 		loaderData.currentQuestion,
 	);
 	const [remainingTime, setRemainingTime] = useState(0);
+	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
 
 	const _ = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
@@ -80,10 +84,18 @@ function RouteComponent(): JSX.Element {
 					}
 					break;
 
+				case WebSocketEvent.QuizShowLeaderboard:
+					{
+						const isShown = result.data as boolean;
+						setIsLeaderboardShown(isShown);
+					}
+					break;
+
 				case WebSocketEvent.PlayerSubmitAnswer:
 					{
+						// WARN: Players might see other players' answers
 						const currentAnswer = result.data as CreateWrittenAnswerRequest;
-						//setHasSubmitted(true);
+						console.log(currentAnswer);
 						toast.info("Submitted answer!");
 					}
 					break;
@@ -124,7 +136,9 @@ function RouteComponent(): JSX.Element {
 	}, [currentQuestion]);
 
 	return (
-		<div className="flex h-full flex-col">
+		<div className="flex h-full flex-col relative">
+			{isLeaderboardShown ? <Leaderboard players={loaderData.players} /> : null}
+
 			<Progress
 				value={remainingTime}
 				max={currentQuestion?.duration}
