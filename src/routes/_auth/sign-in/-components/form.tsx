@@ -1,8 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { LoginSchema, type LoginInput } from "./schema";
+import { SignInSchema, type SignInInput } from "./schema";
 import { Button } from "@/components/ui/button";
-import { setCookie } from "typescript-cookie";
 import {
 	Form,
 	FormControl,
@@ -22,23 +21,22 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { ApiResponse } from "@/lib/api/types";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { User } from "@/lib/user/types";
 import { JSX } from "react";
-import { useAuth } from "@/lib/auth/context";
+import { SignInResponse } from "../-types";
+import { setCookie } from "@/lib/cookie";
 
-export function LoginForm(): JSX.Element {
-	const auth = useAuth();
-	const navigate = useNavigate({ from: "/login" });
-	const form = useForm<LoginInput>({
-		resolver: zodResolver(LoginSchema),
+export function SignInForm(): JSX.Element {
+	const navigate = useNavigate({ from: "/sign-in" });
+	const form = useForm<SignInInput>({
+		resolver: zodResolver(SignInSchema),
 		defaultValues: {
 			username: "",
 			password: ""
 		}
 	});
 
-	async function onSubmit(value: LoginInput): Promise<void> {
-		let toastId = toast.loading("Logging in...");
+	async function onSubmit(value: SignInInput): Promise<void> {
+		let toastId = toast.loading("Signing in...");
 
 		const response = await fetch(
 			`${import.meta.env.VITE_BACKEND_URL}/api/sign-in`,
@@ -52,25 +50,21 @@ export function LoginForm(): JSX.Element {
 			}
 		);
 
-		const result: ApiResponse<User> = await response.json();
-
+		const result: ApiResponse<SignInResponse> = await response.json();
 		if (!response.ok) {
 			toast.error(result.message, { id: toastId });
 			return;
 		}
 
-		setCookie("session", result.data.user_id);
-		await auth.validateSession();
-
+		setCookie("session", result.data.token);
 		toast.success(result.message, { id: toastId });
-
 		await navigate({ to: "/" });
 	}
 
 	return (
 		<Card className="mx-auto max-w-sm">
 			<CardHeader>
-				<CardTitle className="text-2xl">Login</CardTitle>
+				<CardTitle className="text-2xl">SignIn</CardTitle>
 				<CardDescription>Enter your credentials below.</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
@@ -105,15 +99,15 @@ export function LoginForm(): JSX.Element {
 						/>
 
 						<Button type="submit" className="w-full">
-							Login
+							Sign In
 						</Button>
 					</form>
 				</Form>
 
 				<p className="text-center text-sm">
 					Don't have an account?{" "}
-					<Link href="/register" className="text-primary underline">
-						Register
+					<Link href="/sign-up" className="text-primary underline">
+						Sign Up
 					</Link>
 				</p>
 			</CardContent>

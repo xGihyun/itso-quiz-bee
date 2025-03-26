@@ -11,9 +11,9 @@ import gsap from "gsap";
 import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { useAuth } from "@/lib/auth/context";
+import { useAuth } from "@/auth";
 import { QuizBasicInfo, QuizStatus } from "@/lib/quiz/types";
-import { UserRole } from "@/lib/user/types";
+import { UserRole } from "@/lib/user";
 
 type Props = {
 	quizzes: QuizBasicInfo[];
@@ -70,7 +70,7 @@ export function Quizzes(props: Props): JSX.Element {
 
 						joinQuiz(socket, {
 							quiz_id: quiz.quiz_id,
-							user_id: auth.user.user_id
+							user_id: auth.user.userId
 						});
 
 						if (quiz.status === QuizStatus.Started) {

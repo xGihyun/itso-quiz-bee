@@ -16,8 +16,8 @@ import { Route as AuthImport } from './routes/_auth'
 import { Route as AuthedIndexImport } from './routes/_authed/index'
 import { Route as AuthedUsersIndexImport } from './routes/_authed/users/index'
 import { Route as AuthedQuizzesIndexImport } from './routes/_authed/quizzes/index'
-import { Route as AuthRegisterIndexImport } from './routes/_auth/register/index'
-import { Route as AuthLoginIndexImport } from './routes/_auth/login/index'
+import { Route as AuthSignUpIndexImport } from './routes/_auth/sign-up/index'
+import { Route as AuthSignInIndexImport } from './routes/_auth/sign-in/index'
 import { Route as AuthedQuizzesQuizIdIndexImport } from './routes/_authed/quizzes/$quizId/index'
 import { Route as AuthedQuizzesQuizIdViewIndexImport } from './routes/_authed/quizzes/$quizId/view/index'
 import { Route as AuthedQuizzesQuizIdEditIndexImport } from './routes/_authed/quizzes/$quizId/edit/index'
@@ -53,15 +53,15 @@ const AuthedQuizzesIndexRoute = AuthedQuizzesIndexImport.update({
   getParentRoute: () => AuthedRoute,
 } as any)
 
-const AuthRegisterIndexRoute = AuthRegisterIndexImport.update({
-  id: '/register/',
-  path: '/register/',
+const AuthSignUpIndexRoute = AuthSignUpIndexImport.update({
+  id: '/sign-up/',
+  path: '/sign-up/',
   getParentRoute: () => AuthRoute,
 } as any)
 
-const AuthLoginIndexRoute = AuthLoginIndexImport.update({
-  id: '/login/',
-  path: '/login/',
+const AuthSignInIndexRoute = AuthSignInIndexImport.update({
+  id: '/sign-in/',
+  path: '/sign-in/',
   getParentRoute: () => AuthRoute,
 } as any)
 
@@ -117,18 +117,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedIndexImport
       parentRoute: typeof AuthedImport
     }
-    '/_auth/login/': {
-      id: '/_auth/login/'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof AuthLoginIndexImport
+    '/_auth/sign-in/': {
+      id: '/_auth/sign-in/'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof AuthSignInIndexImport
       parentRoute: typeof AuthImport
     }
-    '/_auth/register/': {
-      id: '/_auth/register/'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof AuthRegisterIndexImport
+    '/_auth/sign-up/': {
+      id: '/_auth/sign-up/'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof AuthSignUpIndexImport
       parentRoute: typeof AuthImport
     }
     '/_authed/quizzes/': {
@@ -179,13 +179,13 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 interface AuthRouteChildren {
-  AuthLoginIndexRoute: typeof AuthLoginIndexRoute
-  AuthRegisterIndexRoute: typeof AuthRegisterIndexRoute
+  AuthSignInIndexRoute: typeof AuthSignInIndexRoute
+  AuthSignUpIndexRoute: typeof AuthSignUpIndexRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
-  AuthLoginIndexRoute: AuthLoginIndexRoute,
-  AuthRegisterIndexRoute: AuthRegisterIndexRoute,
+  AuthSignInIndexRoute: AuthSignInIndexRoute,
+  AuthSignUpIndexRoute: AuthSignUpIndexRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
@@ -216,8 +216,8 @@ const AuthedRouteWithChildren =
 export interface FileRoutesByFullPath {
   '': typeof AuthedRouteWithChildren
   '/': typeof AuthedIndexRoute
-  '/login': typeof AuthLoginIndexRoute
-  '/register': typeof AuthRegisterIndexRoute
+  '/sign-in': typeof AuthSignInIndexRoute
+  '/sign-up': typeof AuthSignUpIndexRoute
   '/quizzes': typeof AuthedQuizzesIndexRoute
   '/users': typeof AuthedUsersIndexRoute
   '/quizzes/$quizId': typeof AuthedQuizzesQuizIdIndexRoute
@@ -229,8 +229,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '': typeof AuthRouteWithChildren
   '/': typeof AuthedIndexRoute
-  '/login': typeof AuthLoginIndexRoute
-  '/register': typeof AuthRegisterIndexRoute
+  '/sign-in': typeof AuthSignInIndexRoute
+  '/sign-up': typeof AuthSignUpIndexRoute
   '/quizzes': typeof AuthedQuizzesIndexRoute
   '/users': typeof AuthedUsersIndexRoute
   '/quizzes/$quizId': typeof AuthedQuizzesQuizIdIndexRoute
@@ -244,8 +244,8 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/_authed': typeof AuthedRouteWithChildren
   '/_authed/': typeof AuthedIndexRoute
-  '/_auth/login/': typeof AuthLoginIndexRoute
-  '/_auth/register/': typeof AuthRegisterIndexRoute
+  '/_auth/sign-in/': typeof AuthSignInIndexRoute
+  '/_auth/sign-up/': typeof AuthSignUpIndexRoute
   '/_authed/quizzes/': typeof AuthedQuizzesIndexRoute
   '/_authed/users/': typeof AuthedUsersIndexRoute
   '/_authed/quizzes/$quizId/': typeof AuthedQuizzesQuizIdIndexRoute
@@ -259,8 +259,8 @@ export interface FileRouteTypes {
   fullPaths:
     | ''
     | '/'
-    | '/login'
-    | '/register'
+    | '/sign-in'
+    | '/sign-up'
     | '/quizzes'
     | '/users'
     | '/quizzes/$quizId'
@@ -271,8 +271,8 @@ export interface FileRouteTypes {
   to:
     | ''
     | '/'
-    | '/login'
-    | '/register'
+    | '/sign-in'
+    | '/sign-up'
     | '/quizzes'
     | '/users'
     | '/quizzes/$quizId'
@@ -284,8 +284,8 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_authed'
     | '/_authed/'
-    | '/_auth/login/'
-    | '/_auth/register/'
+    | '/_auth/sign-in/'
+    | '/_auth/sign-up/'
     | '/_authed/quizzes/'
     | '/_authed/users/'
     | '/_authed/quizzes/$quizId/'
@@ -322,8 +322,8 @@ export const routeTree = rootRoute
     "/_auth": {
       "filePath": "_auth.tsx",
       "children": [
-        "/_auth/login/",
-        "/_auth/register/"
+        "/_auth/sign-in/",
+        "/_auth/sign-up/"
       ]
     },
     "/_authed": {
@@ -342,12 +342,12 @@ export const routeTree = rootRoute
       "filePath": "_authed/index.tsx",
       "parent": "/_authed"
     },
-    "/_auth/login/": {
-      "filePath": "_auth/login/index.tsx",
+    "/_auth/sign-in/": {
+      "filePath": "_auth/sign-in/index.tsx",
       "parent": "/_auth"
     },
-    "/_auth/register/": {
-      "filePath": "_auth/register/index.tsx",
+    "/_auth/sign-up/": {
+      "filePath": "_auth/sign-up/index.tsx",
       "parent": "/_auth"
     },
     "/_authed/quizzes/": {

@@ -51,16 +51,13 @@ export function SignUpForm(): JSX.Element {
 		);
 
 		const result: ApiResponse = await response.json();
-
-		console.log("Result:", result);
-
 		if (!response.ok) {
 			toast.error(result.message, { id: toastId });
 			return;
 		}
 
 		toast.success(result.message, { id: toastId });
-		await navigate({ to: "/login" });
+		await navigate({ to: "/sign-in" });
 	}
 
 	return (
@@ -115,15 +112,15 @@ export function SignUpForm(): JSX.Element {
 						/>
 
 						<Button type="submit" className="w-full">
-							SignUp
+							Sign Up
 						</Button>
 					</form>
 				</Form>
 
 				<p className="text-center text-sm">
 					Already have an account?{" "}
-					<Link href="/login" className="text-primary underline">
-						Login
+					<Link href="/sign-in" className="text-primary underline">
+						Sign In
 					</Link>
 				</p>
 			</CardContent>

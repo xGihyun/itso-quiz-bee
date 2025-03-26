@@ -9,7 +9,6 @@ import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { JSX, useState } from "react";
-import { User, UserRole } from "@/lib/user/types";
 import {
 	playersQueryOptions,
 	quizCurrentQuestionQueryOptions,
@@ -31,6 +30,7 @@ import {
 } from "@/components/ui/resizable";
 import { PlayerFullscreen } from "./-components/player-fullscreen";
 import { Progress } from "@/components/ui/progress";
+import { User, UserRole } from "@/lib/user";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -94,7 +94,7 @@ function RouteComponent(): JSX.Element {
 					{
 						const newPlayer = result.data as User;
 
-						if (players.some((p) => p.user_id === newPlayer.user_id)) {
+						if (players.some((p) => p.user_id === newPlayer.userId)) {
 							return;
 						}
 

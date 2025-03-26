@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { RegisterForm } from "./-components/form";
-import { JSX } from "react";
+import { createFileRoute } from '@tanstack/react-router'
+import { SignUpForm } from './-components/form'
+import { JSX } from 'react'
 
-export const Route = createFileRoute("/_auth/register/")({
-	component: RouteComponent
-});
+export const Route = createFileRoute('/_auth/sign-up/')({
+  component: RouteComponent,
+})
 
 function RouteComponent(): JSX.Element {
-	return <RegisterForm />;
+  return <SignUpForm />
 }

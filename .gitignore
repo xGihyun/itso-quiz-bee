@@ -18,3 +18,4 @@ dist/
 .idea
 
 .env
+src/routeTree.gen.ts

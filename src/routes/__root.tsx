@@ -3,7 +3,7 @@ import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { Navbar } from "./-components/navbar";
 import "../index.css";
-import { AuthContextValue, useAuth } from "@/lib/auth/context";
+import { AuthContextValue, useAuth } from "@/auth";
 import { QueryClient } from "@tanstack/react-query";
 
 type RouterContext = {
