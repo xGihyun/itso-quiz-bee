@@ -6,8 +6,8 @@ export enum QuizStatus {
 }
 
 export type QuizBasicInfo = {
-	quiz_id: string;
-    created_at: string;
+	quizId: string;
+    createdAt: string;
 	name: string;
 	description?: string;
 	status: QuizStatus;
@@ -18,9 +18,9 @@ export type Quiz = {
 } & QuizBasicInfo;
 
 export type QuizAnswer = {
-	quiz_answer_id: string;
+	quizAnswerId: string;
 	content: string;
-	is_correct: boolean;
+	isCorrect: boolean;
 };
 
 export enum QuizQuestionVariant {
@@ -30,27 +30,27 @@ export enum QuizQuestionVariant {
 }
 
 export type QuizQuestion = {
-	quiz_question_id: string;
+	quizQuestionId: string;
 	content: string;
 	variant: QuizQuestionVariant;
 	points: number;
-	order_number: number;
+	orderNumber: number;
 	duration: number; // seconds
 	answers: QuizAnswer[];
 };
 
 export type QuizUpdateStatusRequest = {
-	quiz_id: string;
+	quizId: string;
 	status: QuizStatus;
 };
 
 export type QuizUpdatePlayersQuestionRequest = {
-	quiz_id: string;
+	quizId: string;
 } & QuizQuestion;
 
 export type CreateWrittenAnswerRequest = {
 	content: string;
-	quiz_question_id: string;
-	user_id: string;
-	quiz_id: string;
+	quizQuestionId: string;
+	userId: string;
+	quizId: string;
 };
