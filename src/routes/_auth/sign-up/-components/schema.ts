@@ -1,11 +1,11 @@
-import { UserRole } from "@/lib/user/types";
+import { UserRole } from "@/lib/user";
 import { z } from "zod";
 
-export const RegisterSchema = z.object({
+export const SignUpSchema = z.object({
 	username: z.string().min(1, { message: "Required" }),
 	password: z.string().min(1, { message: "Required" }),
 	name: z.string().min(1, { message: "Required" }),
 	role: z.nativeEnum(UserRole).default(UserRole.Player)
 });
 
-export type RegisterInput = z.infer<typeof RegisterSchema>;
+export type SignUpInput = z.infer<typeof SignUpSchema>;

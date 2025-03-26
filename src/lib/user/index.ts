@@ -1,5 +1,18 @@
 import { ApiResponse } from "../api/types";
-import { User } from "./types";
+
+export enum UserRole {
+	Player = "player",
+	Admin = "admin"
+}
+
+export type User = {
+	userId: string;
+	createdAt: string;
+	username: string;
+	name: string;
+	role: UserRole;
+	avatarUrl?: string;
+};
 
 export async function getUserById(userId: string): Promise<ApiResponse<User>> {
 	const response = await fetch(

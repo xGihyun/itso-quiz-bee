@@ -41,7 +41,7 @@ export function LoginForm(): JSX.Element {
 		let toastId = toast.loading("Logging in...");
 
 		const response = await fetch(
-			`${import.meta.env.VITE_BACKEND_URL}/api/login`,
+			`${import.meta.env.VITE_BACKEND_URL}/api/sign-in`,
 			{
 				method: "POST",
 				body: JSON.stringify(value),

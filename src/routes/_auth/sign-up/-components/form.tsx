@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { RegisterSchema, type RegisterInput } from "./schema";
+import { SignUpInput, SignUpSchema } from "./schema";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -21,13 +21,13 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { ApiResponse } from "@/lib/api/types";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { UserRole } from "@/lib/user/types";
 import { JSX } from "react";
+import { UserRole } from "@/lib/user";
 
-export function RegisterForm(): JSX.Element {
+export function SignUpForm(): JSX.Element {
 	const navigate = useNavigate({ from: "/register" });
-	const form = useForm<RegisterInput>({
-		resolver: zodResolver(RegisterSchema),
+	const form = useForm<SignUpInput>({
+		resolver: zodResolver(SignUpSchema),
 		defaultValues: {
 			username: "",
 			password: "",
@@ -36,18 +36,17 @@ export function RegisterForm(): JSX.Element {
 		}
 	});
 
-	async function onSubmit(value: RegisterInput) {
+	async function onSubmit(value: SignUpInput) {
 		let toastId = toast.loading("Logging in...");
 
 		const response = await fetch(
-			`${import.meta.env.VITE_BACKEND_URL}/api/register`,
+			`${import.meta.env.VITE_BACKEND_URL}/api/sign-up`,
 			{
 				method: "POST",
 				body: JSON.stringify(value),
 				headers: {
 					"Content-Type": "application/json"
 				},
-				credentials: "include"
 			}
 		);
 
@@ -67,7 +66,7 @@ export function RegisterForm(): JSX.Element {
 	return (
 		<Card className="mx-auto max-w-sm">
 			<CardHeader>
-				<CardTitle className="text-2xl">Register</CardTitle>
+				<CardTitle className="text-2xl">SignUp</CardTitle>
 				<CardDescription>Enter your details below.</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
@@ -116,7 +115,7 @@ export function RegisterForm(): JSX.Element {
 						/>
 
 						<Button type="submit" className="w-full">
-							Register
+							SignUp
 						</Button>
 					</form>
 				</Form>
