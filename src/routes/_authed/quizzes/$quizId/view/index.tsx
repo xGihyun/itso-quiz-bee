@@ -15,7 +15,6 @@ import {
 	quizQueryOptions,
 } from "@/lib/quiz/query";
 import { ErrorAlert } from "@/components/error-alert";
-import { ApiResponseStatus } from "@/lib/api/types";
 import { updatePlayer, updatePlayerAnswer } from "./-functions/helper";
 import { Player } from "@/lib/quiz/player/types";
 import { QuizViewSchema } from "./-schemas";
@@ -48,12 +47,6 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 				quizCurrentQuestionQueryOptions(params.quizId),
 			),
 		]);
-
-		queries.forEach((query) => {
-			if (query.status === ApiResponseStatus.Error) {
-				throw new Error(query.message);
-			}
-		});
 
 		const [quizQuery, playersQuery, currentQuestionQuery] = queries;
 

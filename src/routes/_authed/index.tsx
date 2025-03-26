@@ -6,7 +6,6 @@ import { getQuizzes } from "@/lib/quiz/requests";
 import { ErrorAlert } from "@/components/error-alert";
 import { Button } from "@/components/ui/button";
 import { v4 as uuidv4 } from "uuid";
-import { ApiResponseStatus } from "@/lib/api/types";
 
 const quizzesQueryOptions = queryOptions({
 	queryKey: ["quizzes"],
@@ -18,10 +17,6 @@ export const Route = createFileRoute("/_authed/")({
 	loader: async ({ context }) => {
 		const quizzesQuery =
 			await context.queryClient.ensureQueryData(quizzesQueryOptions);
-
-		if (quizzesQuery.status !== ApiResponseStatus.Success) {
-			throw new Error(quizzesQuery.message);
-		}
 
 		return {
 			quizzes: quizzesQuery.data

@@ -13,7 +13,6 @@ import {
 	playersQueryOptions,
 	quizCurrentQuestionQueryOptions,
 } from "@/lib/quiz/query";
-import { ApiResponseStatus } from "@/lib/api/types";
 import { ErrorAlert } from "@/components/error-alert";
 import { WrittenAnswerForm } from "./-components/written-form";
 import { gsap } from "gsap";
@@ -28,16 +27,10 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 				quizCurrentQuestionQueryOptions(params.quizId),
 			),
 			context.queryClient.ensureQueryData(
-				playerQueryOptions(params.quizId, context.session.user.user_id),
+				playerQueryOptions(params.quizId, context.session.user.userId),
 			),
 			context.queryClient.ensureQueryData(playersQueryOptions(params.quizId)),
 		]);
-
-		queries.forEach((query) => {
-			if (query.status === ApiResponseStatus.Error) {
-				throw new Error(query.message);
-			}
-		});
 
 		const [currentQuestionQuery, playerQuery, playersQuery] = queries;
 
