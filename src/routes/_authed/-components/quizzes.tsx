@@ -1,4 +1,3 @@
-import useWebSocket from "react-use-websocket";
 import {
 	Card,
 	CardDescription,
@@ -10,7 +9,6 @@ import { JSX, useEffect, useRef } from "react";
 import gsap from "gsap";
 import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
-import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { useAuth } from "@/auth";
 import { QuizBasicInfo, QuizStatus } from "@/lib/quiz/types";
 import { UserRole } from "@/lib/user";
@@ -21,10 +19,8 @@ type Props = {
 
 export function Quizzes(props: Props): JSX.Element {
 	const auth = useAuth();
-	const socket = useWebSocket(WEBSOCKET_URL, WEBSOCKET_OPTIONS);
 	const navigate = useNavigate({ from: "/" });
-
-	const quizzesRef = useRef<HTMLDivElement>(null);
+	const quizzesRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
 		setTimeout(() => {
@@ -46,46 +42,39 @@ export function Quizzes(props: Props): JSX.Element {
 		}, 1000);
 	}, []);
 
+	async function joinQuiz(quiz: QuizBasicInfo) {
+		if (auth.user === null) {
+			return;
+		}
+
+		if (auth.user.role === UserRole.Admin) {
+			await navigate({
+				to: "/quizzes/$quizId/view",
+				params: { quizId: quiz.quizId }
+			});
+			return;
+		}
+
+		if (quiz.status === QuizStatus.Started) {
+			await navigate({
+				to: "/quizzes/$quizId/answer",
+				params: { quizId: quiz.quizId }
+			});
+			return;
+		}
+
+		await navigate({
+			to: "/quizzes/$quizId",
+			params: { quizId: quiz.quizId }
+		});
+	}
+
 	return (
-		<div
-			className="grid grid-cols-4 gap-4 py-4"
-			ref={quizzesRef} // Attach ref to the container
-		>
+		<div className="grid grid-cols-4 gap-4 py-4" ref={quizzesRef}>
 			{props.quizzes.map((quiz) => (
 				<button
-					key={quiz.quiz_id}
-					onClick={async () => {
-						if (auth.user === null) {
-							return;
-						}
-
-						if (auth.user.role === UserRole.Admin) {
-							await navigate({
-								to: "/quizzes/$quizId/view",
-								params: { quizId: quiz.quiz_id }
-							});
-
-							return;
-						}
-
-						joinQuiz(socket, {
-							quiz_id: quiz.quiz_id,
-							user_id: auth.user.userId
-						});
-
-						if (quiz.status === QuizStatus.Started) {
-							await navigate({
-								to: "/quizzes/$quizId/answer",
-								params: { quizId: quiz.quiz_id }
-							});
-							return;
-						}
-
-						await navigate({
-							to: "/quizzes/$quizId",
-							params: { quizId: quiz.quiz_id }
-						});
-					}}
+					key={quiz.quizId}
+					onClick={async () => await joinQuiz(quiz)}
 					className="contents"
 				>
 					<Card
@@ -106,8 +95,8 @@ export function Quizzes(props: Props): JSX.Element {
 }
 
 type JoinQuizRequest = {
-	user_id: string;
-	quiz_id: string;
+	userId: string;
+	quizId: string;
 };
 
 function joinQuiz(socket: WebSocketHook, data: JoinQuizRequest): void {

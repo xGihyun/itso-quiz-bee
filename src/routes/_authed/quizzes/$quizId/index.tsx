@@ -7,22 +7,13 @@ import { gsap } from "gsap";
 import { PuffLoader } from "react-spinners";
 import { JSX } from "react/jsx-runtime";
 import { QuizStatus } from "@/lib/quiz/types";
+import { UMAK_FACTS } from "./-constants";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/")({
-	component: RouteComponent,
+	component: RouteComponent
 });
 
-const UMAK_FACTS = [
-	"The University of Makati (UMak) is a public university located in Taguig City, Metro Manila, Philippines.",
-	"UMak was founded in 1972 as the Makati Polytechnic Community College.",
-	"UMak is the only public university in Metro Manila.",
-	"UMak offers a wide range of undergraduate and graduate programs.",
-	"The College of Computing and Information Sciences (CCIS) is one of the colleges at UMak.",
-	"This system was custom-developed for this competition using Astro, React, Tailwind, and Golang.",
-];
-
 // NOTE: This is the waiting room before the quiz starts
-
 function RouteComponent(): JSX.Element {
 	const navigate = Route.useNavigate();
 	const _ = useWebSocket(WEBSOCKET_URL, {
@@ -40,7 +31,7 @@ function RouteComponent(): JSX.Element {
 						await gsap.to(contentContainerRef.current, {
 							scale: 0,
 							ease: "expo.in",
-							duration: 0.5,
+							duration: 0.5
 						});
 
 						await navigate({ to: "answer" });
@@ -51,7 +42,7 @@ function RouteComponent(): JSX.Element {
 					console.warn("Unknown event type:", result.event);
 			}
 		},
-		...WEBSOCKET_OPTIONS,
+		...WEBSOCKET_OPTIONS
 	});
 
 	const [funFact, setFunFact] = useState<string>("");
@@ -64,23 +55,23 @@ function RouteComponent(): JSX.Element {
 			titleRef.current,
 			{
 				top: "-50px",
-				opacity: 0,
+				opacity: 0
 			},
 			{
 				top: "0px",
-				opacity: 1,
-			},
+				opacity: 1
+			}
 		);
 		gsap.fromTo(
 			funFactRef.current,
 			{
 				top: "50px",
-				opacity: 0,
+				opacity: 0
 			},
 			{
 				top: "0px",
-				opacity: 1,
-			},
+				opacity: 1
+			}
 		);
 
 		let time: number = Math.ceil(Math.random() * 5) + 5;
@@ -89,7 +80,7 @@ function RouteComponent(): JSX.Element {
 		const funfactInterval = setInterval(async () => {
 			await gsap.to(funFactRef.current, {
 				right: "50px",
-				opacity: 0,
+				opacity: 0
 			});
 
 			setFunFact(UMAK_FACTS[Math.ceil(Math.random() * UMAK_FACTS.length - 1)]);
@@ -100,12 +91,12 @@ function RouteComponent(): JSX.Element {
 					funFactRef.current,
 					{
 						right: "-50px",
-						opacity: 0,
+						opacity: 0
 					},
 					{
 						right: "0",
-						opacity: 1,
-					},
+						opacity: 1
+					}
 				)
 				.play();
 		}, time * 1000);
