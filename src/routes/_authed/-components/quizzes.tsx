@@ -7,17 +7,24 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { JSX, useEffect, useRef } from "react";
 import gsap from "gsap";
-import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
-import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { useAuth } from "@/auth";
-import { QuizBasicInfo, QuizStatus } from "@/lib/quiz/types";
+import { QuizBasicInfo } from "@/lib/quiz/types";
 import { UserRole } from "@/lib/user";
+import useWebSocket from "react-use-websocket";
+import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
+import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 
 type Props = {
 	quizzes: QuizBasicInfo[];
 };
 
+type JoinQuizRequest = {
+	userId: string;
+	quizId: string;
+};
+
 export function Quizzes(props: Props): JSX.Element {
+	const socket = useWebSocket(WEBSOCKET_URL, WEBSOCKET_OPTIONS);
 	const auth = useAuth();
 	const navigate = useNavigate({ from: "/" });
 	const quizzesRef = useRef<HTMLDivElement | null>(null);
@@ -55,18 +62,16 @@ export function Quizzes(props: Props): JSX.Element {
 			return;
 		}
 
-		if (quiz.status === QuizStatus.Started) {
-			await navigate({
-				to: "/quizzes/$quizId/answer",
-				params: { quizId: quiz.quizId }
-			});
-			return;
-		}
-
 		await navigate({
-			to: "/quizzes/$quizId",
+			to: "/quizzes/$quizId/answer",
 			params: { quizId: quiz.quizId }
 		});
+
+		const message: WebSocketRequest<JoinQuizRequest> = {
+			event: WebSocketEvent.PlayerJoin,
+			data: { quizId: quiz.quizId, userId: auth.user.userId }
+		};
+		socket.sendJsonMessage(message);
 	}
 
 	return (
@@ -92,18 +97,4 @@ export function Quizzes(props: Props): JSX.Element {
 			))}
 		</div>
 	);
-}
-
-type JoinQuizRequest = {
-	userId: string;
-	quizId: string;
-};
-
-function joinQuiz(socket: WebSocketHook, data: JoinQuizRequest): void {
-	const message: WebSocketRequest<JoinQuizRequest> = {
-		event: WebSocketEvent.PlayerJoin,
-		data: data
-	};
-
-	socket.sendJsonMessage(message);
 }
