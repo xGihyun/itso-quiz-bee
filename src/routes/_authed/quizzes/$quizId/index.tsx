@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { PuffLoader } from "react-spinners";
 import { JSX } from "react/jsx-runtime";
-import { QuizStatus } from "@/lib/quiz/types";
+import { QuizStatus } from "@/lib/quiz";
 import { UMAK_FACTS } from "./-constants";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/")({

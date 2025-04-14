@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { JSX, useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Quiz, QuizQuestion } from "@/lib/quiz/types";
+import { Quiz, QuizQuestion } from "@/lib/quiz";
 import { gsap } from "gsap";
 import { IconPen } from "@/lib/icons";
 import {

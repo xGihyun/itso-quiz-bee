@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import useWebSocket from "react-use-websocket";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { Quiz, QuizStatus } from "@/lib/quiz/types";
+import { Quiz, QuizStatus } from "@/lib/quiz";
 import { showLeaderboard, updateQuizStatus } from "../-functions/websocket";
 import { Toggle } from "@/components/ui/toggle";
 

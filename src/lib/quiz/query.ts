@@ -19,8 +19,3 @@ export const playerQueryOptions = (quizId: string, playerId: string) =>
 		queryFn: () => getPlayer(quizId, playerId),
 	});
 
-export const quizCurrentQuestionQueryOptions = (quizId: string) =>
-	queryOptions({
-		queryKey: ["quiz", "question", "current", quizId],
-		queryFn: () => getCurrentQuestion(quizId),
-	});

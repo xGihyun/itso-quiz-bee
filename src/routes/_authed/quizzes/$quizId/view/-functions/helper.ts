@@ -1,5 +1,5 @@
 import { Player } from "@/lib/quiz/player/types";
-import { CreateWrittenAnswerRequest } from "@/lib/quiz/types";
+import { CreateWrittenAnswerRequest } from "@/lib/quiz";
 
 export function updatePlayerAnswer(
 	players: Player[],

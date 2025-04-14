@@ -1,4 +1,4 @@
-import { QuizQuestionVariant, QuizStatus } from "@/lib/quiz/types";
+import { QuizQuestionVariant, QuizStatus } from "@/lib/quiz";
 import { z } from "zod";
 
 export const CreateAnswerSchema = z.object({

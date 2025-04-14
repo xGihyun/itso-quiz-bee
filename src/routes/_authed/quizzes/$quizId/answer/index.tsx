@@ -7,7 +7,7 @@ import {
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { CreateWrittenAnswerRequest, QuizQuestion } from "@/lib/quiz/types";
+import { CreateWrittenAnswerRequest, QuizQuestion } from "@/lib/quiz";
 import { JSX, useEffect, useRef, useState } from "react";
 import {
 	playerQueryOptions,

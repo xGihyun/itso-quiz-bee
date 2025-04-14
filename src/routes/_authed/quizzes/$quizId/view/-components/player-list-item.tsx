@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "@tanstack/react-router";
 import { JSX } from "react";
 import { Player } from "@/lib/quiz/player/types";
-import { QuizQuestion } from "@/lib/quiz/types";
+import { QuizQuestion } from "@/lib/quiz";
 import { IconPen } from "@/lib/icons";
 
 type Props = {

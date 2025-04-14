@@ -1,7 +1,7 @@
 import {
 	QuizUpdatePlayersQuestionRequest,
 	QuizUpdateStatusRequest,
-} from "@/lib/quiz/types";
+} from "@/lib/quiz";
 import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 

@@ -1,4 +1,4 @@
-import { QuizQuestion } from "@/lib/quiz/types";
+import { QuizQuestion } from "@/lib/quiz";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { JSX } from "react";
 import useWebSocket from "react-use-websocket";

@@ -7,7 +7,7 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { JSX } from "react";
 import { useAuth } from "@/auth";
-import { QuizBasicInfo } from "@/lib/quiz/types";
+import { QuizBasicInfo } from "@/lib/quiz";
 import { UserRole } from "@/lib/user";
 
 type Props = {

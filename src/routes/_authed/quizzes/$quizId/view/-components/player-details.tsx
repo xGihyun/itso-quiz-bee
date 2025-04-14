@@ -1,7 +1,7 @@
 import { JSX } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Player } from "@/lib/quiz/player/types";
-import { Quiz } from "@/lib/quiz/types";
+import { Quiz } from "@/lib/quiz";
 import { IconCheck, IconClose } from "@/lib/icons";
 
 type Props = {

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
 import { CheckIcon } from "lucide-react";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { QuizQuestion } from "@/lib/quiz/types";
+import { QuizQuestion } from "@/lib/quiz";
 import { JSX, useState } from "react";
 import { User } from "@/lib/user/types";
 import { submitAnswer, typeAnswer } from "../-functions/websocket";

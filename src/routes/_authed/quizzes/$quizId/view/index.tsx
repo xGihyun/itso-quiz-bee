@@ -4,7 +4,7 @@ import {
 	CreateWrittenAnswerRequest,
 	QuizQuestion,
 	QuizStatus,
-} from "@/lib/quiz/types";
+} from "@/lib/quiz";
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";

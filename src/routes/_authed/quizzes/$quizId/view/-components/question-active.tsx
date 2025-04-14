@@ -1,5 +1,5 @@
 import { IconClick, IconQuestionAnswer } from "@/lib/icons";
-import { QuizQuestion } from "@/lib/quiz/types";
+import { QuizQuestion } from "@/lib/quiz";
 import { JSX } from "react";
 
 type Props = {
