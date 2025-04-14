@@ -1,3 +1,6 @@
+import { queryOptions } from "@tanstack/react-query";
+import { ApiResponse } from "../api/types";
+
 export enum QuizStatus {
 	Open = "open",
 	Started = "started",
@@ -35,3 +38,36 @@ export type QuizUpdateStatusRequest = {
 	quizId: string;
 	status: QuizStatus;
 };
+
+export async function getQuizzes(): Promise<ApiResponse<QuizBasicInfo[]>> {
+	const response = await fetch(
+		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes`,
+		{
+			method: "GET",
+			credentials: "include"
+		}
+	);
+	const result: ApiResponse<QuizBasicInfo[]> = await response.json();
+
+	return result;
+}
+
+export const quizQueryOptions = (quizId: string) =>
+	queryOptions({
+		queryKey: ["quiz", quizId],
+		queryFn: () => getQuiz(quizId)
+	});
+
+export async function getQuiz(quizId: string): Promise<ApiResponse<Quiz>> {
+	const response = await fetch(
+		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}`,
+		{
+			method: "GET",
+			credentials: "include"
+		}
+	);
+
+	const result: ApiResponse<Quiz> = await response.json();
+
+	return result;
+}
