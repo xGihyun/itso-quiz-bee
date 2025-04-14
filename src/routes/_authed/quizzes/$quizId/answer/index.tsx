@@ -1,35 +1,37 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
+import {
+	WebSocketEvent,
+	WebSocketRequest,
+	WebSocketResponse
+} from "@/lib/websocket/types";
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import {
-	CreateWrittenAnswerRequest,
-	QuizQuestion,
-} from "@/lib/quiz/types";
+import { CreateWrittenAnswerRequest, QuizQuestion } from "@/lib/quiz/types";
 import { JSX, useEffect, useRef, useState } from "react";
 import {
 	playerQueryOptions,
 	playersQueryOptions,
-	quizCurrentQuestionQueryOptions,
+	quizCurrentQuestionQueryOptions
 } from "@/lib/quiz/query";
 import { ErrorAlert } from "@/components/error-alert";
 import { WrittenAnswerForm } from "./-components/written-form";
-import { gsap } from "gsap";
 import { Progress } from "@/components/ui/progress";
 import { Leaderboard } from "./-components/leaderboard";
+import { JoinQuizRequest } from "@/lib/quiz/websocket";
+import { useAuth } from "@/auth";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 	component: RouteComponent,
 	loader: async ({ context, params }) => {
 		const queries = await Promise.all([
 			context.queryClient.ensureQueryData(
-				quizCurrentQuestionQueryOptions(params.quizId),
+				quizCurrentQuestionQueryOptions(params.quizId)
 			),
 			context.queryClient.ensureQueryData(
-				playerQueryOptions(params.quizId, context.session.user.userId),
+				playerQueryOptions(params.quizId, context.session.user.userId)
 			),
-			context.queryClient.ensureQueryData(playersQueryOptions(params.quizId)),
+			context.queryClient.ensureQueryData(playersQueryOptions(params.quizId))
 		]);
 
 		const [currentQuestionQuery, playerQuery, playersQuery] = queries;
@@ -38,13 +40,13 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 			currentQuestion: currentQuestionQuery.data,
 			user: context.session.user,
 			player: playerQuery.data,
-			players: playersQuery.data,
+			players: playersQuery.data
 		};
 	},
 	errorComponent: ({ error }) => {
 		return <ErrorAlert message={error.message} />;
 	},
-	pendingComponent: () => <div>Loading...</div>,
+	pendingComponent: () => <div>Loading...</div>
 });
 
 // TODO:
@@ -53,10 +55,12 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 
 function RouteComponent(): JSX.Element {
 	const loaderData = Route.useLoaderData();
+	const params = Route.useParams();
+	const auth = useAuth();
+    const socket = useWebSocket(WEBSOCKET_URL, WEBSOCKET_OPTIONS)
 
-	const [hasSubmitted, setHasSubmitted] = useState(false);
 	const [currentQuestion, setCurrentQuestion] = useState(
-		loaderData.currentQuestion,
+		loaderData.currentQuestion
 	);
 	const [remainingTime, setRemainingTime] = useState(0);
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
@@ -109,27 +113,23 @@ function RouteComponent(): JSX.Element {
 				default:
 					console.warn("Unknown event type:", result.event);
 			}
-		},
+		}
 	});
 
-	const questionRef = useRef<HTMLParagraphElement>(null);
-
 	useEffect(() => {
-		gsap.fromTo(
-			questionRef.current,
-			{
-				opacity: 0,
-				ease: "power3.out",
-			},
-			{
-				opacity: 1,
-				ease: "power3.out",
-			},
-		);
-	}, [currentQuestion]);
+		if (auth.user === null) {
+			return;
+		}
+
+		const message: WebSocketRequest<JoinQuizRequest> = {
+			event: WebSocketEvent.PlayerJoin,
+			data: { quizId: params.quizId, userId: auth.user.userId }
+		};
+		socket.sendJsonMessage(message);
+	}, []);
 
 	return (
-		<div className="flex h-full flex-col relative">
+		<div className="relative flex h-full flex-col">
 			{isLeaderboardShown ? <Leaderboard players={loaderData.players} /> : null}
 
 			<Progress
@@ -139,10 +139,7 @@ function RouteComponent(): JSX.Element {
 			/>
 
 			<div className="flex h-full items-center bg-card px-20 py-10">
-				<p
-					className="mx-auto mb-5 max-w-5xl text-center font-metropolis-bold text-3xl"
-					ref={questionRef}
-				>
+				<p className="mx-auto mb-5 max-w-5xl text-center font-metropolis-bold text-3xl">
 					{currentQuestion.content}
 				</p>
 			</div>

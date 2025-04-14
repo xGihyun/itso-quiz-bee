@@ -9,15 +9,9 @@ import { JSX } from "react";
 import { useAuth } from "@/auth";
 import { QuizBasicInfo } from "@/lib/quiz/types";
 import { UserRole } from "@/lib/user";
-import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 
 type Props = {
 	quizzes: QuizBasicInfo[];
-};
-
-type JoinQuizRequest = {
-	userId: string;
-	quizId: string;
 };
 
 export function Quizzes(props: Props): JSX.Element {
@@ -41,11 +35,6 @@ export function Quizzes(props: Props): JSX.Element {
 			to: "/quizzes/$quizId/answer",
 			params: { quizId: quiz.quizId }
 		});
-
-		const message: WebSocketRequest<JoinQuizRequest> = {
-			event: WebSocketEvent.PlayerJoin,
-			data: { quizId: quiz.quizId, userId: auth.user.userId }
-		};
 	}
 
 	return (
