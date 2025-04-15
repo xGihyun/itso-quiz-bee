@@ -16,11 +16,10 @@ import { CheckIcon } from "lucide-react";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { QuizQuestion } from "@/lib/quiz";
 import { JSX, useState } from "react";
-import { User } from "@/lib/user/types";
 import { submitAnswer, typeAnswer } from "../-functions/websocket";
 import { useParams } from "@tanstack/react-router";
 import { IconPen } from "@/lib/icons";
-import { Player } from "@/lib/quiz/player/types";
+import { Player } from "@/lib/quiz/player";
 
 type Props = {
 	player: Player;
@@ -33,7 +32,7 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 		resolver: zodResolver(WrittenAnswerSchema),
 		defaultValues: {
 			content: "",
-			quiz_question_id: props.question.quiz_question_id,
+			quiz_question_id: props.question.quizQuestionId,
 		},
 	});
 
@@ -59,7 +58,7 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 
 					form.reset({
 						content: "",
-						quiz_question_id: data.quiz_question_id,
+						quiz_question_id: data.quizQuestionId,
 					});
 					break;
 
@@ -72,7 +71,7 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 	async function onSubmit(value: WrittenAnswerInput): Promise<void> {
 		submitAnswer(socket, {
 			...value,
-			user_id: props.player.user_id,
+			user_id: props.player.userId,
 			quiz_id: params.quizId,
 		});
 	}
