@@ -135,26 +135,30 @@ function RouteComponent(): JSX.Element {
 		<div className="relative flex h-full flex-col">
 			{isLeaderboardShown ? <Leaderboard players={loaderData.players} /> : null}
 
-			<Progress
-				value={remainingTime}
-				max={currentQuestion?.duration}
-				className="rounded-none"
-			/>
-
-			<div className="flex h-full items-center bg-card px-20 py-10">
-				<p className="mx-auto mb-5 max-w-5xl text-center font-metropolis-bold text-3xl">
-					{currentQuestion.content}
-				</p>
-			</div>
-
-			<div className="mx-auto flex h-full w-full px-20 py-10">
-				<div className="mx-auto w-full max-w-5xl">
-					<WrittenAnswerForm
-						question={currentQuestion}
-						player={loaderData.player}
+			{currentQuestion ? (
+				<div>
+					<Progress
+						value={remainingTime}
+						max={currentQuestion?.duration}
+						className="rounded-none"
 					/>
+
+					<div className="flex h-full items-center bg-card px-20 py-10">
+						<p className="mx-auto mb-5 max-w-5xl text-center font-metropolis-bold text-3xl">
+							{currentQuestion?.content}
+						</p>
+					</div>
+
+					<div className="mx-auto flex h-full w-full px-20 py-10">
+						<div className="mx-auto w-full max-w-5xl">
+							<WrittenAnswerForm
+								question={currentQuestion}
+								player={loaderData.player}
+							/>
+						</div>
+					</div>
 				</div>
-			</div>
+			) : null}
 		</div>
 	);
 }
