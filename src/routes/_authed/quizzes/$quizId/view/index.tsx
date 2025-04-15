@@ -1,22 +1,12 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
-import {
-	CreateWrittenAnswerRequest,
-	QuizQuestion,
-	QuizStatus,
-} from "@/lib/quiz";
+import { quizQueryOptions, QuizQuestion, QuizStatus } from "@/lib/quiz";
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { JSX, useState } from "react";
-import {
-	playersQueryOptions,
-	quizCurrentQuestionQueryOptions,
-	quizQueryOptions,
-} from "@/lib/quiz/query";
 import { ErrorAlert } from "@/components/error-alert";
 import { updatePlayer, updatePlayerAnswer } from "./-functions/helper";
-import { Player } from "@/lib/quiz/player/types";
 import { QuizViewSchema } from "./-schemas";
 import { PlayerListItem } from "./-components/player-list-item";
 import { QuestionListItem } from "./-components/question-list-item";
@@ -25,11 +15,13 @@ import { QuestionActive } from "./-components/question-active";
 import {
 	ResizableHandle,
 	ResizablePanel,
-	ResizablePanelGroup,
+	ResizablePanelGroup
 } from "@/components/ui/resizable";
 import { PlayerFullscreen } from "./-components/player-fullscreen";
 import { Progress } from "@/components/ui/progress";
 import { User, UserRole } from "@/lib/user";
+import { CreateWrittenAnswerRequest, Player, playersQueryOptions } from "@/lib/quiz/player";
+import { quizCurrentQuestionQueryOptions } from "@/lib/quiz/question";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -44,8 +36,8 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 			context.queryClient.ensureQueryData(quizQueryOptions(params.quizId)),
 			context.queryClient.ensureQueryData(playersQueryOptions(params.quizId)),
 			context.queryClient.ensureQueryData(
-				quizCurrentQuestionQueryOptions(params.quizId),
-			),
+				quizCurrentQuestionQueryOptions(params.quizId)
+			)
 		]);
 
 		const [quizQuery, playersQuery, currentQuestionQuery] = queries;
@@ -53,13 +45,13 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 		return {
 			quiz: quizQuery.data,
 			players: playersQuery.data,
-			currentQuestion: currentQuestionQuery.data,
+			currentQuestion: currentQuestionQuery.data
 		};
 	},
 	errorComponent: ({ error }) => {
 		return <ErrorAlert message={error.message} />;
 	},
-	pendingComponent: () => <div>Loading...</div>,
+	pendingComponent: () => <div>Loading...</div>
 });
 
 function RouteComponent(): JSX.Element {
@@ -69,12 +61,12 @@ function RouteComponent(): JSX.Element {
 	const [quiz, setQuiz] = useState(loaderData.quiz);
 	const [players, setPlayers] = useState(loaderData.players);
 	const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(
-		loaderData.currentQuestion,
+		loaderData.currentQuestion
 	);
 	const [remainingTime, setRemainingTime] = useState(0);
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
 
-	const selectedPlayer = players.find((p) => p.user_id === search.playerId);
+	const selectedPlayer = players.find((p) => p.userId === search.playerId);
 
 	const _ = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
@@ -87,7 +79,7 @@ function RouteComponent(): JSX.Element {
 					{
 						const newPlayer = result.data as User;
 
-						if (players.some((p) => p.user_id === newPlayer.userId)) {
+						if (players.some((p) => p.userId === newPlayer.userId)) {
 							return;
 						}
 
@@ -97,9 +89,9 @@ function RouteComponent(): JSX.Element {
 								...newPlayer,
 								result: {
 									answers: [],
-									score: 0,
-								},
-							},
+									score: 0
+								}
+							}
 						]);
 					}
 					break;
@@ -160,11 +152,11 @@ function RouteComponent(): JSX.Element {
 				default:
 					console.warn("Unknown event type:", result.event);
 			}
-		},
+		}
 	});
 
 	const focusedPlayerIndex = players.findIndex(
-		(player) => player.user_id === search.playerId,
+		(player) => player.userId === search.playerId
 	);
 	const focusedPlayer = players[focusedPlayerIndex];
 
@@ -193,10 +185,10 @@ function RouteComponent(): JSX.Element {
 								return (
 									<PlayerListItem
 										player={player}
-										isActive={selectedPlayer?.user_id === player.user_id}
+										isActive={selectedPlayer?.userId === player.userId}
 										rank={i + 1}
 										question={currentQuestion}
-										key={player.user_id}
+										key={player.userId}
 									/>
 								);
 							})}
@@ -216,15 +208,15 @@ function RouteComponent(): JSX.Element {
 							<ResizableHandle withHandle />
 
 							<ResizablePanel minSize={10}>
-								<div className="space-y-2 overflow-y-scroll h-full">
+								<div className="h-full space-y-2 overflow-y-scroll">
 									{quiz.questions.map((question) => (
 										<QuestionListItem
 											question={question}
 											isActive={
-												currentQuestion?.quiz_question_id ===
-												question.quiz_question_id
+												currentQuestion?.quizQuestionId ===
+												question.quizQuestionId
 											}
-											key={question.quiz_question_id}
+											key={question.quizQuestionId}
 										/>
 									))}
 								</div>
