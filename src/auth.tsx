@@ -12,6 +12,7 @@ import { deleteCookie, getCookie } from "./lib/cookie";
 
 export type AuthContextValue = {
 	user: User | null;
+	sessionToken: string;
 	validateSession: () => Promise<AuthSession | null>;
 	signOut: () => Promise<void>;
 };
@@ -24,6 +25,7 @@ type AuthProviderProps = {
 
 export function AuthProvider(props: AuthProviderProps): JSX.Element {
 	const [user, setUser] = useState<User | null>(null);
+	const [sessionToken, setSessionToken] = useState<string>();
 
 	async function validateSession(): Promise<AuthSession | null> {
 		const token = getCookie("session");
@@ -37,6 +39,7 @@ export function AuthProvider(props: AuthProviderProps): JSX.Element {
 			return null;
 		}
 		setUser(authSession.data.user);
+		setSessionToken(authSession.data.session);
 
 		return authSession.data;
 	}
@@ -67,7 +70,7 @@ export function AuthProvider(props: AuthProviderProps): JSX.Element {
 	}, []);
 
 	return (
-		<AuthContext value={{ user, validateSession, signOut }}>
+		<AuthContext value={{ user, validateSession, signOut, sessionToken }}>
 			{props.children}
 		</AuthContext>
 	);
