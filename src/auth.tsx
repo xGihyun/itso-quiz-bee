@@ -25,7 +25,7 @@ type AuthProviderProps = {
 
 export function AuthProvider(props: AuthProviderProps): JSX.Element {
 	const [user, setUser] = useState<User | null>(null);
-	const [sessionToken, setSessionToken] = useState<string>();
+	const [sessionToken, setSessionToken] = useState<string>("");
 
 	async function validateSession(): Promise<AuthSession | null> {
 		const token = getCookie("session");
@@ -39,7 +39,7 @@ export function AuthProvider(props: AuthProviderProps): JSX.Element {
 			return null;
 		}
 		setUser(authSession.data.user);
-		setSessionToken(authSession.data.session);
+		setSessionToken(token);
 
 		return authSession.data;
 	}
