@@ -20,8 +20,13 @@ import {
 import { PlayerFullscreen } from "./-components/player-fullscreen";
 import { Progress } from "@/components/ui/progress";
 import { User, UserRole } from "@/lib/user";
-import { CreateWrittenAnswerRequest, Player, playersQueryOptions } from "@/lib/quiz/player";
+import {
+	CreateWrittenAnswerRequest,
+	Player,
+	playersQueryOptions
+} from "@/lib/quiz/player";
 import { quizCurrentQuestionQueryOptions } from "@/lib/quiz/question";
+import { useAuth } from "@/auth";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -57,6 +62,7 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 function RouteComponent(): JSX.Element {
 	const loaderData = Route.useLoaderData();
 	const search = Route.useSearch();
+	const auth = useAuth();
 
 	const [quiz, setQuiz] = useState(loaderData.quiz);
 	const [players, setPlayers] = useState(loaderData.players);
@@ -71,6 +77,9 @@ function RouteComponent(): JSX.Element {
 	const _ = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
 		share: true,
+		queryParams: {
+			token: auth.sessionToken
+		},
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
 
@@ -78,6 +87,7 @@ function RouteComponent(): JSX.Element {
 				case WebSocketEvent.PlayerJoin:
 					{
 						const newPlayer = result.data as User;
+                        console.log(newPlayer)
 
 						if (players.some((p) => p.userId === newPlayer.userId)) {
 							return;

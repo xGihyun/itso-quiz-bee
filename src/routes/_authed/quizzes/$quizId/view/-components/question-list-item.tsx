@@ -4,6 +4,7 @@ import { JSX } from "react";
 import useWebSocket from "react-use-websocket";
 import { updatePlayersQuestion } from "../-functions/websocket";
 import { useParams } from "@tanstack/react-router";
+import { useAuth } from "@/auth";
 
 type Props = {
 	question: QuizQuestion;
@@ -12,9 +13,13 @@ type Props = {
 
 export function QuestionListItem(props: Props): JSX.Element {
 	const params = useParams({ from: "/_authed/quizzes/$quizId/view/" });
+	const auth = useAuth();
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
-		share: true
+		share: true,
+		queryParams: {
+			token: auth.sessionToken
+		},
 	});
 
 	return (
@@ -28,7 +33,7 @@ export function QuestionListItem(props: Props): JSX.Element {
 			}
 		>
 			<div className="content-center font-metropolis-bold text-lg">
-				{props.question.order_number}
+				{props.question.orderNumber}
 			</div>
 
 			<div>
