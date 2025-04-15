@@ -1,9 +1,15 @@
 import { User } from ".";
 import { ApiResponse } from "../api/types";
 
+export type Session = {
+	sessionId: string;
+	userId: string;
+	expiresAt: string;
+};
+
 export type AuthSession = {
 	user: User;
-	session: string;
+	session: Session;
 };
 
 export async function getAuthSession(
