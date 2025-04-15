@@ -1,16 +1,16 @@
 export enum WebSocketEvent {
-	QuizUpdateStatus = "quiz-update-status",
-	QuizUpdateQuestion = "quiz-update-question",
-	QuizDisableAnswering = "quiz-disable-answering",
-	QuizShowLeaderboard = "quiz-show-leaderboard",
+	QuizUpdateStatus = "quiz:update-status",
+	QuizUpdateQuestion = "quiz:update-question",
+	QuizDisableAnswering = "quiz:disable-answering",
+	QuizShowLeaderboard = "quiz:show-leaderboard",
 
-	TimerPass = "timer-pass",
-	TimerDone = "timer-done",
+	TimerPass = "quiz:timer-pass",
+	TimerDone = "quiz:timer-done",
 
-	PlayerJoin = "player-join",
-	PlayerLeave = "player-leave",
-	PlayerSubmitAnswer = "player-submit-answer",
-	PlayerTypeAnswer = "player-type-answer",
+	PlayerJoin = "quiz:player-join",
+	PlayerLeave = "quiz:player-leave",
+	PlayerSubmitAnswer = "quiz:player-submit-answer",
+	PlayerTypeAnswer = "quiz:player-type-answer",
 
 	Heartbeat = "heartbeat",
 }
