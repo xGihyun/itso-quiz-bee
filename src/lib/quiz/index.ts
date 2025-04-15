@@ -39,6 +39,11 @@ export type QuizUpdateStatusRequest = {
 	status: QuizStatus;
 };
 
+export const quizzesQueryOptions = queryOptions({
+	queryKey: ["quizzes"],
+	queryFn: getQuizzes
+});
+
 export async function getQuizzes(): Promise<ApiResponse<QuizBasicInfo[]>> {
 	const response = await fetch(
 		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes`,

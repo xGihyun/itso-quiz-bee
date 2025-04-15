@@ -1,16 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Quizzes } from "./-components/quizzes";
 import { JSX } from "react";
-import { queryOptions } from "@tanstack/react-query";
-import { getQuizzes } from "@/lib/quiz/requests";
 import { ErrorAlert } from "@/components/error-alert";
 import { Button } from "@/components/ui/button";
 import { v4 as uuidv4 } from "uuid";
-
-const quizzesQueryOptions = queryOptions({
-	queryKey: ["quizzes"],
-	queryFn: getQuizzes
-});
+import { quizzesQueryOptions } from "@/lib/quiz";
 
 export const Route = createFileRoute("/_authed/")({
 	component: HomeComponent,

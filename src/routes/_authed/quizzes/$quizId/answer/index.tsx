@@ -7,19 +7,20 @@ import {
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { CreateWrittenAnswerRequest, QuizQuestion } from "@/lib/quiz";
-import { JSX, useEffect, useRef, useState } from "react";
-import {
-	playerQueryOptions,
-	playersQueryOptions,
-	quizCurrentQuestionQueryOptions
-} from "@/lib/quiz/query";
+import { QuizQuestion } from "@/lib/quiz";
+import { JSX, useEffect, useState } from "react";
 import { ErrorAlert } from "@/components/error-alert";
 import { WrittenAnswerForm } from "./-components/written-form";
 import { Progress } from "@/components/ui/progress";
 import { Leaderboard } from "./-components/leaderboard";
-import { JoinQuizRequest } from "@/lib/quiz/websocket";
 import { useAuth } from "@/auth";
+import { quizCurrentQuestionQueryOptions } from "@/lib/quiz/question";
+import {
+	CreateWrittenAnswerRequest,
+	JoinQuizRequest,
+	playerQueryOptions,
+	playersQueryOptions
+} from "@/lib/quiz/player";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 	component: RouteComponent,
@@ -57,7 +58,6 @@ function RouteComponent(): JSX.Element {
 	const loaderData = Route.useLoaderData();
 	const params = Route.useParams();
 	const auth = useAuth();
-    const socket = useWebSocket(WEBSOCKET_URL, WEBSOCKET_OPTIONS)
 
 	const [currentQuestion, setCurrentQuestion] = useState(
 		loaderData.currentQuestion
@@ -65,9 +65,12 @@ function RouteComponent(): JSX.Element {
 	const [remainingTime, setRemainingTime] = useState(0);
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
 
-	const _ = useWebSocket(WEBSOCKET_URL, {
+	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
 		share: true,
+		queryParams: {
+			token: auth.sessionToken
+		},
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
 
