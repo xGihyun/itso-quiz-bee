@@ -1,4 +1,4 @@
-import { QuizQuestionVariant, QuizStatus } from "@/lib/quiz";
+import { QuizStatus } from "@/lib/quiz";
 import { z } from "zod";
 
 export const CreateAnswerSchema = z.object({
@@ -12,7 +12,6 @@ export type CreateAnswerInput = z.infer<typeof CreateAnswerSchema>;
 export const CreateQuestionSchema = z.object({
 	quiz_question_id: z.string().min(1, { message: "Required" }),
 	content: z.string().min(1, { message: "Required" }),
-	variant: z.nativeEnum(QuizQuestionVariant),
 	points: z.coerce.number(),
 	duration: z.coerce.number().optional(),
 	answers: CreateAnswerSchema.array()

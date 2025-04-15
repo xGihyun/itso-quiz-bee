@@ -3,7 +3,7 @@ import { EditQuizForm } from "./-components/edit-quiz-form";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { JSX } from "react";
 import { ErrorAlert } from "@/components/error-alert";
-import { quizQueryOptions } from "@/lib/quiz/query";
+import { quizQueryOptions } from "@/lib/quiz";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/edit/")({
 	component: RouteComponent,

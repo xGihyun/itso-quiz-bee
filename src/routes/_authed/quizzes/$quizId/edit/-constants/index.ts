@@ -1,4 +1,4 @@
-import { QuizQuestionVariant, QuizStatus } from "@/lib/quiz";
+import { QuizStatus } from "@/lib/quiz";
 import {
 	CreateQuizInput,
 	type CreateAnswerInput,
@@ -22,8 +22,6 @@ export function createDefaultQuestion(): CreateQuestionInput {
 		points: 1,
 		answers: [createDefaultAnswer()],
 		content: "Untitled Question",
-		// The questions for the quiz bee are always written
-		variant: QuizQuestionVariant.Written
 	};
 }
 
