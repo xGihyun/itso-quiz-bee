@@ -3,14 +3,15 @@ import { ApiResponse } from "../api/types";
 import { User } from "../user";
 
 export type Player = {
+    user: User;
 	result: PlayerResult;
-} & User;
+};
 
 export type PlayerAnswer = {
-	player_answer_id: string;
+	playerAnswerId: string;
 	content: string;
-	is_correct: boolean;
-	quiz_question_id: string;
+	isCorrect: boolean;
+	quizQuestionId: string;
 };
 
 export type PlayerResult = {
@@ -78,7 +79,7 @@ export type CreateWrittenAnswerRequest = {
 };
 
 export type GetWrittenAnswerResponse = {
-	player_written_answer_id: string;
+	playerWrittenAnswerId: string;
 	content: string;
 };
 
