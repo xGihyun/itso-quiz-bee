@@ -64,7 +64,7 @@ export function SignInForm(): JSX.Element {
 	return (
 		<Card className="mx-auto max-w-sm">
 			<CardHeader>
-				<CardTitle className="text-2xl">SignIn</CardTitle>
+				<CardTitle className="text-2xl">Sign In</CardTitle>
 				<CardDescription>Enter your credentials below.</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
@@ -106,7 +106,7 @@ export function SignInForm(): JSX.Element {
 
 				<p className="text-center text-sm">
 					Don't have an account?{" "}
-					<Link href="/sign-up" className="text-primary underline">
+					<Link to="/sign-up" className="text-primary underline">
 						Sign Up
 					</Link>
 				</p>
