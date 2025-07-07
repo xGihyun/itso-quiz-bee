@@ -2,15 +2,15 @@ import { QuizStatus } from "@/lib/quiz";
 import { z } from "zod";
 
 export const CreateAnswerSchema = z.object({
-	quiz_answer_id: z.string().min(1, { message: "Required" }),
+	quizAnswerId: z.string().min(1, { message: "Required" }),
 	content: z.string().min(1, { message: "Required" }),
-	is_correct: z.boolean()
+	isCorrect: z.boolean()
 });
 
 export type CreateAnswerInput = z.infer<typeof CreateAnswerSchema>;
 
 export const CreateQuestionSchema = z.object({
-	quiz_question_id: z.string().min(1, { message: "Required" }),
+	quizQuestionId: z.string().min(1, { message: "Required" }),
 	content: z.string().min(1, { message: "Required" }),
 	points: z.coerce.number(),
 	duration: z.coerce.number().optional(),
@@ -20,7 +20,7 @@ export const CreateQuestionSchema = z.object({
 export type CreateQuestionInput = z.infer<typeof CreateQuestionSchema>;
 
 export const CreateQuizSchema = z.object({
-	quiz_id: z.string().min(1, { message: "Required" }),
+	quizId: z.string().min(1, { message: "Required" }),
 	name: z.string().min(1, { message: "Required" }),
 	description: z.string().optional(),
 	status: z.nativeEnum(QuizStatus).default(QuizStatus.Closed),
