@@ -19,7 +19,9 @@ export function QuestionActive(props: Props): JSX.Element {
 				<IconClick className="size-6 text-primary" />
 				<p>Click to reveal answer.</p>
                 */}
-				<p>{props.question.answers[0].content}</p>
+                {/* FIXME: There should be an answer here */}
+				{/* <p>{props.question.answers[0].content}</p> */}
+				<p>Answer Here</p>
 			</div>
 		</div>
 	);

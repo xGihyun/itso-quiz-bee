@@ -1,4 +1,3 @@
-import { Player } from "@/lib/quiz/player/types";
 import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { JSX, useEffect, useRef } from "react";
@@ -11,6 +10,7 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { Player } from "@/lib/quiz/player";
 
 type Props = {
 	player: Player;
@@ -20,9 +20,9 @@ type Props = {
 };
 
 export function PlayerFullscreen(props: Props): JSX.Element {
-	const initials = props.player.name[0];
+	const initials = props.player.user.name[0];
 	const playerAnswer = props.player.result.answers.find(
-		(answer) => answer.quiz_question_id === props.question?.quiz_question_id,
+		(answer) => answer.quizQuestionId === props.question?.quizQuestionId,
 	);
 
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -58,14 +58,14 @@ export function PlayerFullscreen(props: Props): JSX.Element {
 					<section className="content-center h-full space-y-10">
 						<div className="space-y-2">
 							<Avatar className="size-40 mx-auto">
-								<AvatarImage src={props.player.avatar_url} />
+								<AvatarImage src={props.player.user.avatarUrl} />
 								<AvatarFallback className="text-foreground text-6xl">
 									{initials}
 								</AvatarFallback>
 							</Avatar>
 
 							<p className="font-metropolis-bold text-3xl text-center">
-								{props.player.name}
+								{props.player.user.name}
 							</p>
 						</div>
 
@@ -144,16 +144,16 @@ function AnswerHistory(props: Props): JSX.Element {
 		<div className="h-full space-y-2  overflow-y-scroll">
 			{props.player.result.answers.map((answer) => {
 				const question = props.quiz.questions.find(
-					(question) => question.quiz_question_id === answer.quiz_question_id,
+					(question) => question.quizQuestionId === answer.quizQuestionId,
 				);
 
 				return (
 					<div
 						className="flex gap-4 w-full rounded border px-4 py-3 text-start bg-card"
-						key={answer.player_answer_id}
+						key={answer.playerAnwerId}
 					>
 						<div className="content-center font-metropolis-bold text-lg">
-							{question?.order_number}
+							{question?.orderNumber}
 						</div>
 
 						<div className="flex flex-col w-full">
@@ -169,7 +169,7 @@ function AnswerHistory(props: Props): JSX.Element {
 							</div>
 
 							<p
-								className={`font-metropolis-semibold ${answer.is_correct ? "text-success" : "text-destructive"} `}
+								className={`font-metropolis-semibold ${answer.isCorrect ? "text-success" : "text-destructive"} `}
 							>
 								{answer.content}
 							</p>

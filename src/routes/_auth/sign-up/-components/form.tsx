@@ -25,7 +25,7 @@ import { JSX } from "react";
 import { UserRole } from "@/lib/user";
 
 export function SignUpForm(): JSX.Element {
-	const navigate = useNavigate({ from: "/register" });
+	const navigate = useNavigate({ from: "/sign-up" });
 	const form = useForm<SignUpInput>({
 		resolver: zodResolver(SignUpSchema),
 		defaultValues: {
@@ -119,7 +119,7 @@ export function SignUpForm(): JSX.Element {
 
 				<p className="text-center text-sm">
 					Already have an account?{" "}
-					<Link href="/sign-in" className="text-primary underline">
+					<Link to="/sign-in" className="text-primary underline">
 						Sign In
 					</Link>
 				</p>

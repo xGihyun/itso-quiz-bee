@@ -72,7 +72,7 @@ function RouteComponent(): JSX.Element {
 	const [remainingTime, setRemainingTime] = useState(0);
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
 
-	const selectedPlayer = players.find((p) => p.userId === search.playerId);
+	const selectedPlayer = players.find((p) => p.user.userId === search.playerId);
 
 	const _ = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
@@ -89,14 +89,16 @@ function RouteComponent(): JSX.Element {
 						const newPlayer = result.data as User;
                         console.log(newPlayer)
 
-						if (players.some((p) => p.userId === newPlayer.userId)) {
+                        // TODO: Server should be responsible for having unique players
+                        // Probably not needed for now
+						if (players.some((p) => p.user.userId === newPlayer.userId)) {
 							return;
 						}
 
 						setPlayers([
 							...players,
 							{
-								...newPlayer,
+								user: newPlayer,
 								result: {
 									answers: [],
 									score: 0
@@ -166,7 +168,7 @@ function RouteComponent(): JSX.Element {
 	});
 
 	const focusedPlayerIndex = players.findIndex(
-		(player) => player.userId === search.playerId
+		(player) => player.user.userId === search.playerId
 	);
 	const focusedPlayer = players[focusedPlayerIndex];
 
@@ -195,10 +197,10 @@ function RouteComponent(): JSX.Element {
 								return (
 									<PlayerListItem
 										player={player}
-										isActive={selectedPlayer?.userId === player.userId}
+										isActive={selectedPlayer?.user.userId === player.user.userId}
 										rank={i + 1}
 										question={currentQuestion}
-										key={player.userId}
+										key={player.user.userId}
 									/>
 								);
 							})}
