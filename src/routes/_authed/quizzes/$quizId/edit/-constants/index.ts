@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 
 export function createDefaultQuiz(quizId: string): CreateQuizInput {
 	return {
-		quiz_id: quizId,
+		quizId: quizId,
 		name: "Untitled Quiz",
 		description: "",
 		status: QuizStatus.Closed,
@@ -18,7 +18,7 @@ export function createDefaultQuiz(quizId: string): CreateQuizInput {
 
 export function createDefaultQuestion(): CreateQuestionInput {
 	return {
-		quiz_question_id: uuidv4(),
+		quizQuestionId: uuidv4(),
 		points: 1,
 		answers: [createDefaultAnswer()],
 		content: "Untitled Question",
@@ -28,7 +28,7 @@ export function createDefaultQuestion(): CreateQuestionInput {
 export function createDefaultAnswer(): CreateAnswerInput {
 	return {
 		content: "Answer",
-		is_correct: true, // Assuming that the answer is written
-		quiz_answer_id: uuidv4()
+		isCorrect: true, // Assuming that the answer is written
+		quizAnswerId: uuidv4()
 	};
 }
