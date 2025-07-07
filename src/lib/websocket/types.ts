@@ -4,7 +4,7 @@ export enum WebSocketEvent {
 	QuizDisableAnswering = "quiz:disable-answering",
 	QuizShowLeaderboard = "quiz:show-leaderboard",
 
-	TimerPass = "quiz:timer-pass",
+	TimerStart = "quiz:timer-start",
 	TimerDone = "quiz:timer-done",
 
 	PlayerJoin = "quiz:player-join",

@@ -27,6 +27,7 @@ import {
 } from "@/lib/quiz/player";
 import { quizCurrentQuestionQueryOptions } from "@/lib/quiz/question";
 import { useAuth } from "@/auth";
+import { Interval } from "@/lib/quiz/timer";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -82,6 +83,8 @@ function RouteComponent(): JSX.Element {
 		},
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
+
+            console.log(result)
 
 			switch (result.event) {
 				case WebSocketEvent.PlayerJoin:
@@ -148,10 +151,17 @@ function RouteComponent(): JSX.Element {
 					}
 					break;
 
-				case WebSocketEvent.TimerPass:
+				case WebSocketEvent.TimerDone:
 					{
-						const remainingTime = result.data as number;
-						setRemainingTime(remainingTime);
+						toast.info("Time is up!");
+					}
+					break;
+
+				case WebSocketEvent.TimerStart:
+					{
+						const interval = result.data as Interval;
+                        console.log(interval)
+						// setRemainingTime(remainingTime);
 					}
 					break;
 
