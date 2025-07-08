@@ -8,19 +8,23 @@ import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { QuizQuestion } from "@/lib/quiz";
-import { JSX, useEffect, useState } from "react";
+import { JSX, useEffect, useRef, useState } from "react";
 import { ErrorAlert } from "@/components/error-alert";
 import { WrittenAnswerForm } from "./-components/written-form";
 import { Progress } from "@/components/ui/progress";
 import { Leaderboard } from "./-components/leaderboard";
 import { useAuth } from "@/auth";
-import { quizCurrentQuestionQueryOptions } from "@/lib/quiz/question";
+import {
+	QuizCurrentQuestion,
+	quizCurrentQuestionQueryOptions
+} from "@/lib/quiz/question";
 import {
 	CreateWrittenAnswerRequest,
 	JoinQuizRequest,
 	playerQueryOptions,
 	playersQueryOptions
 } from "@/lib/quiz/player";
+import { Interval } from "@/lib/quiz/timer";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 	component: RouteComponent,
@@ -65,6 +69,8 @@ function RouteComponent(): JSX.Element {
 	const [remainingTime, setRemainingTime] = useState(0);
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
 
+	const intervalRef = useRef<NodeJS.Timeout>(null);
+
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
 		share: true,
@@ -77,9 +83,8 @@ function RouteComponent(): JSX.Element {
 			switch (result.event) {
 				case WebSocketEvent.QuizUpdateQuestion:
 					{
-						const question = result.data as QuizQuestion;
+						const question = result.data as QuizCurrentQuestion;
 						setCurrentQuestion(question);
-						setRemainingTime(question.duration);
 						toast.info("Next question!");
 					}
 					break;
@@ -100,15 +105,31 @@ function RouteComponent(): JSX.Element {
 					}
 					break;
 
-				case WebSocketEvent.TimerPass:
+				case WebSocketEvent.TimerStart:
 					{
-						const remainingTime = result.data as number;
-						setRemainingTime(remainingTime);
+						if (intervalRef.current) {
+							clearInterval(intervalRef.current);
+						}
+						const interval = result.data as Interval;
+						console.log(interval);
+
+						setRemainingTime(currentQuestion!.question.duration);
+
+						intervalRef.current = setInterval(() => {
+							const now = new Date();
+							const endAt = new Date(interval.endAt);
+							const remaining = endAt.getSeconds() - now.getSeconds();
+
+							setRemainingTime(remaining);
+						}, 1000);
 					}
 					break;
 
 				case WebSocketEvent.TimerDone:
 					{
+						if (intervalRef.current) {
+							clearInterval(intervalRef.current);
+						}
 						toast.info("Time is up!");
 					}
 					break;
@@ -139,13 +160,13 @@ function RouteComponent(): JSX.Element {
 				<div>
 					<Progress
 						value={remainingTime}
-						max={currentQuestion?.duration}
+						max={currentQuestion?.question.duration || 100}
 						className="rounded-none"
 					/>
 
 					<div className="flex h-full items-center bg-card px-20 py-10">
 						<p className="mx-auto mb-5 max-w-5xl text-center font-metropolis-bold text-3xl">
-							{currentQuestion?.content}
+							{currentQuestion?.question.content}
 						</p>
 					</div>
 

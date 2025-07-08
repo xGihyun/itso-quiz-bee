@@ -1,10 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
-import { quizQueryOptions, QuizQuestion, QuizStatus } from "@/lib/quiz";
+import { quizQueryOptions, QuizStatus } from "@/lib/quiz";
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { JSX, useState } from "react";
+import { JSX, useRef, useState } from "react";
 import { ErrorAlert } from "@/components/error-alert";
 import { updatePlayer, updatePlayerAnswer } from "./-functions/helper";
 import { QuizViewSchema } from "./-schemas";
@@ -25,7 +25,10 @@ import {
 	Player,
 	playersQueryOptions
 } from "@/lib/quiz/player";
-import { quizCurrentQuestionQueryOptions } from "@/lib/quiz/question";
+import {
+	QuizCurrentQuestion,
+	quizCurrentQuestionQueryOptions
+} from "@/lib/quiz/question";
 import { useAuth } from "@/auth";
 import { Interval } from "@/lib/quiz/timer";
 
@@ -67,13 +70,14 @@ function RouteComponent(): JSX.Element {
 
 	const [quiz, setQuiz] = useState(loaderData.quiz);
 	const [players, setPlayers] = useState(loaderData.players);
-	const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(
-		loaderData.currentQuestion
-	);
-	const [remainingTime, setRemainingTime] = useState(0);
+	const [currentQuestion, setCurrentQuestion] =
+		useState<QuizCurrentQuestion | null>(loaderData.currentQuestion);
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
+	const [remainingTime, setRemainingTime] = useState(0);
 
 	const selectedPlayer = players.find((p) => p.user.userId === search.playerId);
+
+	const intervalRef = useRef<NodeJS.Timeout>(null);
 
 	const _ = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
@@ -84,16 +88,16 @@ function RouteComponent(): JSX.Element {
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
 
-            console.log(result)
+			console.log(result);
 
 			switch (result.event) {
 				case WebSocketEvent.PlayerJoin:
 					{
 						const newPlayer = result.data as User;
-                        console.log(newPlayer)
+						console.log(newPlayer);
 
-                        // TODO: Server should be responsible for having unique players
-                        // Probably not needed for now
+						// TODO: Server should be responsible for having unique players
+						// Probably not needed for now
 						if (players.some((p) => p.user.userId === newPlayer.userId)) {
 							return;
 						}
@@ -121,9 +125,8 @@ function RouteComponent(): JSX.Element {
 
 				case WebSocketEvent.QuizUpdateQuestion:
 					{
-						const question = result.data as QuizQuestion;
+						const question = result.data as QuizCurrentQuestion;
 						setCurrentQuestion(question);
-						setRemainingTime(question.duration);
 						toast.info("Next question!");
 					}
 					break;
@@ -151,22 +154,31 @@ function RouteComponent(): JSX.Element {
 					}
 					break;
 
-				case WebSocketEvent.TimerDone:
-					{
-						toast.info("Time is up!");
-					}
-					break;
-
 				case WebSocketEvent.TimerStart:
 					{
+						if (intervalRef.current) {
+							clearInterval(intervalRef.current);
+						}
 						const interval = result.data as Interval;
-                        console.log(interval)
-						// setRemainingTime(remainingTime);
+						console.log(interval);
+
+						setRemainingTime(currentQuestion!.question.duration);
+
+						intervalRef.current = setInterval(() => {
+							const now = new Date();
+							const endAt = new Date(interval.endAt);
+							const remaining = endAt.getSeconds() - now.getSeconds();
+
+							setRemainingTime(remaining);
+						}, 1000);
 					}
 					break;
 
 				case WebSocketEvent.TimerDone:
 					{
+						if (intervalRef.current) {
+							clearInterval(intervalRef.current);
+						}
 						toast.info("Time is up!");
 					}
 					break;
@@ -186,14 +198,14 @@ function RouteComponent(): JSX.Element {
 		<div className="relative h-full pb-16">
 			<Progress
 				value={remainingTime}
-				max={currentQuestion?.duration}
+				max={currentQuestion?.question.duration || 100}
 				className="rounded-none"
 			/>
 
 			{focusedPlayerIndex !== -1 ? (
 				<PlayerFullscreen
 					player={focusedPlayer}
-					question={currentQuestion}
+					question={currentQuestion?.question}
 					quiz={quiz}
 					rank={focusedPlayerIndex + 1}
 				/>
@@ -207,9 +219,11 @@ function RouteComponent(): JSX.Element {
 								return (
 									<PlayerListItem
 										player={player}
-										isActive={selectedPlayer?.user.userId === player.user.userId}
+										isActive={
+											selectedPlayer?.user.userId === player.user.userId
+										}
 										rank={i + 1}
-										question={currentQuestion}
+										question={currentQuestion?.question}
 										key={player.user.userId}
 									/>
 								);
@@ -222,8 +236,8 @@ function RouteComponent(): JSX.Element {
 					<ResizablePanel minSize={20}>
 						<ResizablePanelGroup direction="vertical" className="gap-3">
 							<ResizablePanel minSize={10}>
-								{currentQuestion ? (
-									<QuestionActive question={currentQuestion} />
+								{currentQuestion?.question ? (
+									<QuestionActive question={currentQuestion.question} />
 								) : null}
 							</ResizablePanel>
 
@@ -235,7 +249,7 @@ function RouteComponent(): JSX.Element {
 										<QuestionListItem
 											question={question}
 											isActive={
-												currentQuestion?.quizQuestionId ===
+												currentQuestion?.question.quizQuestionId ===
 												question.quizQuestionId
 											}
 											key={question.quizQuestionId}
