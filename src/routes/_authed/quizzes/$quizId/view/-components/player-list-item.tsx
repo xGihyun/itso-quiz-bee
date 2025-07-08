@@ -9,18 +9,18 @@ type Props = {
 	player: Player;
 	isActive: boolean;
 	rank: number;
-	question: QuizQuestion | null;
+	question?: QuizQuestion;
 };
 
 export function PlayerListItem(props: Props): JSX.Element {
 	const initials = props.player.user.name[0];
 	const playerAnswer = props.player.result.answers.find(
-		(answer) => answer.quizQuestionId === props.question?.quizQuestionId,
+		(answer) => answer.quizQuestionId === props.question?.quizQuestionId
 	);
 
 	return (
 		<Link
-			className="flex gap-4 rounded border px-4 py-3 bg-card"
+			className="flex gap-4 rounded border bg-card px-4 py-3"
 			to="."
 			search={(prev) => ({ ...prev, playerId: props.player.user.userId })}
 			key={props.player.user.userId}
@@ -48,8 +48,7 @@ export function PlayerListItem(props: Props): JSX.Element {
 										? "text-success"
 										: "text-destructive"
 									: "text-muted-foreground"
-							}
-                            `}
+							} `}
 						/>
 						<p
 							className={`font-metropolis-semibold ${

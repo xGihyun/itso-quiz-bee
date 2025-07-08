@@ -1,4 +1,4 @@
-import { CreateWrittenAnswerRequest } from "@/lib/quiz";
+import { CreateWrittenAnswerRequest } from "@/lib/quiz/player";
 import { WebSocketEvent, WebSocketRequest } from "@/lib/websocket/types";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 

@@ -1,6 +1,6 @@
-import { Player } from "@/lib/quiz/player/types";
 import { JSX } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Player } from "@/lib/quiz/player";
 
 type Props = {
 	players: Player[];
@@ -17,7 +17,7 @@ export function Leaderboard(props: Props): JSX.Element {
 						<PlayerLeaderboardItem
 							player={player}
 							rank={i + 1}
-							key={player.user_id}
+							key={player.user.userId}
 						/>
 					);
 				})}
@@ -32,7 +32,7 @@ type PlayerLeaderboardItemProps = {
 };
 
 function PlayerLeaderboardItem(props: PlayerLeaderboardItemProps): JSX.Element {
-	const initials = props.player.name[0];
+	const initials = props.player.user.name[0];
 
 	return (
 		<div className="flex gap-4 rounded border px-4 py-3 bg-card">
@@ -42,14 +42,14 @@ function PlayerLeaderboardItem(props: PlayerLeaderboardItemProps): JSX.Element {
 
 			<div className="flex w-full items-center gap-2">
 				<Avatar className="size-12">
-					<AvatarImage src={props.player.avatar_url} />
+					<AvatarImage src={props.player.user.avatarUrl} />
 					<AvatarFallback className="text-foreground">
 						{initials}
 					</AvatarFallback>
 				</Avatar>
 
 				<div className="w-full">
-					<p>{props.player.name}</p>
+					<p>{props.player.user.name}</p>
 				</div>
 			</div>
 

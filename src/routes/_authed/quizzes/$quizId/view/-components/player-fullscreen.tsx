@@ -8,13 +8,13 @@ import { IconPen } from "@/lib/icons";
 import {
 	ResizableHandle,
 	ResizablePanel,
-	ResizablePanelGroup,
+	ResizablePanelGroup
 } from "@/components/ui/resizable";
 import { Player } from "@/lib/quiz/player";
 
 type Props = {
 	player: Player;
-	question: QuizQuestion | null;
+	question?: QuizQuestion;
 	quiz: Quiz;
 	rank: number;
 };
@@ -22,7 +22,7 @@ type Props = {
 export function PlayerFullscreen(props: Props): JSX.Element {
 	const initials = props.player.user.name[0];
 	const playerAnswer = props.player.result.answers.find(
-		(answer) => answer.quizQuestionId === props.question?.quizQuestionId,
+		(answer) => answer.quizQuestionId === props.question?.quizQuestionId
 	);
 
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -32,39 +32,39 @@ export function PlayerFullscreen(props: Props): JSX.Element {
 			containerRef.current,
 			{
 				opacity: 0,
-				ease: "power3.out",
+				ease: "power3.out"
 			},
 			{
 				opacity: 1,
-				ease: "power3.out",
-			},
+				ease: "power3.out"
+			}
 		);
 	}, []);
 
 	return (
 		<div
-			className="inset-0 fixed w-full h-full bg-background z-[999] p-10 flex flex-col"
+			className="fixed inset-0 z-[999] flex h-full w-full flex-col bg-background p-10"
 			ref={containerRef}
 		>
 			<Link
-				className="text-muted-foreground absolute top-2 rounded right-2 p-2 hover:bg-muted"
+				className="absolute right-2 top-2 rounded p-2 text-muted-foreground hover:bg-muted"
 				to="."
 			>
 				<X className="size-4" />
 			</Link>
 
-			<ResizablePanelGroup direction="horizontal" className="gap-3 h-full">
+			<ResizablePanelGroup direction="horizontal" className="h-full gap-3">
 				<ResizablePanel minSize={20}>
-					<section className="content-center h-full space-y-10">
+					<section className="h-full content-center space-y-10">
 						<div className="space-y-2">
-							<Avatar className="size-40 mx-auto">
+							<Avatar className="mx-auto size-40">
 								<AvatarImage src={props.player.user.avatarUrl} />
-								<AvatarFallback className="text-foreground text-6xl">
+								<AvatarFallback className="text-6xl text-foreground">
 									{initials}
 								</AvatarFallback>
 							</Avatar>
 
-							<p className="font-metropolis-bold text-3xl text-center">
+							<p className="text-center font-metropolis-bold text-3xl">
 								{props.player.user.name}
 							</p>
 						</div>
@@ -72,7 +72,7 @@ export function PlayerFullscreen(props: Props): JSX.Element {
 						<div className="grid grid-cols-2">
 							<div className="flex flex-col items-center">
 								<span>Rank</span>
-								<span className="font-metropolis-bold text-3xl ">
+								<span className="font-metropolis-bold text-3xl">
 									#{props.rank}
 								</span>
 							</div>
@@ -124,7 +124,7 @@ type CurrentQuestionProps = {
 
 function CurrentQuestion(props: CurrentQuestionProps): JSX.Element {
 	return (
-		<div className="h-full content-center space-y-4 rounded border bg-card p-6 overflow-auto">
+		<div className="h-full content-center space-y-4 overflow-auto rounded border bg-card p-6">
 			<p className="text-center text-base">{props.question.content}</p>
 
 			<div className="flex items-center justify-center gap-1">
@@ -141,30 +141,30 @@ function CurrentQuestion(props: CurrentQuestionProps): JSX.Element {
 
 function AnswerHistory(props: Props): JSX.Element {
 	return (
-		<div className="h-full space-y-2  overflow-y-scroll">
+		<div className="h-full space-y-2 overflow-y-scroll">
 			{props.player.result.answers.map((answer) => {
 				const question = props.quiz.questions.find(
-					(question) => question.quizQuestionId === answer.quizQuestionId,
+					(question) => question.quizQuestionId === answer.quizQuestionId
 				);
 
 				return (
 					<div
-						className="flex gap-4 w-full rounded border px-4 py-3 text-start bg-card"
-						key={answer.playerAnwerId}
+						className="flex w-full gap-4 rounded border bg-card px-4 py-3 text-start"
+						key={answer.playerAnswerId}
 					>
 						<div className="content-center font-metropolis-bold text-lg">
 							{question?.orderNumber}
 						</div>
 
-						<div className="flex flex-col w-full">
-							<div className="flex justify-between w-full">
+						<div className="flex w-full flex-col">
+							<div className="flex w-full justify-between">
 								<p>{question?.content}</p>
 
 								<div className="space-x-1">
-									<span className="text-base font-metropolis-bold">
+									<span className="font-metropolis-bold text-base">
 										{question?.points}
 									</span>
-									<span className="text-sm font-metropolis-bold">pts.</span>
+									<span className="font-metropolis-bold text-sm">pts.</span>
 								</div>
 							</div>
 

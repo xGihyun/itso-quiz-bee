@@ -28,7 +28,7 @@ export function QuestionListItem(props: Props): JSX.Element {
 			onClick={() =>
 				updatePlayersQuestion(socket, {
 					...props.question,
-					quiz_id: params.quizId
+					quizId: params.quizId
 				})
 			}
 		>

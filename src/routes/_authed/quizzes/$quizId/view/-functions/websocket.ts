@@ -5,7 +5,7 @@ import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 
 export function updateQuizStatus(
 	socket: WebSocketHook,
-	data: QuizSetQuestionRequest
+	data: QuizUpdateStatusRequest
 ): void {
 	const message: WebSocketRequest<QuizUpdateStatusRequest> = {
 		event: WebSocketEvent.QuizUpdateStatus,

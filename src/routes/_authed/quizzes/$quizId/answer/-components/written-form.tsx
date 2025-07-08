@@ -8,7 +8,7 @@ import {
 	FormControl,
 	FormField,
 	FormItem,
-	FormMessage,
+	FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
@@ -20,10 +20,11 @@ import { submitAnswer, typeAnswer } from "../-functions/websocket";
 import { useParams } from "@tanstack/react-router";
 import { IconPen } from "@/lib/icons";
 import { Player } from "@/lib/quiz/player";
+import { QuizCurrentQuestion } from "@/lib/quiz/question";
 
 type Props = {
 	player: Player;
-	question: QuizQuestion;
+	question: QuizCurrentQuestion;
 };
 
 export function WrittenAnswerForm(props: Props): JSX.Element {
@@ -32,14 +33,15 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 		resolver: zodResolver(WrittenAnswerSchema),
 		defaultValues: {
 			content: "",
-			quiz_question_id: props.question.quizQuestionId,
-		},
+			quizQuestionId: props.question.question.quizQuestionId
+		}
 	});
 
 	const [currentAnswer, setCurrentAnswer] = useState(
 		props.player.result.answers.find(
-			(answer) => answer.quiz_question_id === props.question.quiz_question_id,
-		),
+			(answer) =>
+				answer.quizQuestionId === props.question.question.quizQuestionId
+		)
 	);
 
 	const socket = useWebSocket(WEBSOCKET_URL, {
@@ -52,27 +54,27 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 				case WebSocketEvent.QuizUpdateQuestion:
 					const data = result.data as QuizQuestion;
 					const newCurrentAnswer = props.player.result.answers.find(
-						(answer) => answer.quiz_question_id === data.quiz_question_id,
+						(answer) => answer.quizQuestionId === data.quizQuestionId
 					);
 					setCurrentAnswer(newCurrentAnswer);
 
 					form.reset({
 						content: "",
-						quiz_question_id: data.quizQuestionId,
+						quizQuestionId: data.quizQuestionId
 					});
 					break;
 
 				default:
 					console.warn("Unknown event type:", result.event);
 			}
-		},
+		}
 	});
 
 	async function onSubmit(value: WrittenAnswerInput): Promise<void> {
 		submitAnswer(socket, {
 			...value,
-			user_id: props.player.userId,
-			quiz_id: params.quizId,
+			userId: props.player.user.userId,
+			quizId: params.quizId
 		});
 	}
 
@@ -88,19 +90,20 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 								<div className="relative">
 									<Input
 										{...field}
-										className="h-auto rounded-b-none rounded-t border-b-2 border-b-secondary/50 bg-card read-only:bg-muted/50 focus:border-b-primary focus-visible:ring-transparent md:px-4 md:py-2 md:ps-11 md:text-lg peer"
+										className="peer h-auto rounded-b-none rounded-t border-b-2 border-b-secondary/50 bg-card read-only:bg-muted/50 focus:border-b-primary focus-visible:ring-transparent md:px-4 md:py-2 md:ps-11 md:text-lg"
 										placeholder="Type your answer"
 										onChange={(event) => {
 											typeAnswer(socket, {
-												quiz_question_id: props.question.quiz_question_id,
+												quizQuestionId:
+													props.question.question.quizQuestionId,
 												content: event.target.value,
-												user_id: props.player.user_id,
-												quiz_id: params.quizId,
+												userId: props.player.user.userId,
+												quizId: params.quizId
 											});
 											return field.onChange(event);
 										}}
 										value={currentAnswer?.content ?? field.value}
-                                        disabled={currentAnswer !== undefined}
+										disabled={currentAnswer !== undefined}
 									/>
 									<div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
 										<IconPen className="size-6" />
