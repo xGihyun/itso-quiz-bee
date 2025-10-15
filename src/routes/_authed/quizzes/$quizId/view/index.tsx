@@ -4,7 +4,7 @@ import { quizQueryOptions, QuizStatus } from "@/lib/quiz";
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { JSX, useRef, useState } from "react";
+import { JSX, useEffect, useRef, useState } from "react";
 import { ErrorAlert } from "@/components/error-alert";
 import { updatePlayer, updatePlayerAnswer } from "./-functions/helper";
 import { QuizViewSchema } from "./-schemas";
@@ -127,6 +127,7 @@ function RouteComponent(): JSX.Element {
 					{
 						const question = result.data as QuizCurrentQuestion;
 						setCurrentQuestion(question);
+						setRemainingTime(question.question.duration);
 						toast.info("Next question!");
 					}
 					break;
@@ -162,14 +163,15 @@ function RouteComponent(): JSX.Element {
 						const interval = result.data as Interval;
 						console.log(interval);
 
-						setRemainingTime(currentQuestion!.question.duration);
-
 						intervalRef.current = setInterval(() => {
 							const now = new Date();
 							const endAt = new Date(interval.endAt);
-							const remaining = endAt.getSeconds() - now.getSeconds();
-
+							const remaining = Math.max(
+								0,
+								Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
+							);
 							setRemainingTime(remaining);
+							console.log(remaining);
 						}, 1000);
 					}
 					break;
@@ -179,6 +181,7 @@ function RouteComponent(): JSX.Element {
 						if (intervalRef.current) {
 							clearInterval(intervalRef.current);
 						}
+						setRemainingTime(0);
 						toast.info("Time is up!");
 					}
 					break;
@@ -193,6 +196,15 @@ function RouteComponent(): JSX.Element {
 		(player) => player.user.userId === search.playerId
 	);
 	const focusedPlayer = players[focusedPlayerIndex];
+
+	useEffect(() => {
+		return () => {
+			if (intervalRef.current) {
+				clearInterval(intervalRef.current);
+				console.log("Unmounted interval");
+			}
+		};
+	}, []);
 
 	return (
 		<div className="relative h-full pb-16">
