@@ -63,7 +63,7 @@ export function SignUpForm(): JSX.Element {
 	return (
 		<Card className="mx-auto max-w-sm">
 			<CardHeader>
-				<CardTitle className="text-2xl">SignUp</CardTitle>
+				<CardTitle className="text-2xl">Sign Up</CardTitle>
 				<CardDescription>Enter your details below.</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
