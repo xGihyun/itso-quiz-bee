@@ -1,63 +1,137 @@
+import { Quiz, QuizBasicInfo, QuizStatus } from "@/lib/quiz";
 import {
 	Card,
+	CardContent,
 	CardDescription,
+	CardFooter,
 	CardHeader,
 	CardTitle
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "@tanstack/react-router";
 import { JSX } from "react";
-import { useAuth } from "@/auth";
-import { QuizBasicInfo } from "@/lib/quiz";
-import { UserRole } from "@/lib/user";
+import {
+	PencilIcon,
+	PlayIcon,
+	ClockIcon,
+	TrophyIcon,
+	PlusIcon
+} from "lucide-react";
 
 type Props = {
 	quizzes: QuizBasicInfo[];
+	isAdmin: boolean;
 };
 
 export function Quizzes(props: Props): JSX.Element {
-	const auth = useAuth();
-	const navigate = useNavigate({ from: "/" });
+	const navigate = useNavigate();
 
-	async function joinQuiz(quiz: QuizBasicInfo) {
-		if (auth.user === null) {
-			return;
+	const getStatusVariant = (status: string) => {
+		switch (status) {
+			case "started":
+				return "default";
+			case "closed":
+				return "secondary";
+			case "ended":
+				return "outline";
+			default:
+				return "secondary";
 		}
+	};
 
-		if (auth.user.role === UserRole.Admin) {
-			await navigate({
-				to: "/quizzes/$quizId/view",
-				params: { quizId: quiz.quizId }
-			});
-			return;
-		}
-
-		await navigate({
-			to: "/quizzes/$quizId/answer",
-			params: { quizId: quiz.quizId }
-		});
-	}
+	const totalPoints = (quiz: Quiz) => {
+		return quiz.questions.reduce((sum, q) => sum + q.points, 0);
+	};
 
 	return (
-		<div className="grid grid-cols-4 gap-4 py-4">
+		<section className="ga grid grid-cols-4 gap-2">
 			{props.quizzes.map((quiz) => (
-				<button
+				<Card
 					key={quiz.quizId}
-					onClick={async () => await joinQuiz(quiz)}
-					className="contents"
+					className="group flex flex-col transition-all hover:shadow-lg"
 				>
-					<Card
-						className={`relative cursor-pointer overflow-hidden transition-transform`}
-					>
-						<div className="absolute left-0 top-0 rounded-br-lg bg-green-400 px-2">
-							<span className="text-xs text-background">{quiz.status}</span>
+					<CardHeader>
+						<div className="flex items-start justify-between gap-2">
+							<CardTitle className="line-clamp-2 text-xl">
+								{quiz.name}
+							</CardTitle>
+							<Badge variant={getStatusVariant(quiz.status)}>
+								{quiz.status}
+							</Badge>
 						</div>
-						<CardHeader>
-							<CardTitle>{quiz.name}</CardTitle>
-							<CardDescription>{quiz.description}</CardDescription>
-						</CardHeader>
-					</Card>
-				</button>
+						{quiz.description && (
+							<CardDescription className="line-clamp-2">
+								{quiz.description}
+							</CardDescription>
+						)}
+					</CardHeader>
+
+					<CardFooter className="flex gap-2">
+						{props.isAdmin ? (
+							<>
+								<Button
+									variant="outline"
+									size="sm"
+									className="flex-1"
+									onClick={() =>
+										navigate({
+											to: "/quizzes/$quizId/edit",
+											params: { quizId: quiz.quizId }
+										})
+									}
+								>
+									<PencilIcon className="mr-2 h-4 w-4" />
+									Edit
+								</Button>
+								<Button
+									size="sm"
+									className="flex-1"
+									onClick={() =>
+										navigate({
+											to: "/quizzes/$quizId/view",
+											params: { quizId: quiz.quizId }
+										})
+									}
+								>
+									<PlayIcon className="mr-2 h-4 w-4" />
+									View
+								</Button>
+							</>
+						) : (
+							<Button
+								size="sm"
+								className="w-full"
+								onClick={() => {
+									if (quiz.status === QuizStatus.Open) {
+										navigate({
+											to: "/quizzes/$quizId",
+											params: { quizId: quiz.quizId }
+										});
+										return;
+									}
+
+									navigate({
+										to: "/quizzes/$quizId/answer",
+										params: { quizId: quiz.quizId }
+									});
+								}}
+								disabled={
+									!(
+										quiz.status === QuizStatus.Started ||
+										quiz.status === QuizStatus.Open
+									)
+								}
+							>
+								<PlayIcon className="mr-2 h-4 w-4" />
+								{quiz.status === "started" || quiz.status === "open"
+									? "Join Quiz"
+									: "Not Available"}
+							</Button>
+						)}
+					</CardFooter>
+				</Card>
 			))}
-		</div>
+		</section>
 	);
 }

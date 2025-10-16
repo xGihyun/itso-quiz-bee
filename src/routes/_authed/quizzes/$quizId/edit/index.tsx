@@ -12,13 +12,13 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/edit/")({
 	},
 	pendingComponent: () => <div>Loading...</div>,
 	loader: ({ context, params }) => {
-		return context.queryClient.ensureQueryData(quizQueryOptions(params.quizId));
+		return context.queryClient.ensureQueryData(quizQueryOptions(params.quizId, true));
 	}
 });
 
 function RouteComponent(): JSX.Element {
 	const params = Route.useParams();
-	const query = useSuspenseQuery(quizQueryOptions(params.quizId));
+	const query = useSuspenseQuery(quizQueryOptions(params.quizId, true));
 
 	return (
 		<div className="mx-auto max-w-screen-sm">

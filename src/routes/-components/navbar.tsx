@@ -14,6 +14,8 @@ export function Navbar(): JSX.Element {
 		await navigate({ to: "/sign-in" });
 	}
 
+    const initials = `${auth.user?.name[0]}`
+
 	return (
 		<nav className="fixed inset-0 z-[998] flex h-16 w-full items-center justify-between border-b border-b-border bg-card px-10">
 			<div className="h-full py-2">
@@ -30,8 +32,8 @@ export function Navbar(): JSX.Element {
 				<Button onClick={handleSignOut}>Logout</Button>
 
 				<Avatar>
-					<AvatarImage src="https://github.com/shadcn.png" />
-					<AvatarFallback>CN</AvatarFallback>
+					<AvatarImage />
+					<AvatarFallback>{initials}</AvatarFallback>
 				</Avatar>
 			</div>
 		</nav>

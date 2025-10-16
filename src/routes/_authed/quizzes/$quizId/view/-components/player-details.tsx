@@ -1,8 +1,8 @@
 import { JSX } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Player } from "@/lib/quiz/player/types";
 import { Quiz } from "@/lib/quiz";
 import { IconCheck, IconClose } from "@/lib/icons";
+import { Player } from "@/lib/quiz/player";
 
 type Props = {
 	player: Player;
@@ -16,14 +16,14 @@ export function PlayerDetails(props: Props): JSX.Element {
 		<div className="space-y-10">
 			<div className="flex gap-2">
 				<Avatar className="size-20">
-					<AvatarImage src={props.player.avatar_url} />
+					<AvatarImage src={props.player.user.avatarUrl} />
 					<AvatarFallback className="font-metropolis-medium text-4xl text-foreground">
-						{props.player.name[0]}
+						{props.player.user.name[0]}
 					</AvatarFallback>
 				</Avatar>
 
 				<div className="w-full">
-					<p>{props.player.name}</p>
+					<p>{props.player.user.name}</p>
 
 					<p>{props.player.result.currentAnswer || "No answer yet."}</p>
 				</div>
@@ -39,16 +39,16 @@ export function PlayerDetails(props: Props): JSX.Element {
 			<div className="space-y-2">
 				{props.player.result.answers.map((answer, i) => {
 					const question = props.quiz.questions.find(
-						(question) => question.quiz_question_id === answer.quiz_question_id
+						(question) => question.quizQuestionId === answer.quizQuestionId
 					);
 
 					return (
 						<div
 							className="flex flex-col gap-2 rounded border bg-card px-3 py-2"
-							key={answer.player_answer_id}
+							key={answer.playerAnswerId}
 						>
 							<div className="flex items-center gap-1">
-								{answer.is_correct ? (
+								{answer.isCorrect ? (
 									<IconCheck className="text-success" />
 								) : (
 									<IconClose className="text-destructive" />

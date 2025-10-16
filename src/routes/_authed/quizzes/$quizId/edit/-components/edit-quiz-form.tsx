@@ -4,6 +4,7 @@ import {
 	FormControl,
 	FormField,
 	FormItem,
+	FormLabel,
 	FormMessage
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -17,7 +18,7 @@ import { ApiResponse } from "@/lib/api/types";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { Quiz } from "@/lib/quiz";
 import { createDefaultQuestion, createDefaultQuiz } from "../-constants";
-import { JSX } from "react";
+import { JSX, useEffect } from "react";
 
 type Props = {
 	quiz?: Quiz;
@@ -26,9 +27,20 @@ type Props = {
 export function EditQuizForm(props: Props): JSX.Element {
 	const params = useParams({ from: "/_authed/quizzes/$quizId/edit/" });
 
+	// Normalize quiz data to ensure all questions have at least one answer
+	const normalizedQuiz = props.quiz ? {
+		...props.quiz,
+		questions: props.quiz.questions.map((question) => ({
+			...question,
+			answers: question.answers && question.answers.length > 0 
+				? question.answers 
+				: [createDefaultAnswer()]
+		}))
+	} : createDefaultQuiz(params.quizId);
+
 	const form = useForm<CreateQuizInput>({
 		resolver: zodResolver(CreateQuizSchema),
-		defaultValues: props.quiz || createDefaultQuiz(params.quizId)
+		defaultValues: normalizedQuiz
 	});
 
 	const formQuestions = useFieldArray({
@@ -36,10 +48,24 @@ export function EditQuizForm(props: Props): JSX.Element {
 		name: "questions"
 	});
 
-	async function onSubmit(value: CreateQuizInput): Promise<void> {
-		let toastId = toast.loading("Creating quiz...");
+	// Debug: Log validation errors
+	useEffect(() => {
+		if (Object.keys(form.formState.errors).length > 0) {
+			console.log("Form validation errors:", form.formState.errors);
+		}
+	}, [form.formState.errors]);
 
-		console.log(value);
+	// Debug: Log form values
+	useEffect(() => {
+		const subscription = form.watch((value) => {
+			console.log("Form values changed:", value);
+		});
+		return () => subscription.unsubscribe();
+	}, [form.watch]);
+
+	async function onSubmit(value: CreateQuizInput): Promise<void> {
+		console.log("onSubmit called with:", value);
+		let toastId = toast.loading("Creating quiz...");
 
 		const response = await fetch(
 			`${import.meta.env.VITE_BACKEND_URL}/api/quizzes`,
@@ -63,9 +89,30 @@ export function EditQuizForm(props: Props): JSX.Element {
 		toast.success(result.message, { id: toastId });
 	}
 
+	// Add invalid handler to see what's failing
+	function onInvalid(errors: any): void {
+		console.log("Form is invalid, errors:", errors);
+		toast.error("Please fix the form errors before submitting");
+	}
+
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+			<form 
+				onSubmit={form.handleSubmit(onSubmit, onInvalid)} 
+				className="space-y-4"
+			>
+				{/* Debug display */}
+				{Object.keys(form.formState.errors).length > 0 && (
+					<Card className="border-destructive">
+						<CardHeader className="text-destructive">
+							<p className="font-bold">Form Errors:</p>
+							<pre className="text-xs overflow-auto">
+								{JSON.stringify(form.formState.errors, null, 2)}
+							</pre>
+						</CardHeader>
+					</Card>
+				)}
+
 				<Card>
 					<CardHeader>
 						<FormField
@@ -73,9 +120,10 @@ export function EditQuizForm(props: Props): JSX.Element {
 							name="name"
 							render={({ field }) => (
 								<FormItem>
+									<FormLabel>Quiz Title</FormLabel>
 									<FormControl>
 										<Input
-											placeholder="Insert Title"
+											placeholder="Enter quiz title"
 											className="h-auto md:text-2xl"
 											{...field}
 										/>
@@ -92,8 +140,9 @@ export function EditQuizForm(props: Props): JSX.Element {
 							name="description"
 							render={({ field }) => (
 								<FormItem>
+									<FormLabel>Description</FormLabel>
 									<FormControl>
-										<Input placeholder="Insert description" {...field} />
+										<Input placeholder="Enter quiz description" {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -105,15 +154,16 @@ export function EditQuizForm(props: Props): JSX.Element {
 				{formQuestions.fields.map((field, i) => {
 					return (
 						<Card key={field.id}>
-							<CardHeader>
+							<CardHeader className="space-y-4">
 								<FormField
 									control={form.control}
 									name={`questions.${i}.content`}
 									render={({ field }) => (
 										<FormItem>
+											<FormLabel>Question {i + 1}</FormLabel>
 											<FormControl>
 												<AutosizeTextarea
-													placeholder="Insert question"
+													placeholder="Enter your question"
 													{...field}
 												/>
 											</FormControl>
@@ -122,31 +172,45 @@ export function EditQuizForm(props: Props): JSX.Element {
 									)}
 								/>
 
-								<FormField
-									control={form.control}
-									name={`questions.${i}.points`}
-									render={({ field }) => (
-										<FormItem className="col-span-1 w-full">
-											<FormControl>
-												<Input placeholder="Points" {...field} />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+								<div className="grid grid-cols-2 gap-4">
+									<FormField
+										control={form.control}
+										name={`questions.${i}.points`}
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Points</FormLabel>
+												<FormControl>
+													<Input 
+														placeholder="0" 
+														type="number"
+														{...field}
+														onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
 
-								<FormField
-									control={form.control}
-									name={`questions.${i}.duration`}
-									render={({ field }) => (
-										<FormItem className="col-span-1 w-full">
-											<FormControl>
-												<Input placeholder="Duration (seconds)" {...field} />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+									<FormField
+										control={form.control}
+										name={`questions.${i}.duration`}
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Duration (seconds)</FormLabel>
+												<FormControl>
+													<Input 
+														placeholder="30" 
+														type="number"
+														{...field}
+														onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
 							</CardHeader>
 
 							<CardContent>
@@ -155,8 +219,9 @@ export function EditQuizForm(props: Props): JSX.Element {
 									name={`questions.${i}.answers.0.content`}
 									render={({ field }) => (
 										<FormItem className="w-full">
+											<FormLabel>Correct Answer</FormLabel>
 											<FormControl>
-												<Input placeholder="Insert answer" {...field} />
+												<Input placeholder="Enter the correct answer" {...field} />
 											</FormControl>
 											<FormMessage />
 										</FormItem>

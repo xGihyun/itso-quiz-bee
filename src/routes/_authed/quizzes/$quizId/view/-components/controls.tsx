@@ -9,7 +9,11 @@ import {
 import useWebSocket from "react-use-websocket";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
 import { Quiz, QuizStatus } from "@/lib/quiz";
-import { showLeaderboard, updateQuizStatus } from "../-functions/websocket";
+import {
+	showLeaderboard,
+	updatePlayersQuestion,
+	updateQuizStatus
+} from "../-functions/websocket";
 import { Toggle } from "@/components/ui/toggle";
 import { useAuth } from "@/auth";
 
@@ -36,12 +40,20 @@ export function Controls(props: Props): JSX.Element {
 			<div className="mx-auto">
 				<Select
 					value={props.quiz.status}
-					onValueChange={(v) =>
+					onValueChange={(v) => {
+						const status = v as QuizStatus;
 						updateQuizStatus(socket, {
 							quizId: props.quiz.quizId,
-							status: v as QuizStatus
-						})
-					}
+							status: status
+						});
+
+						if (status === QuizStatus.Started) {
+							updatePlayersQuestion(socket, {
+								quizQuestionId: props.quiz.questions[0].quizQuestionId,
+								quizId: props.quiz.quizId
+							});
+						}
+					}}
 				>
 					<SelectTrigger className="w-40">
 						<SelectValue placeholder="Status" />
@@ -59,7 +71,7 @@ export function Controls(props: Props): JSX.Element {
 
 			<div>
 				<Toggle onPressedChange={(v) => showLeaderboard(socket, v)}>
-					Leaderbaord
+					Leaderboard
 				</Toggle>
 			</div>
 		</div>

@@ -8,6 +8,8 @@ import { PuffLoader } from "react-spinners";
 import { JSX } from "react/jsx-runtime";
 import { QuizStatus } from "@/lib/quiz";
 import { UMAK_FACTS } from "./-constants";
+import { JoinQuizRequest } from "@/lib/quiz/player";
+import { useAuth } from "@/auth";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/")({
 	component: RouteComponent
@@ -16,7 +18,13 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/")({
 // NOTE: This is the waiting room before the quiz starts
 function RouteComponent(): JSX.Element {
 	const navigate = Route.useNavigate();
-	const _ = useWebSocket(WEBSOCKET_URL, {
+	const params = Route.useParams();
+	const auth = useAuth();
+
+	const socket = useWebSocket(WEBSOCKET_URL, {
+		queryParams: {
+			token: auth.sessionToken
+		},
 		onMessage: async (event) => {
 			const result: WebSocketRequest = await JSON.parse(event.data);
 
@@ -100,6 +108,19 @@ function RouteComponent(): JSX.Element {
 				)
 				.play();
 		}, time * 1000);
+
+		if (!auth.user || !socket.sendJsonMessage) {
+			console.log("Skipping join - no user or socket not ready");
+			return;
+		}
+
+		const message: WebSocketRequest<JoinQuizRequest> = {
+			event: WebSocketEvent.PlayerJoin,
+			data: { quizId: params.quizId, userId: auth.user.userId }
+		};
+
+		console.log("Sending player join message");
+		socket.sendJsonMessage(message);
 
 		return () => clearInterval(funfactInterval);
 	}, []);

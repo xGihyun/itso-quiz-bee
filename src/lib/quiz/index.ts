@@ -57,15 +57,15 @@ export async function getQuizzes(): Promise<ApiResponse<QuizBasicInfo[]>> {
 	return result;
 }
 
-export const quizQueryOptions = (quizId: string) =>
+export const quizQueryOptions = (quizId: string, includeAnswers: boolean = false) =>
 	queryOptions({
 		queryKey: ["quiz", quizId],
-		queryFn: () => getQuiz(quizId)
+		queryFn: () => getQuiz(quizId, includeAnswers)
 	});
 
-export async function getQuiz(quizId: string): Promise<ApiResponse<Quiz>> {
+export async function getQuiz(quizId: string, includeAnswers: boolean): Promise<ApiResponse<Quiz>> {
 	const response = await fetch(
-		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}`,
+		`${import.meta.env.VITE_BACKEND_URL}/api/quizzes/${quizId}?includeAnswers=${includeAnswers}`,
 		{
 			method: "GET",
 			credentials: "include"

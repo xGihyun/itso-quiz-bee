@@ -71,6 +71,7 @@ function RouteComponent(): JSX.Element {
 
 	const intervalRef = useRef<NodeJS.Timeout>(null);
 
+	// Move the useWebSocket hook BEFORE the useEffect
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
 		share: true,
@@ -85,6 +86,7 @@ function RouteComponent(): JSX.Element {
 					{
 						const question = result.data as QuizCurrentQuestion;
 						setCurrentQuestion(question);
+						setRemainingTime(question.question.duration);
 						toast.info("Next question!");
 					}
 					break;
@@ -113,14 +115,15 @@ function RouteComponent(): JSX.Element {
 						const interval = result.data as Interval;
 						console.log(interval);
 
-						setRemainingTime(currentQuestion!.question.duration);
-
 						intervalRef.current = setInterval(() => {
 							const now = new Date();
 							const endAt = new Date(interval.endAt);
-							const remaining = endAt.getSeconds() - now.getSeconds();
-
+							const remaining = Math.max(
+								0,
+								Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
+							);
 							setRemainingTime(remaining);
+							console.log(remaining);
 						}, 1000);
 					}
 					break;
@@ -130,6 +133,7 @@ function RouteComponent(): JSX.Element {
 						if (intervalRef.current) {
 							clearInterval(intervalRef.current);
 						}
+						setRemainingTime(0);
 						toast.info("Time is up!");
 					}
 					break;
@@ -140,8 +144,12 @@ function RouteComponent(): JSX.Element {
 		}
 	});
 
+	// Now add proper dependencies to useEffect
 	useEffect(() => {
-		if (auth.user === null) {
+		console.log("useEffect running, auth.user:", auth.user);
+
+		if (!auth.user || !socket.sendJsonMessage) {
+			console.log("Skipping join - no user or socket not ready");
 			return;
 		}
 
@@ -149,8 +157,47 @@ function RouteComponent(): JSX.Element {
 			event: WebSocketEvent.PlayerJoin,
 			data: { quizId: params.quizId, userId: auth.user.userId }
 		};
+
+		console.log("Sending player join message");
 		socket.sendJsonMessage(message);
-	}, []);
+
+            console.log("Current Question:", currentQuestion)
+		if (currentQuestion?.interval) {
+			const now = new Date();
+			const endAt = new Date(currentQuestion.interval.endAt);
+			const remaining = Math.max(
+				0,
+				Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
+			);
+
+			setRemainingTime(remaining);
+
+			// Start interval if time remaining
+			if (remaining > 0) {
+				intervalRef.current = setInterval(() => {
+					const now = new Date();
+					const endAt = new Date(currentQuestion.interval!.endAt);
+					const remaining = Math.max(
+						0,
+						Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
+					);
+
+					setRemainingTime(remaining);
+
+					if (remaining <= 0 && intervalRef.current) {
+						clearInterval(intervalRef.current);
+					}
+				}, 1000);
+			}
+		}
+
+		return () => {
+			if (intervalRef.current) {
+				clearInterval(intervalRef.current);
+				console.log("Unmounted interval");
+			}
+		};
+	}, [auth.user, params.quizId, socket.sendJsonMessage]); // Add dependencies
 
 	return (
 		<div className="relative flex h-full flex-col">
@@ -175,6 +222,7 @@ function RouteComponent(): JSX.Element {
 							<WrittenAnswerForm
 								question={currentQuestion}
 								player={loaderData.player}
+								socket={socket}
 							/>
 						</div>
 					</div>

@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
-import { quizQueryOptions, QuizStatus } from "@/lib/quiz";
+import { quizQueryOptions, QuizQuestion, QuizStatus } from "@/lib/quiz";
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
@@ -31,6 +31,7 @@ import {
 } from "@/lib/quiz/question";
 import { useAuth } from "@/auth";
 import { Interval } from "@/lib/quiz/timer";
+import { updatePlayersQuestion } from "./-functions/websocket";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	component: RouteComponent,
@@ -42,7 +43,9 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	},
 	loader: async ({ context, params }) => {
 		const queries = await Promise.all([
-			context.queryClient.ensureQueryData(quizQueryOptions(params.quizId)),
+			context.queryClient.ensureQueryData(
+				quizQueryOptions(params.quizId, true)
+			),
 			context.queryClient.ensureQueryData(playersQueryOptions(params.quizId)),
 			context.queryClient.ensureQueryData(
 				quizCurrentQuestionQueryOptions(params.quizId)
@@ -67,19 +70,64 @@ function RouteComponent(): JSX.Element {
 	const loaderData = Route.useLoaderData();
 	const search = Route.useSearch();
 	const auth = useAuth();
+	const params = Route.useParams();
 
 	const [quiz, setQuiz] = useState(loaderData.quiz);
 	const [players, setPlayers] = useState(loaderData.players);
 	const [currentQuestion, setCurrentQuestion] =
-		useState<QuizCurrentQuestion | null>(loaderData.currentQuestion);
+		useState<QuizCurrentQuestion | null>({
+			...loaderData.currentQuestion,
+			question: loaderData.quiz.questions.find(
+				(v) =>
+					v.quizQuestionId ===
+					loaderData.currentQuestion.question.quizQuestionId
+			)!
+		});
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
 	const [remainingTime, setRemainingTime] = useState(0);
 
 	const selectedPlayer = players.find((p) => p.user.userId === search.playerId);
-
 	const intervalRef = useRef<NodeJS.Timeout>(null);
 
-	const _ = useWebSocket(WEBSOCKET_URL, {
+	// Initialize timer on mount if there's an active question with interval
+	useEffect(() => {
+		if (currentQuestion?.interval) {
+			const now = new Date();
+			const endAt = new Date(currentQuestion.interval.endAt);
+			const remaining = Math.max(
+				0,
+				Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
+			);
+
+			setRemainingTime(remaining);
+
+			// Start interval if time remaining
+			if (remaining > 0) {
+				intervalRef.current = setInterval(() => {
+					const now = new Date();
+					const endAt = new Date(currentQuestion.interval!.endAt);
+					const remaining = Math.max(
+						0,
+						Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
+					);
+
+					setRemainingTime(remaining);
+
+					if (remaining <= 0 && intervalRef.current) {
+						clearInterval(intervalRef.current);
+					}
+				}, 1000);
+			}
+		}
+
+		return () => {
+			if (intervalRef.current) {
+				clearInterval(intervalRef.current);
+			}
+		};
+	}, [currentQuestion?.question.quizQuestionId]);
+
+	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
 		share: true,
 		queryParams: {
@@ -87,17 +135,14 @@ function RouteComponent(): JSX.Element {
 		},
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
-
 			console.log(result);
 
 			switch (result.event) {
 				case WebSocketEvent.PlayerJoin:
 					{
 						const newPlayer = result.data as User;
-						console.log(newPlayer);
+						console.log("Joined:", newPlayer);
 
-						// TODO: Server should be responsible for having unique players
-						// Probably not needed for now
 						if (players.some((p) => p.user.userId === newPlayer.userId)) {
 							return;
 						}
@@ -126,7 +171,12 @@ function RouteComponent(): JSX.Element {
 				case WebSocketEvent.QuizUpdateQuestion:
 					{
 						const question = result.data as QuizCurrentQuestion;
-						setCurrentQuestion(question);
+						setCurrentQuestion({
+							...question,
+							question: loaderData.quiz.questions.find(
+								(v) => v.quizQuestionId === question.question.quizQuestionId
+							)!
+						});
 						setRemainingTime(question.question.duration);
 						toast.info("Next question!");
 					}
@@ -160,6 +210,7 @@ function RouteComponent(): JSX.Element {
 						if (intervalRef.current) {
 							clearInterval(intervalRef.current);
 						}
+
 						const interval = result.data as Interval;
 						console.log(interval);
 
@@ -170,8 +221,13 @@ function RouteComponent(): JSX.Element {
 								0,
 								Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
 							);
+
 							setRemainingTime(remaining);
 							console.log(remaining);
+
+							if (remaining <= 0 && intervalRef.current) {
+								clearInterval(intervalRef.current);
+							}
 						}, 1000);
 					}
 					break;
@@ -183,6 +239,10 @@ function RouteComponent(): JSX.Element {
 						}
 						setRemainingTime(0);
 						toast.info("Time is up!");
+
+						setPlayers((prev) =>
+							[...prev].sort((a, b) => b.result.score - a.result.score)
+						);
 					}
 					break;
 
@@ -197,14 +257,23 @@ function RouteComponent(): JSX.Element {
 	);
 	const focusedPlayer = players[focusedPlayerIndex];
 
-	useEffect(() => {
-		return () => {
-			if (intervalRef.current) {
-				clearInterval(intervalRef.current);
-				console.log("Unmounted interval");
-			}
-		};
-	}, []);
+	// Handler for question click
+	const handleQuestionClick = (question: QuizQuestion) => {
+		// Update local state immediately
+		if (currentQuestion?.question.quizQuestionId !== question.quizQuestionId) {
+			setCurrentQuestion({
+				question: question
+			});
+		}
+
+		// Only send WebSocket message if quiz is started (to trigger timer)
+		if (quiz.status === QuizStatus.Started) {
+			updatePlayersQuestion(socket, {
+				...question,
+				quizId: params.quizId
+			});
+		}
+	};
 
 	return (
 		<div className="relative h-full pb-16">
@@ -259,11 +328,13 @@ function RouteComponent(): JSX.Element {
 								<div className="h-full space-y-2 overflow-y-scroll">
 									{quiz.questions.map((question) => (
 										<QuestionListItem
+											quiz={quiz}
 											question={question}
 											isActive={
 												currentQuestion?.question.quizQuestionId ===
 												question.quizQuestionId
 											}
+											onQuestionClick={handleQuestionClick}
 											key={question.quizQuestionId}
 										/>
 									))}
