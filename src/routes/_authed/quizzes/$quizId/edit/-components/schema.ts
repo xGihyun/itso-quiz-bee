@@ -4,7 +4,7 @@ import { z } from "zod";
 export const CreateAnswerSchema = z.object({
 	quizAnswerId: z.string().min(1, { message: "Required" }),
 	content: z.string().min(1, { message: "Required" }),
-	isCorrect: z.boolean()
+	isCorrect: z.boolean({ message: "Required" }).default(true)
 });
 
 export type CreateAnswerInput = z.infer<typeof CreateAnswerSchema>;

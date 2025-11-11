@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { ApiResponse } from "@/lib/api/types";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { Quiz } from "@/lib/quiz";
-import { createDefaultQuestion, createDefaultQuiz } from "../-constants";
+import { createDefaultAnswer, createDefaultQuestion, createDefaultQuiz } from "../-constants";
 import { JSX, useEffect } from "react";
 
 type Props = {
