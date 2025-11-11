@@ -25,6 +25,7 @@ import {
 	playersQueryOptions
 } from "@/lib/quiz/player";
 import { Interval } from "@/lib/quiz/timer";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 	component: RouteComponent,
@@ -69,17 +70,22 @@ function RouteComponent(): JSX.Element {
 	const [remainingTime, setRemainingTime] = useState(0);
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
 
+	console.log("loaderData.currentQuestion", loaderData.currentQuestion);
+	console.log("currentQuestion state", currentQuestion);
+
 	const intervalRef = useRef<NodeJS.Timeout>(null);
 
 	// Move the useWebSocket hook BEFORE the useEffect
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
-		share: true,
+		// share: true,
 		queryParams: {
 			token: auth.sessionToken
 		},
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
+
+			console.log(result);
 
 			switch (result.event) {
 				case WebSocketEvent.QuizUpdateQuestion:
@@ -144,6 +150,8 @@ function RouteComponent(): JSX.Element {
 		}
 	});
 
+	const queryClient = useQueryClient();
+
 	// Now add proper dependencies to useEffect
 	useEffect(() => {
 		console.log("useEffect running, auth.user:", auth.user);
@@ -161,10 +169,14 @@ function RouteComponent(): JSX.Element {
 		console.log("Sending player join message");
 		socket.sendJsonMessage(message);
 
-            console.log("Current Question:", currentQuestion)
-		if (currentQuestion?.interval) {
+		queryClient.invalidateQueries(
+			quizCurrentQuestionQueryOptions(params.quizId)
+		);
+
+		console.log("Current Question:", loaderData.currentQuestion);
+		if (loaderData.currentQuestion.interval) {
 			const now = new Date();
-			const endAt = new Date(currentQuestion.interval.endAt);
+			const endAt = new Date(loaderData.currentQuestion.interval.endAt);
 			const remaining = Math.max(
 				0,
 				Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
@@ -176,17 +188,13 @@ function RouteComponent(): JSX.Element {
 			if (remaining > 0) {
 				intervalRef.current = setInterval(() => {
 					const now = new Date();
-					const endAt = new Date(currentQuestion.interval!.endAt);
+					const endAt = new Date(loaderData.currentQuestion.interval!.endAt);
 					const remaining = Math.max(
 						0,
 						Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
 					);
-
 					setRemainingTime(remaining);
-
-					if (remaining <= 0 && intervalRef.current) {
-						clearInterval(intervalRef.current);
-					}
+					console.log(remaining);
 				}, 1000);
 			}
 		}
@@ -197,7 +205,7 @@ function RouteComponent(): JSX.Element {
 				console.log("Unmounted interval");
 			}
 		};
-	}, [auth.user, params.quizId, socket.sendJsonMessage]); // Add dependencies
+	}, [auth.user, params.quizId, socket.readyState]); // Add dependencies
 
 	return (
 		<div className="relative flex h-full flex-col">
