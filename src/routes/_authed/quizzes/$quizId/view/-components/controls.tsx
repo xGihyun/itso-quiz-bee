@@ -69,11 +69,11 @@ export function Controls(props: Props): JSX.Element {
 				</Select>
 			</div>
 
-			<div>
-				<Toggle onPressedChange={(v) => showLeaderboard(socket, v)}>
-					Leaderboard
-				</Toggle>
-			</div>
+			{/* <div> */}
+			{/* 	<Toggle onPressedChange={(v) => showLeaderboard(socket, v)}> */}
+			{/* 		Leaderboard */}
+			{/* 	</Toggle> */}
+			{/* </div> */}
 		</div>
 	);
 }
