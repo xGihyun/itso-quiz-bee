@@ -27,4 +27,4 @@ export const WEBSOCKET_OPTIONS: Options = {
 	reconnectAttempts: 10
 };
 
-export const WEBSOCKET_URL = `ws://${import.meta.env.VITE_HOST}:${import.meta.env.VITE_PORT}/ws`;
+export const WEBSOCKET_URL = `ws://${import.meta.env.VITE_BACKEND_URL?.replace('http://', '')}/ws`;

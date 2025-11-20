@@ -1,15 +1,27 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "@tanstack/react-router";
 import { JSX } from "react";
 import { QuizQuestion } from "@/lib/quiz";
 import { IconPen } from "@/lib/icons";
-import { Player } from "@/lib/quiz/player";
+import {
+	FocusViolationReason,
+	Player,
+	PlayerFocusViolation
+} from "@/lib/quiz/player";
 
 type Props = {
 	player: Player;
 	isActive: boolean;
 	rank: number;
 	question?: QuizQuestion;
+	violation?: PlayerFocusViolation;
+};
+
+const violationLabel: Record<FocusViolationReason, string> = {
+	[FocusViolationReason.VisibilityChange]: "Tab switch detected",
+	[FocusViolationReason.WindowBlur]: "Window inactive",
+	[FocusViolationReason.RestrictedKey]: "Shortcut attempt"
 };
 
 export function PlayerListItem(props: Props): JSX.Element {
@@ -17,10 +29,13 @@ export function PlayerListItem(props: Props): JSX.Element {
 	const playerAnswer = props.player.result.answers.find(
 		(answer) => answer.quizQuestionId === props.question?.quizQuestionId
 	);
+	const violationText = props.violation
+		? violationLabel[props.violation.reason]
+		: null;
 
 	return (
 		<Link
-			className="flex gap-4 rounded border bg-card px-4 py-3"
+			className={`flex gap-4 rounded border bg-card px-4 py-3 ${props.violation ? "border-destructive/70" : ""}`}
 			to="."
 			search={(prev) => ({ ...prev, playerId: props.player.user.userId })}
 			key={props.player.user.userId}
@@ -63,11 +78,18 @@ export function PlayerListItem(props: Props): JSX.Element {
 				</div>
 			</div>
 
-			<div className="content-center space-x-0.5">
-				<span className="font-metropolis-bold text-lg">
-					{props.player.result.score}
-				</span>
-				<span className="font-metropolis-bold text-sm">pts.</span>
+			<div className="flex flex-col items-end justify-center gap-2">
+				{props.violation && violationText ? (
+					<Badge variant="destructive" className="whitespace-nowrap">
+						{violationText} · #{props.violation.attempt}
+					</Badge>
+				) : null}
+				<div className="content-center space-x-0.5">
+					<span className="font-metropolis-bold text-lg">
+						{props.player.result.score}
+					</span>
+					<span className="font-metropolis-bold text-sm">pts.</span>
+				</div>
 			</div>
 		</Link>
 	);

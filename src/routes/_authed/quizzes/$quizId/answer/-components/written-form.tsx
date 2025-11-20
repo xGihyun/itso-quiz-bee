@@ -11,24 +11,21 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { CheckIcon } from "lucide-react";
-import { QuizQuestion } from "@/lib/quiz";
 import { JSX, useState, useEffect } from "react";
 import { submitAnswer, typeAnswer } from "../-functions/websocket";
 import { useParams } from "@tanstack/react-router";
 import { IconPen } from "@/lib/icons";
-import { Player, PlayerAnswer } from "@/lib/quiz/player";
+import { Player } from "@/lib/quiz/player";
 import { QuizCurrentQuestion } from "@/lib/quiz/question";
 import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 import { toast } from "sonner";
-import useWebSocket from "react-use-websocket";
-import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { useAuth } from "@/auth";
-import { WebSocketEvent, WebSocketResponse } from "@/lib/websocket/types";
 
 type Props = {
 	player: Player;
 	question: QuizCurrentQuestion;
 	socket: WebSocketHook; // Add socket as a prop
+	isTimerDone: boolean;
+	isInteractionLocked: boolean;
 };
 
 export function WrittenAnswerForm(props: Props): JSX.Element {
@@ -40,9 +37,6 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 			quizQuestionId: props.question.question.quizQuestionId
 		}
 	});
-	const auth = useAuth();
-	const [isTimerDone, setIsTimerDone] = useState(false);
-
 	const [currentAnswer, setCurrentAnswer] = useState<
 		WrittenAnswerInput | undefined
 	>(
@@ -51,29 +45,6 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 				answer.quizQuestionId === props.question.question.quizQuestionId
 		)
 	);
-
-	const _ = useWebSocket(WEBSOCKET_URL, {
-		...WEBSOCKET_OPTIONS,
-		share: true,
-		queryParams: {
-			token: auth.sessionToken
-		},
-		onMessage: async (event) => {
-			const result: WebSocketResponse = await JSON.parse(event.data);
-
-			switch (result.event) {
-				case WebSocketEvent.TimerStart:
-					setIsTimerDone(false);
-					break;
-				case WebSocketEvent.TimerDone:
-					setIsTimerDone(true);
-					break;
-
-				default:
-					console.warn("Unknown event type:", result.event);
-			}
-		}
-	});
 
 	// Update the form when the question changes
 	useEffect(() => {
@@ -119,16 +90,22 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 										className="peer h-auto rounded-b-none rounded-t border-b-2 border-b-secondary/50 bg-card read-only:bg-muted/50 focus:border-b-primary focus-visible:ring-transparent md:px-4 md:py-2 md:ps-11 md:text-lg"
 										placeholder="Type your answer"
 										onChange={(event) => {
-											typeAnswer(props.socket, {
-												quizQuestionId: props.question.question.quizQuestionId,
-												content: event.target.value,
-												userId: props.player.user.userId,
-												quizId: params.quizId
-											});
+											if (!props.isInteractionLocked && !props.isTimerDone) {
+												typeAnswer(props.socket, {
+													quizQuestionId: props.question.question.quizQuestionId,
+													content: event.target.value,
+													userId: props.player.user.userId,
+													quizId: params.quizId
+												});
+											}
 											return field.onChange(event);
 										}}
 										value={currentAnswer?.content ?? field.value}
-										disabled={isTimerDone || currentAnswer !== undefined}
+										disabled={
+											props.isTimerDone ||
+											props.isInteractionLocked ||
+											currentAnswer !== undefined
+										}
 									/>
 									<div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
 										<IconPen className="size-6" />
@@ -141,7 +118,14 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 				/>
 
 				<div className="flex justify-end">
-					<Button type="submit" disabled={currentAnswer !== undefined}>
+					<Button
+						type="submit"
+						disabled={
+							currentAnswer !== undefined ||
+							props.isInteractionLocked ||
+							props.isTimerDone
+						}
+					>
 						<CheckIcon size={16} />
 						Submit
 					</Button>

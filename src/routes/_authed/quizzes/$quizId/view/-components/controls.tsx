@@ -47,7 +47,7 @@ export function Controls(props: Props): JSX.Element {
 							status: status
 						});
 
-						if (status === QuizStatus.Started) {
+						if (status === QuizStatus.Started && props.quiz.questions && props.quiz.questions.length > 0) {
 							updatePlayersQuestion(socket, {
 								quizQuestionId: props.quiz.questions[0].quizQuestionId,
 								quizId: props.quiz.quizId

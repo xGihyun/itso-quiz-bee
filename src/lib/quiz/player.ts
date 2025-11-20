@@ -2,6 +2,20 @@ import { queryOptions } from "@tanstack/react-query";
 import { ApiResponse } from "../api/types";
 import { User } from "../user";
 
+export enum FocusViolationReason {
+	VisibilityChange = "visibility-change",
+	WindowBlur = "window-blur",
+	RestrictedKey = "restricted-key"
+}
+
+export type PlayerFocusViolation = {
+	quizId: string;
+	userId: string;
+	reason: FocusViolationReason;
+	occurredAt: string;
+	attempt: number;
+};
+
 export type Player = {
     user: User;
 	result: PlayerResult;

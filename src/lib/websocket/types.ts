@@ -11,6 +11,7 @@ export enum WebSocketEvent {
 	PlayerLeave = "quiz:player-leave",
 	PlayerSubmitAnswer = "quiz:player-submit-answer",
 	PlayerTypeAnswer = "quiz:player-type-answer",
+	PlayerFocusWarning = "quiz:player-focus-warning",
 
 	Heartbeat = "heartbeat",
 }

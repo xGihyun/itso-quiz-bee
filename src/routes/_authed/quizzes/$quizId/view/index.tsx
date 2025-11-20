@@ -22,7 +22,9 @@ import { Progress } from "@/components/ui/progress";
 import { User, UserRole } from "@/lib/user";
 import {
 	CreateWrittenAnswerRequest,
+	FocusViolationReason,
 	Player,
+	PlayerFocusViolation,
 	playersQueryOptions
 } from "@/lib/quiz/player";
 import {
@@ -66,6 +68,24 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/view/")({
 	pendingComponent: () => <div>Loading...</div>
 });
 
+const focusViolationCopy: Record<
+	FocusViolationReason,
+	{ title: string; description: string }
+> = {
+	[FocusViolationReason.VisibilityChange]: {
+		title: "switched tabs",
+		description: "The player left the quiz tab"
+	},
+	[FocusViolationReason.WindowBlur]: {
+		title: "window inactive",
+		description: "The player clicked outside the quiz window"
+	},
+	[FocusViolationReason.RestrictedKey]: {
+		title: "shortcut attempt",
+		description: "Blocked Alt/Tab style key combination"
+	}
+};
+
 function RouteComponent(): JSX.Element {
 	const loaderData = Route.useLoaderData();
 	const search = Route.useSearch();
@@ -75,19 +95,31 @@ function RouteComponent(): JSX.Element {
 	const [quiz, setQuiz] = useState(loaderData.quiz);
 	const [players, setPlayers] = useState(loaderData.players);
 	const [currentQuestion, setCurrentQuestion] =
-		useState<QuizCurrentQuestion | null>({
-			...loaderData.currentQuestion,
-			question: loaderData.quiz.questions.find(
-				(v) =>
-					v.quizQuestionId ===
-					loaderData.currentQuestion.question.quizQuestionId
-			)!
-		});
+		useState<QuizCurrentQuestion | null>(
+			loaderData.currentQuestion?.question
+				? {
+						...loaderData.currentQuestion,
+						question: loaderData.quiz.questions.find(
+							(v) =>
+								v.quizQuestionId ===
+								loaderData.currentQuestion!.question.quizQuestionId
+						)!
+					}
+				: null
+		);
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
 	const [remainingTime, setRemainingTime] = useState(0);
+ 	const [focusViolations, setFocusViolations] = useState<
+		Record<string, PlayerFocusViolation>
+	>({});
 
 	const selectedPlayer = players.find((p) => p.user.userId === search.playerId);
 	const intervalRef = useRef<NodeJS.Timeout>(null);
+	const playersRef = useRef(players);
+
+	useEffect(() => {
+		playersRef.current = players;
+	}, [players]);
 
 	// Initialize timer on mount if there's an active question with interval
 	useEffect(() => {
@@ -125,7 +157,7 @@ function RouteComponent(): JSX.Element {
 				clearInterval(intervalRef.current);
 			}
 		};
-	}, [currentQuestion?.question.quizQuestionId]);
+	}, [currentQuestion?.question?.quizQuestionId]);
 
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
@@ -143,20 +175,22 @@ function RouteComponent(): JSX.Element {
 						const newPlayer = result.data as User;
 						console.log("Joined:", newPlayer);
 
-						if (players.some((p) => p.user.userId === newPlayer.userId)) {
-							return;
-						}
-
-						setPlayers([
-							...players,
-							{
-								user: newPlayer,
-								result: {
-									answers: [],
-									score: 0
-								}
+						setPlayers((prev) => {
+							if (prev.some((p) => p.user.userId === newPlayer.userId)) {
+								return prev;
 							}
-						]);
+
+							return [
+								...prev,
+								{
+									user: newPlayer,
+									result: {
+										answers: [],
+										score: 0
+									}
+								}
+							];
+						});
 					}
 					break;
 
@@ -192,16 +226,33 @@ function RouteComponent(): JSX.Element {
 				case WebSocketEvent.PlayerTypeAnswer:
 					{
 						const currentAnswer = result.data as CreateWrittenAnswerRequest;
-						const results = updatePlayerAnswer(players, currentAnswer);
-						setPlayers(results);
+						setPlayers((prev) => updatePlayerAnswer(prev, currentAnswer));
 					}
 					break;
 
 				case WebSocketEvent.PlayerSubmitAnswer:
 					{
 						const newPlayer = result.data as Player;
-						const results = updatePlayer(players, newPlayer);
-						setPlayers(results);
+						setPlayers((prev) => updatePlayer(prev, newPlayer));
+					}
+					break;
+
+				case WebSocketEvent.PlayerFocusWarning:
+					{
+						const violation = result.data as PlayerFocusViolation;
+						setFocusViolations((prev) => ({
+							...prev,
+							[violation.userId]: violation
+						}));
+
+						const violator =
+							playersRef.current.find(
+								(player) => player.user.userId === violation.userId
+							)?.user.name ?? "A player";
+						const copy = focusViolationCopy[violation.reason];
+						toast.error(`${violator} ${copy.title}`, {
+							description: `${copy.description} · attempt #${violation.attempt}`
+						});
 					}
 					break;
 
@@ -269,7 +320,7 @@ function RouteComponent(): JSX.Element {
 		// Only send WebSocket message if quiz is started (to trigger timer)
 		if (quiz.status === QuizStatus.Started) {
 			updatePlayersQuestion(socket, {
-				...question,
+				quizQuestionId: question.quizQuestionId,
 				quizId: params.quizId
 			});
 		}
@@ -305,6 +356,7 @@ function RouteComponent(): JSX.Element {
 										}
 										rank={i + 1}
 										question={currentQuestion?.question}
+										violation={focusViolations[player.user.userId]}
 										key={player.user.userId}
 									/>
 								);
@@ -331,7 +383,7 @@ function RouteComponent(): JSX.Element {
 											quiz={quiz}
 											question={question}
 											isActive={
-												currentQuestion?.question.quizQuestionId ===
+												currentQuestion?.question?.quizQuestionId ===
 												question.quizQuestionId
 											}
 											onQuestionClick={handleQuestionClick}

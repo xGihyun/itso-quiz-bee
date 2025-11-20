@@ -7,8 +7,9 @@ import {
 import useWebSocket from "react-use-websocket";
 import { toast } from "sonner";
 import { WEBSOCKET_OPTIONS, WEBSOCKET_URL } from "@/lib/websocket/constants";
-import { QuizQuestion } from "@/lib/quiz";
-import { JSX, useEffect, useRef, useState } from "react";
+import { QuizStatus, quizQueryOptions } from "@/lib/quiz";
+import { Button } from "@/components/ui/button";
+import { JSX, useCallback, useEffect, useRef, useState } from "react";
 import { ErrorAlert } from "@/components/error-alert";
 import { WrittenAnswerForm } from "./-components/written-form";
 import { Progress } from "@/components/ui/progress";
@@ -19,8 +20,9 @@ import {
 	quizCurrentQuestionQueryOptions
 } from "@/lib/quiz/question";
 import {
-	CreateWrittenAnswerRequest,
+	FocusViolationReason,
 	JoinQuizRequest,
+	PlayerFocusViolation,
 	playerQueryOptions,
 	playersQueryOptions
 } from "@/lib/quiz/player";
@@ -31,6 +33,7 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 	component: RouteComponent,
 	loader: async ({ context, params }) => {
 		const queries = await Promise.all([
+			context.queryClient.ensureQueryData(quizQueryOptions(params.quizId)),
 			context.queryClient.ensureQueryData(
 				quizCurrentQuestionQueryOptions(params.quizId)
 			),
@@ -40,9 +43,10 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 			context.queryClient.ensureQueryData(playersQueryOptions(params.quizId))
 		]);
 
-		const [currentQuestionQuery, playerQuery, playersQuery] = queries;
+		const [quizQuery, currentQuestionQuery, playerQuery, playersQuery] = queries;
 
 		return {
+			quiz: quizQuery.data,
 			currentQuestion: currentQuestionQuery.data,
 			user: context.session.user,
 			player: playerQuery.data,
@@ -59,153 +63,294 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 // - Persist submitted answer
 // - Prevent answer resubmission
 
+const VIOLATION_DUPLICATE_WINDOW_MS = 400;
+
+const focusReasonCopy: Record<
+	FocusViolationReason,
+	{ title: string; description: string }
+> = {
+	[FocusViolationReason.VisibilityChange]: {
+		title: "Stay in this tab",
+		description:
+			"Switching to another tab or window pauses your quiz attempt."
+	},
+	[FocusViolationReason.WindowBlur]: {
+		title: "Quiz window inactive",
+		description:
+			"Click directly on the quiz window to keep answering."
+	},
+	[FocusViolationReason.RestrictedKey]: {
+		title: "Shortcuts disabled",
+		description:
+			"System shortcuts like Alt+Tab are blocked while the quiz is running."
+	}
+};
+
+const computeRemainingSeconds = (interval: Interval): number => {
+	const endAt = new Date(interval.endAt).getTime();
+	return Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+};
+
 function RouteComponent(): JSX.Element {
 	const loaderData = Route.useLoaderData();
 	const params = Route.useParams();
 	const auth = useAuth();
+	const queryClient = useQueryClient();
 
-	const [currentQuestion, setCurrentQuestion] = useState(
-		loaderData.currentQuestion
+	const initialQuestion = loaderData.currentQuestion ?? null;
+	const initialInterval = initialQuestion?.interval ?? null;
+	const initialDuration = initialQuestion?.question.duration ?? 0;
+	const initialRemainingTime = initialInterval
+		? computeRemainingSeconds(initialInterval)
+		: initialDuration;
+
+	const [currentQuestion, setCurrentQuestion] = useState<
+		QuizCurrentQuestion | null
+	>(initialQuestion);
+	const [remainingTime, setRemainingTime] = useState(initialRemainingTime);
+	const [timerInterval, setTimerInterval] = useState<Interval | null>(
+		initialInterval
 	);
-	const [remainingTime, setRemainingTime] = useState(0);
+	const [timerDuration, setTimerDuration] = useState(initialDuration);
+	const [isTimerExpired, setIsTimerExpired] = useState(
+		initialDuration > 0 && initialRemainingTime <= 0
+	);
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
+	const [quizStatus, setQuizStatus] = useState<QuizStatus>(
+		loaderData.quiz.status
+	);
+	const [isFocusLocked, setIsFocusLocked] = useState(false);
+	const [focusReason, setFocusReason] = useState<FocusViolationReason | null>(
+		null
+	);
+	const [focusViolationCount, setFocusViolationCount] = useState(0);
 
-	console.log("loaderData.currentQuestion", loaderData.currentQuestion);
-	console.log("currentQuestion state", currentQuestion);
+	const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const lastViolationAtRef = useRef(0);
+	const focusViolationCountRef = useRef(0);
+	const hasJoinedRef = useRef(false);
 
-	const intervalRef = useRef<NodeJS.Timeout>(null);
-
-	// Move the useWebSocket hook BEFORE the useEffect
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
-		// share: true,
 		queryParams: {
 			token: auth.sessionToken
 		},
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
 
-			console.log(result);
-
 			switch (result.event) {
-				case WebSocketEvent.QuizUpdateQuestion:
-					{
-						const question = result.data as QuizCurrentQuestion;
-						setCurrentQuestion(question);
-						setRemainingTime(question.question.duration);
-						toast.info("Next question!");
-					}
+				case WebSocketEvent.QuizUpdateStatus: {
+					const status = result.data as QuizStatus;
+					setQuizStatus(status);
+					toast.info(`Quiz is ${status}.`);
 					break;
-
-				case WebSocketEvent.QuizShowLeaderboard:
-					{
-						const isShown = result.data as boolean;
-						setIsLeaderboardShown(isShown);
-					}
+				}
+				case WebSocketEvent.QuizUpdateQuestion: {
+					const question = result.data as QuizCurrentQuestion;
+					setCurrentQuestion(question);
+					setTimerDuration(question.question.duration);
+					setRemainingTime(question.question.duration);
+					setTimerInterval(null);
+					setIsTimerExpired(false);
+					setIsLeaderboardShown(false);
+					toast.info("Next question!");
 					break;
-
-				case WebSocketEvent.PlayerSubmitAnswer:
-					{
-						// WARN: Players might see other players' answers
-						const currentAnswer = result.data as CreateWrittenAnswerRequest;
-						console.log(currentAnswer);
-						toast.info("Submitted answer!");
-					}
+				}
+				case WebSocketEvent.QuizShowLeaderboard: {
+					const isShown = result.data as boolean;
+					setIsLeaderboardShown(isShown);
 					break;
-
-				case WebSocketEvent.TimerStart:
-					{
-						if (intervalRef.current) {
-							clearInterval(intervalRef.current);
-						}
-						const interval = result.data as Interval;
-						console.log(interval);
-
-						intervalRef.current = setInterval(() => {
-							const now = new Date();
-							const endAt = new Date(interval.endAt);
-							const remaining = Math.max(
-								0,
-								Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
-							);
-							setRemainingTime(remaining);
-							console.log(remaining);
-						}, 1000);
-					}
+				}
+				case WebSocketEvent.PlayerSubmitAnswer: {
+					toast.info("Submitted answer!");
 					break;
-
-				case WebSocketEvent.TimerDone:
-					{
-						if (intervalRef.current) {
-							clearInterval(intervalRef.current);
-						}
-						setRemainingTime(0);
-						toast.info("Time is up!");
-					}
+				}
+				case WebSocketEvent.TimerStart: {
+					const interval = result.data as Interval;
+					setTimerInterval(interval);
+					setRemainingTime(computeRemainingSeconds(interval));
+					setIsTimerExpired(false);
 					break;
-
+				}
+				case WebSocketEvent.TimerDone: {
+					setTimerInterval(null);
+					setIsTimerExpired(true);
+					setRemainingTime(0);
+					toast.info("Time is up!");
+					break;
+				}
 				default:
 					console.warn("Unknown event type:", result.event);
 			}
 		}
 	});
 
-	const queryClient = useQueryClient();
+	const startCountdown = useCallback((interval: Interval | null) => {
+		if (intervalRef.current) {
+			clearInterval(intervalRef.current);
+			intervalRef.current = null;
+		}
 
-	// Now add proper dependencies to useEffect
-	useEffect(() => {
-		console.log("useEffect running, auth.user:", auth.user);
-
-		if (!auth.user || !socket.sendJsonMessage) {
-			console.log("Skipping join - no user or socket not ready");
+		if (!interval) {
 			return;
 		}
+
+		setIsTimerExpired(false);
+
+		const tick = (): void => {
+			const next = computeRemainingSeconds(interval);
+			setRemainingTime(next);
+
+			if (next <= 0 && intervalRef.current) {
+				clearInterval(intervalRef.current);
+				intervalRef.current = null;
+				setIsTimerExpired(true);
+			}
+		};
+
+		tick();
+		intervalRef.current = window.setInterval(tick, 1000);
+	}, []);
+
+	useEffect(() => {
+		startCountdown(timerInterval);
+	}, [startCountdown, timerInterval]);
+
+	useEffect(() => {
+		return () => {
+			if (intervalRef.current) {
+				clearInterval(intervalRef.current);
+				intervalRef.current = null;
+			}
+		};
+	}, []);
+
+	useEffect(() => {
+		if (!auth.user || !socket.sendJsonMessage || hasJoinedRef.current) {
+			return;
+		}
+
+		hasJoinedRef.current = true;
 
 		const message: WebSocketRequest<JoinQuizRequest> = {
 			event: WebSocketEvent.PlayerJoin,
 			data: { quizId: params.quizId, userId: auth.user.userId }
 		};
 
-		console.log("Sending player join message");
 		socket.sendJsonMessage(message);
 
-		queryClient.invalidateQueries(
-			quizCurrentQuestionQueryOptions(params.quizId)
-		);
+		queryClient.invalidateQueries({
+			queryKey: quizCurrentQuestionQueryOptions(params.quizId).queryKey
+		});
+	}, [auth.user, params.quizId, queryClient, socket.sendJsonMessage]);
 
-		console.log("Current Question:", loaderData.currentQuestion);
-		if (loaderData.currentQuestion.interval) {
-			const now = new Date();
-			const endAt = new Date(loaderData.currentQuestion.interval.endAt);
-			const remaining = Math.max(
-				0,
-				Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
-			);
-
-			setRemainingTime(remaining);
-
-			// Start interval if time remaining
-			if (remaining > 0) {
-				intervalRef.current = setInterval(() => {
-					const now = new Date();
-					const endAt = new Date(loaderData.currentQuestion.interval!.endAt);
-					const remaining = Math.max(
-						0,
-						Math.floor((endAt.getTime() - now.getTime()) / 1000) + 1
-					);
-					setRemainingTime(remaining);
-					console.log(remaining);
-				}, 1000);
+	const reportFocusViolation = useCallback(
+		(reason: FocusViolationReason) => {
+			if (!auth.user || !socket.sendJsonMessage) {
+				return;
 			}
+
+			const now = Date.now();
+			if (now - lastViolationAtRef.current < VIOLATION_DUPLICATE_WINDOW_MS) {
+				return;
+			}
+
+			lastViolationAtRef.current = now;
+			focusViolationCountRef.current += 1;
+			const attempt = focusViolationCountRef.current;
+
+			setFocusViolationCount(attempt);
+			setFocusReason(reason);
+			setIsFocusLocked(true);
+
+			const payload: PlayerFocusViolation = {
+				quizId: params.quizId,
+				userId: auth.user.userId,
+				reason,
+				occurredAt: new Date().toISOString(),
+				attempt
+			};
+
+			const message: WebSocketRequest<PlayerFocusViolation> = {
+				event: WebSocketEvent.PlayerFocusWarning,
+				data: payload
+			};
+
+			socket.sendJsonMessage(message);
+
+			const copy = focusReasonCopy[reason];
+			toast.error(copy.title, { description: copy.description });
+		},
+		[auth.user, params.quizId, socket.sendJsonMessage]
+	);
+
+	useEffect(() => {
+		if (!auth.user) {
+			return;
 		}
 
-		return () => {
-			if (intervalRef.current) {
-				clearInterval(intervalRef.current);
-				console.log("Unmounted interval");
+		const handleVisibilityChange = (): void => {
+			if (document.hidden) {
+				reportFocusViolation(FocusViolationReason.VisibilityChange);
 			}
 		};
-	}, [auth.user, params.quizId, socket.readyState]); // Add dependencies
+
+		const handleBlur = (): void => {
+			if (document.hidden) {
+				return;
+			}
+
+			reportFocusViolation(FocusViolationReason.WindowBlur);
+		};
+
+		const handleKeydown = (event: KeyboardEvent): void => {
+			if (event.altKey && (event.key === "Tab" || event.key === "F4")) {
+				event.preventDefault();
+				reportFocusViolation(FocusViolationReason.RestrictedKey);
+			}
+		};
+
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+		window.addEventListener("blur", handleBlur);
+		window.addEventListener("keydown", handleKeydown);
+
+		return () => {
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+			window.removeEventListener("blur", handleBlur);
+			window.removeEventListener("keydown", handleKeydown);
+		};
+	}, [auth.user, reportFocusViolation]);
+
+	const statusLockCopy = (() => {
+		switch (quizStatus) {
+			case QuizStatus.Open:
+				return {
+					title: "Waiting for the host",
+					description: "Stay on this tab until the quiz officially starts."
+				};
+			case QuizStatus.Paused:
+				return {
+					title: "Quiz paused",
+					description: "Answering is temporarily disabled by the admin."
+				};
+			case QuizStatus.Closed:
+				return {
+					title: "Quiz finished",
+					description: "Thanks for playing! You can wait for the final results."
+				};
+			default:
+				return null;
+		}
+	})();
+
+	const isStatusLocked = statusLockCopy !== null && quizStatus !== QuizStatus.Started;
+	const showStatusOverlay = isStatusLocked;
+	const isInteractionLocked = isFocusLocked || isStatusLocked;
+
+	const handleFocusResume = (): void => {
+		setIsFocusLocked(false);
+		setFocusReason(null);
+	};
 
 	return (
 		<div className="relative flex h-full flex-col">
@@ -215,13 +360,13 @@ function RouteComponent(): JSX.Element {
 				<div>
 					<Progress
 						value={remainingTime}
-						max={currentQuestion?.question.duration || 100}
+						max={Math.max(1, timerDuration || 1)}
 						className="rounded-none"
 					/>
 
 					<div className="flex h-full items-center bg-card px-20 py-10">
 						<p className="mx-auto mb-5 max-w-5xl text-center font-metropolis-bold text-3xl">
-							{currentQuestion?.question.content}
+							{currentQuestion.question.content}
 						</p>
 					</div>
 
@@ -231,9 +376,39 @@ function RouteComponent(): JSX.Element {
 								question={currentQuestion}
 								player={loaderData.player}
 								socket={socket}
+								isTimerDone={isTimerExpired}
+								isInteractionLocked={isInteractionLocked}
 							/>
 						</div>
 					</div>
+				</div>
+			) : null}
+
+			{showStatusOverlay && statusLockCopy ? (
+				<div className="absolute inset-0 z-[550] flex flex-col items-center justify-center bg-background/95 px-6 text-center">
+					<p className="text-3xl font-metropolis-bold">
+						{statusLockCopy.title}
+					</p>
+					<p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+						{statusLockCopy.description}
+					</p>
+				</div>
+			) : null}
+
+			{isFocusLocked && focusReason ? (
+				<div className="absolute inset-0 z-[600] flex flex-col items-center justify-center bg-background/95 px-6 text-center">
+					<p className="text-3xl font-metropolis-bold">
+						{focusReasonCopy[focusReason].title}
+					</p>
+					<p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+						{focusReasonCopy[focusReason].description}
+					</p>
+					<p className="mt-6 text-sm text-muted-foreground">
+						Attempt #{focusViolationCount}
+					</p>
+					<Button className="mt-8" onClick={handleFocusResume}>
+						I'm ready to continue
+					</Button>
 				</div>
 			) : null}
 		</div>
