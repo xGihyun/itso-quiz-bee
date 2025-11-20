@@ -4,5 +4,5 @@ export const UMAK_FACTS = [
 	"UMak is the only public university in Metro Manila.",
 	"UMak offers a wide range of undergraduate and graduate programs.",
 	"The College of Computing and Information Sciences (CCIS) is one of the colleges at UMak.",
-	"This system was custom-developed for this competition using Astro, React, Tailwind, and Golang."
+	"This system was custom-developed for this competition using React and Golang."
 ];

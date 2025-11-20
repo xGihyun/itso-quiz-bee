@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { PuffLoader } from "react-spinners";
 
-export const Route = createFileRoute("/_authed/quizzes/$quizId/")({
+export const Route = createFileRoute("/quizzes/$quizId/")({
 	component: RouteComponent,
 });
 

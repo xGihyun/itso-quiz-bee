@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Build the application with environment variables
-ARG VITE_BACKEND_URL=http://localhost:3002
+ARG VITE_BACKEND_URL=http://0.0.0.0:3002
 ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 RUN npm run build
 

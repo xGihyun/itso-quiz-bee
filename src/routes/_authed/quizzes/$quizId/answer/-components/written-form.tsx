@@ -53,6 +53,11 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 				answer.quizQuestionId === props.question.question.quizQuestionId
 		);
 
+		console.log("Current", currentAnswer);
+		console.log("New current", newCurrentAnswer);
+		console.log("Is timer done", props.isTimerDone);
+		console.log("Is interaction locked", props.isInteractionLocked);
+
 		// if (!newCurrentAnswer) return;
 
 		setCurrentAnswer(newCurrentAnswer);
@@ -62,6 +67,10 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 			quizQuestionId: props.question.question.quizQuestionId
 		});
 	}, [props.question.question.quizQuestionId, props.player.result.answers]);
+
+	useEffect(() => {
+		console.log("is timer done debug:", props.isTimerDone);
+	}, [props.isTimerDone]);
 
 	async function onSubmit(value: WrittenAnswerInput): Promise<void> {
 		submitAnswer(props.socket, {
@@ -92,7 +101,8 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 										onChange={(event) => {
 											if (!props.isInteractionLocked && !props.isTimerDone) {
 												typeAnswer(props.socket, {
-													quizQuestionId: props.question.question.quizQuestionId,
+													quizQuestionId:
+														props.question.question.quizQuestionId,
 													content: event.target.value,
 													userId: props.player.user.userId,
 													quizId: params.quizId

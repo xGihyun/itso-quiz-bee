@@ -27,7 +27,8 @@ import {
 	playersQueryOptions
 } from "@/lib/quiz/player";
 import { Interval } from "@/lib/quiz/timer";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Wait } from "@/routes/_authed/-components/wait";
 
 export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 	component: RouteComponent,
@@ -43,7 +44,8 @@ export const Route = createFileRoute("/_authed/quizzes/$quizId/answer/")({
 			context.queryClient.ensureQueryData(playersQueryOptions(params.quizId))
 		]);
 
-		const [quizQuery, currentQuestionQuery, playerQuery, playersQuery] = queries;
+		const [quizQuery, currentQuestionQuery, playerQuery, playersQuery] =
+			queries;
 
 		return {
 			quiz: quizQuery.data,
@@ -71,13 +73,11 @@ const focusReasonCopy: Record<
 > = {
 	[FocusViolationReason.VisibilityChange]: {
 		title: "Stay in this tab",
-		description:
-			"Switching to another tab or window pauses your quiz attempt."
+		description: "Switching to another tab or window pauses your quiz attempt."
 	},
 	[FocusViolationReason.WindowBlur]: {
 		title: "Quiz window inactive",
-		description:
-			"Click directly on the quiz window to keep answering."
+		description: "Click directly on the quiz window to keep answering."
 	},
 	[FocusViolationReason.RestrictedKey]: {
 		title: "Shortcuts disabled",
@@ -86,9 +86,9 @@ const focusReasonCopy: Record<
 	}
 };
 
-const computeRemainingSeconds = (interval: Interval): number => {
-	const endAt = new Date(interval.endAt).getTime();
-	return Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+// Change the signature to accept a number (timestamp in ms)
+const computeRemainingSeconds = (targetTimeMs: number): number => {
+	return Math.max(0, Math.ceil((targetTimeMs - Date.now()) / 1000));
 };
 
 function RouteComponent(): JSX.Element {
@@ -96,25 +96,38 @@ function RouteComponent(): JSX.Element {
 	const params = Route.useParams();
 	const auth = useAuth();
 	const queryClient = useQueryClient();
+	const player = useQuery(
+		playerQueryOptions(params.quizId, auth.user?.userId!)
+	);
 
 	const initialQuestion = loaderData.currentQuestion ?? null;
 	const initialInterval = initialQuestion?.interval ?? null;
-	const initialDuration = initialQuestion?.question.duration ?? 0;
-	const initialRemainingTime = initialInterval
-		? computeRemainingSeconds(initialInterval)
-		: initialDuration;
 
-	const [currentQuestion, setCurrentQuestion] = useState<
-		QuizCurrentQuestion | null
-	>(initialQuestion);
-	const [remainingTime, setRemainingTime] = useState(initialRemainingTime);
+	// If loading from fresh page, we must trust server time.
+	// If logic permits, you could assume full duration on refresh,
+	// but server time is safer for mid-quiz refreshes.
+	const initialTargetTime = initialInterval
+		? new Date(initialInterval.endAt).getTime()
+		: Date.now() + (initialQuestion?.question.duration ?? 0) * 1000;
+
+	const initialDuration = initialQuestion?.question.duration ?? 0;
+	// const initialRemainingTime = initialInterval
+	// 	? computeRemainingSeconds(initialInterval)
+	// 	: initialDuration;
+
+	const [currentQuestion, setCurrentQuestion] =
+		useState<QuizCurrentQuestion | null>(initialQuestion);
+	// Initialize remaining time using the helper with the number
+	const [remainingTime, setRemainingTime] = useState(
+		initialInterval
+			? computeRemainingSeconds(initialTargetTime)
+			: (initialQuestion?.question.duration ?? 0)
+	);
 	const [timerInterval, setTimerInterval] = useState<Interval | null>(
 		initialInterval
 	);
 	const [timerDuration, setTimerDuration] = useState(initialDuration);
-	const [isTimerExpired, setIsTimerExpired] = useState(
-		initialDuration > 0 && initialRemainingTime <= 0
-	);
+	const [isTimerExpired, setIsTimerExpired] = useState(remainingTime <= 0);
 	const [isLeaderboardShown, setIsLeaderboardShown] = useState(false);
 	const [quizStatus, setQuizStatus] = useState<QuizStatus>(
 		loaderData.quiz.status
@@ -130,6 +143,34 @@ function RouteComponent(): JSX.Element {
 	const focusViolationCountRef = useRef(0);
 	const hasJoinedRef = useRef(false);
 
+	// 2. Update startCountdown to accept a specific Target Timestamp (ms)
+	const startCountdown = useCallback((targetTimeMs: number) => {
+		if (intervalRef.current) {
+			clearInterval(intervalRef.current);
+			intervalRef.current = null;
+		}
+
+		setIsTimerExpired(false);
+
+		const tick = (): void => {
+			// Use the passed targetTimeMs, ignoring server clock skew
+			const next = computeRemainingSeconds(targetTimeMs);
+			setRemainingTime(next);
+
+			console.log("tick");
+
+			if (next <= 0) {
+				if (intervalRef.current) clearInterval(intervalRef.current);
+				intervalRef.current = null;
+				console.log("TIME IS UP ON TICK");
+				// setIsTimerExpired(true);
+			}
+		};
+
+		tick();
+		intervalRef.current = window.setInterval(tick, 1000);
+	}, []);
+
 	const socket = useWebSocket(WEBSOCKET_URL, {
 		...WEBSOCKET_OPTIONS,
 		queryParams: {
@@ -137,6 +178,8 @@ function RouteComponent(): JSX.Element {
 		},
 		onMessage: async (event) => {
 			const result: WebSocketResponse = await JSON.parse(event.data);
+
+			console.log(result);
 
 			switch (result.event) {
 				case WebSocketEvent.QuizUpdateStatus: {
@@ -149,8 +192,16 @@ function RouteComponent(): JSX.Element {
 					const question = result.data as QuizCurrentQuestion;
 					setCurrentQuestion(question);
 					setTimerDuration(question.question.duration);
-					setRemainingTime(question.question.duration);
-					setTimerInterval(null);
+
+					// --- THE FIX IS HERE ---
+					// Instead of trusting question.interval.endAt (which might be in the past due to clock skew),
+					// we calculate a LOCAL end time: Now + Duration.
+					const durationMs = question.question.duration * 1000;
+					const localTargetTime = Date.now() + durationMs;
+
+					// Start the countdown using our synchronized local time
+					startCountdown(localTargetTime);
+
 					setIsTimerExpired(false);
 					setIsLeaderboardShown(false);
 					toast.info("Next question!");
@@ -167,8 +218,23 @@ function RouteComponent(): JSX.Element {
 				}
 				case WebSocketEvent.TimerStart: {
 					const interval = result.data as Interval;
+
+					// 1. Calculate the total duration of the timer from the server's data
+					const startMs = new Date(interval.startAt).getTime();
+					const endMs = new Date(interval.endAt).getTime();
+					const durationMs = endMs - startMs;
+
+					// 2. Create a local target time relative to right NOW
+					// This ignores whether the server clock is ahead or behind yours
+					const localTargetTime = Date.now() + durationMs;
+
+					// 3. Start the countdown with the local timestamp
+					startCountdown(localTargetTime);
+
+					// Optional: Keep this if you need the raw data for other UI parts,
+					// but don't use it for the countdown logic anymore.
 					setTimerInterval(interval);
-					setRemainingTime(computeRemainingSeconds(interval));
+
 					setIsTimerExpired(false);
 					break;
 				}
@@ -185,36 +251,40 @@ function RouteComponent(): JSX.Element {
 		}
 	});
 
-	const startCountdown = useCallback((interval: Interval | null) => {
-		if (intervalRef.current) {
-			clearInterval(intervalRef.current);
-			intervalRef.current = null;
-		}
+	// const startCountdown = useCallback((interval: Interval | null) => {
+	// 	if (intervalRef.current) {
+	// 		clearInterval(intervalRef.current);
+	// 		intervalRef.current = null;
+	// 	}
+	//
+	// 	if (!interval) {
+	// 		return;
+	// 	}
+	//
+	// 	setIsTimerExpired(false);
+	//
+	// 	const tick = (): void => {
+	// 		const next = computeRemainingSeconds(interval);
+	// 		setRemainingTime(next);
+	//
+	// 		if (next <= 0 && intervalRef.current) {
+	// 			clearInterval(intervalRef.current);
+	// 			intervalRef.current = null;
+	// 			setIsTimerExpired(true);
+	// 		}
+	// 	};
+	//
+	// 	tick();
+	// 	intervalRef.current = window.setInterval(tick, 1000);
+	// }, []);
 
-		if (!interval) {
-			return;
-		}
-
-		setIsTimerExpired(false);
-
-		const tick = (): void => {
-			const next = computeRemainingSeconds(interval);
-			setRemainingTime(next);
-
-			if (next <= 0 && intervalRef.current) {
-				clearInterval(intervalRef.current);
-				intervalRef.current = null;
-				setIsTimerExpired(true);
-			}
-		};
-
-		tick();
-		intervalRef.current = window.setInterval(tick, 1000);
-	}, []);
-
+	// 4. Handle initial load countdown
 	useEffect(() => {
-		startCountdown(timerInterval);
-	}, [startCountdown, timerInterval]);
+		if (initialInterval) {
+			// On page load, we have to trust the server time (or calculate an offset)
+			startCountdown(new Date(initialInterval.endAt).getTime());
+		}
+	}, []); // Empty dependency array to run once on mount
 
 	useEffect(() => {
 		return () => {
@@ -343,7 +413,8 @@ function RouteComponent(): JSX.Element {
 		}
 	})();
 
-	const isStatusLocked = statusLockCopy !== null && quizStatus !== QuizStatus.Started;
+	const isStatusLocked =
+		statusLockCopy !== null && quizStatus !== QuizStatus.Started;
 	const showStatusOverlay = isStatusLocked;
 	const isInteractionLocked = isFocusLocked || isStatusLocked;
 
@@ -373,8 +444,9 @@ function RouteComponent(): JSX.Element {
 					<div className="mx-auto flex h-full w-full px-20 py-10">
 						<div className="mx-auto w-full max-w-5xl">
 							<WrittenAnswerForm
+								key={currentQuestion.question.quizQuestionId}
 								question={currentQuestion}
-								player={loaderData.player}
+								player={player.data!.data}
 								socket={socket}
 								isTimerDone={isTimerExpired}
 								isInteractionLocked={isInteractionLocked}
@@ -385,19 +457,25 @@ function RouteComponent(): JSX.Element {
 			) : null}
 
 			{showStatusOverlay && statusLockCopy ? (
-				<div className="absolute inset-0 z-[550] flex flex-col items-center justify-center bg-background/95 px-6 text-center">
-					<p className="text-3xl font-metropolis-bold">
-						{statusLockCopy.title}
-					</p>
-					<p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-						{statusLockCopy.description}
-					</p>
+				<div className="absolute inset-0 z-[550] flex flex-col items-center justify-center bg-background px-6 text-center">
+					{quizStatus === QuizStatus.Open ? (
+						<Wait />
+					) : (
+						<>
+							<p className="font-metropolis-bold text-3xl">
+								{statusLockCopy.title}
+							</p>
+							<p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+								{statusLockCopy.description}
+							</p>
+						</>
+					)}
 				</div>
 			) : null}
 
 			{isFocusLocked && focusReason ? (
 				<div className="absolute inset-0 z-[600] flex flex-col items-center justify-center bg-background/95 px-6 text-center">
-					<p className="text-3xl font-metropolis-bold">
+					<p className="font-metropolis-bold text-3xl">
 						{focusReasonCopy[focusReason].title}
 					</p>
 					<p className="mt-4 max-w-2xl text-lg text-muted-foreground">

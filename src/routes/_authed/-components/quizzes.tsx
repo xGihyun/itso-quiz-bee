@@ -103,13 +103,13 @@ export function Quizzes(props: Props): JSX.Element {
 								size="sm"
 								className="w-full"
 								onClick={() => {
-									if (quiz.status === QuizStatus.Open) {
-										navigate({
-											to: "/quizzes/$quizId",
-											params: { quizId: quiz.quizId }
-										});
-										return;
-									}
+									// if (quiz.status === QuizStatus.Open) {
+									// 	navigate({
+									// 		to: "/quizzes/$quizId",
+									// 		params: { quizId: quiz.quizId }
+									// 	});
+									// 	return;
+									// }
 
 									navigate({
 										to: "/quizzes/$quizId/answer",
