@@ -37,10 +37,13 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 			quizQuestionId: props.question.question.quizQuestionId
 		}
 	});
+
+	const existingAnswers = props.player.result?.answers ?? [];
+
 	const [currentAnswer, setCurrentAnswer] = useState<
 		WrittenAnswerInput | undefined
 	>(
-		props.player.result.answers.find(
+		existingAnswers.find(
 			(answer) =>
 				answer.quizQuestionId === props.question.question.quizQuestionId
 		)
@@ -48,7 +51,8 @@ export function WrittenAnswerForm(props: Props): JSX.Element {
 
 	// Update the form when the question changes
 	useEffect(() => {
-		const newCurrentAnswer = props.player.result.answers.find(
+		const safeAnswers = props.player.result?.answers ?? [];
+		const newCurrentAnswer = safeAnswers.find(
 			(answer) =>
 				answer.quizQuestionId === props.question.question.quizQuestionId
 		);
