@@ -1,11 +1,11 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { DataTable } from './-components/data-table'
 import { columns, UserColumn } from './-components/columns'
 import { useQuery } from '@tanstack/react-query'
-import { ApiResponse, ApiResponseStatus } from '@/lib/api/types'
+import { ApiResponse } from '@/lib/api/types'
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { CreateUserForm } from './-components/form'
-import { UserRole } from '@/lib/user/types'
 
 export const Route = createFileRoute('/_authed/users/')({
   component: RouteComponent,
