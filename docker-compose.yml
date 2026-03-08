@@ -1,19 +1,19 @@
-version: '3.8'
+name: itso-quiz-bee
 
 services:
   postgres:
     image: postgres:16-alpine
     container_name: itso-quiz-bee-db
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-itso_quiz_bee}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: itso_quiz_bee
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - 5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,10 +21,10 @@ services:
       - itso-network
 
   redis:
-    image: redis/redis-stack:latest
-    container_name: itso-quiz-bee-cache
+    image: redis/redis-stack:7.4.0-v8
+    container_name: itso-quiz-bee-redis
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - 6379:6379
     volumes:
       - redis_data:/data
     healthcheck:
@@ -39,20 +39,16 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: itso-quiz-bee-api
+    container_name: itso-quiz-bee-server
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-itso_quiz_bee}
-      REDIS_URL: redis://redis:6379
-      PORT: ${BACKEND_PORT:-3002}
-      HOST: 0.0.0.0
-      FRONTEND_PORT: ${FRONTEND_PORT:-3001}
+    env_file:
+      - ./server/.env
     ports:
-      - "${BACKEND_PORT:-3002}:3002"
+      - 3002:3002
     networks:
       - itso-network
     restart: unless-stopped
@@ -61,16 +57,13 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
-      args:
-        VITE_BACKEND_URL: http://localhost:${BACKEND_PORT:-3002}
     container_name: itso-quiz-bee-web
     depends_on:
       - backend
-    environment:
-      HOST: 0.0.0.0
-      PORT: 3000
+    env_file:
+      - ./client/.env
     ports:
-      - "${FRONTEND_PORT:-3001}:3000"
+      - 3000:3000
     networks:
       - itso-network
     restart: unless-stopped

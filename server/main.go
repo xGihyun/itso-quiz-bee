@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 	"github.com/xGihyun/itso-quiz-bee/internal/api"
-	_ "github.com/xGihyun/itso-quiz-bee/internal/middleware"
 	"github.com/xGihyun/itso-quiz-bee/internal/quiz"
 	"github.com/xGihyun/itso-quiz-bee/internal/user"
 	"github.com/xGihyun/itso-quiz-bee/internal/ws"
@@ -47,11 +47,6 @@ func main() {
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
 		log.Fatal().Msg("PORT not found.")
-	}
-
-	frontendPort, ok := os.LookupEnv("FRONTEND_PORT")
-	if !ok {
-		log.Fatal().Msg("FRONTEND_PORT not found.")
 	}
 
 	redisURL, ok := os.LookupEnv("REDIS_URL")
@@ -113,14 +108,11 @@ func main() {
 		api.HTTPHandler(app.quiz.GetCurrentQuestion),
 	)
 
-	// Build allowed origins for both localhost and docker internal network
-	allowedOrigins := []string{
-		"http://localhost:" + frontendPort,
-		"http://127.0.0.1:" + frontendPort,
-		"http://frontend:" + frontendPort,        // Docker internal hostname
-		"http://itso-quiz-bee-web:" + frontendPort, // Docker container name
-		"http://192.168.55.101:" + frontendPort, // Docker container name
+	allowedOriginsEnv, ok := os.LookupEnv("ALLOWED_ORIGINS")
+	if !ok {
+		log.Warn().Msg("ALLOWED_ORIGINS not found.")
 	}
+	allowedOrigins := strings.Split(allowedOriginsEnv, ",")
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   allowedOrigins,
@@ -131,7 +123,6 @@ func main() {
 
 	server := http.Server{
 		Addr: host + ":" + port,
-		// Handler: corsHandler.Handler(middleware.RequestLogger(router)),
 		Handler: corsHandler.Handler(router),
 	}
 
